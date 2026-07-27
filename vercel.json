@@ -1,13 +1,4 @@
 {
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/webapp/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/webapp/$1"
-    }
-  ]
+  "buildCommand": null,
+  "outputDirectory": "webapp"
 }
