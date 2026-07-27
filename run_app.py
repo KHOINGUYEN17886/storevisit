@@ -832,14 +832,7 @@ class StoreVisitApp:
     def _on_close(self):
         """Confirm if user wants to close when worker is active."""
         if self.is_running:
-            # Check if active worker is writing or converting PowerPoint
-            if "Merge" in self.progress_lbl["text"] or "QC" in self.progress_lbl["text"]:
-                messagebox.showwarning(
-                    "Đang xuất file", 
-                    "Không thể đóng ứng dụng khi worker đang lưu hoặc xuất PowerPoint/PDF. Vui lòng đợi trong giây lát."
-                )
-                return
-            if messagebox.askyesno("Đóng ứng dụng", "Tiến trình đang chạy. Bạn có muốn hủy bỏ job và đóng ứng dụng không?"):
+            if messagebox.askyesno("Đóng ứng dụng", "Tiến trình đang chạy. Bạn có muốn hủy bỏ job và đóng ứng dụng ngay không?"):
                 self._trigger_cancel()
                 self._force_kill_subprocess()
                 self.root.destroy()
