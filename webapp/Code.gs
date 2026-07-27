@@ -1746,6 +1746,12 @@ function doPost(e) {
       } else {
         result = toggleUserStatus(postData.requesterUsername, postData.targetUsername, postData.newStatus);
       }
+    } else if (action === "syncASMUsersFromStoresInfo") {
+      if (Array.isArray(payload)) {
+        result = syncASMUsersFromStoresInfo(payload[0], payload[1]);
+      } else {
+        result = syncASMUsersFromStoresInfo(postData.requesterUsername, postData.storeDataList);
+      }
     } else if (action === "processForm") {
       result = processForm(payload);
     } else if (action === "updateIssueResolution") {
@@ -2266,18 +2272,24 @@ function initASMUsersSheet() {
     var sheet = ss.getSheetByName(USER_SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(USER_SHEET_NAME);
-      var headers = ["username", "password", "full_name", "role", "region", "stores", "created_at"];
+      var headers = ["username", "password", "full_name", "role", "region", "stores", "status", "created_at"];
       sheet.appendRow(headers);
       sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
       
-      // Default Seed Accounts:
-      // Master Account (ASM Khôi) - Full access
-      sheet.appendRow(["khoi", "khoi123", "ASM Khôi", "master", "ALL", "ALL", new Date().toISOString()]);
-      // Standard ASM Accounts (Sample Clusters)
-      sheet.appendRow(["nam", "123456", "Nguyễn Văn Nam", "asm", "Miền Nam 1", "VINCOM, CMT8, AEONBD, DONGNAI, VTAU4", new Date().toISOString()]);
-      // Master Khôi fallback username
-      sheet.appendRow(["khoind", "khoi123", "ASM Khôi", "master", "ALL", "ALL", new Date().toISOString()]);
-      Logger.log("✅ Đã khởi tạo sheet " + USER_SHEET_NAME + " với tài khoản Master khoi & khoind.");
+      var nowIso = new Date().toISOString();
+      // 10 Official ASM Accounts Seeded from StoresInfo.xlsx (184 stores total)
+      sheet.appendRow(["khoi", "khoi123", "ASM Khôi", "master", "ALL", "ALL", "Active", nowIso]);
+      sheet.appendRow(["dung", "123456", "ASM Dũng", "asm", "HCM, Miền Trung- Tây Nguyên", "CMT8, CHOA3, TCHINH, LBBICH, QBINH, KONTUM, GIALAI, PTHIET, DAKLAK, DAKLAK2, DAKLAK5, DAKNONG, DALAT, DALAT2, BAOLOC", "Active", nowIso]);
+      sheet.appendRow(["hn", "123456", "ASM Hà Nội", "asm", "HN", "HN1, HN2, HN3, HN4, HN5, HN6, HN8, HN10, HN11, HN12, HTMAU, HN15, HN16, HN17, HN18, HN19, HN20, HN21, HN22, HN23, HN24, HN25, HN26, CAUGIAYHN, HNTN, TUYENQUANG, HP, HP3, HP4, LACHTRAYHP, TBINH, QNINH, THANHHOA, VINH1, VINH2, HATINH, NINHBINH, HAGIANG, VIETTRI, BACNINH, NAMDINH, BACGIANG, VINHYEN, LAOCAI, YENBAI", "Active", nowIso]);
+      sheet.appendRow(["huong", "123456", "ASM Hương", "asm", "HCM, Miền Trung- Tây Nguyên, Miền Tây", "KINHDV, HAUGIANG, MYTHO, MYTHO2, CAYLAY, CAOLANH, HONGNGU, SADEC, LXUYEN, LONGXUYEN2, LONGXUYEN3, CHAUDOC, RGIA, RGIA2, RACHGIA3, HATIEN, BENTRE, VINHLONG, VINHLONG2, TRAVINH, CTHO, CTHO2, CTHO3, CTHO6, CANTHO3T2, APHAUGIANG, STR, STR2, BACLIEU, BACLIEU2, CMAU, CMAU2, FLDLTTON", "Active", nowIso]);
+      sheet.appendRow(["linh", "123456", "ASM Linh", "asm", "HCM", "SO1, HBT, CAOTH, NTMK, NDC, LVS, 185_3T2, 126_3T2, NVTROI, PDP, GOVAP, LOTTEGV, 901QT, LQDINH, NGUYENOANH, AEONTP, LETRONGTAN", "Active", nowIso]);
+      sheet.appendRow(["lam", "123456", "ASM Lâm", "asm", "HCM", "HVPLAZA, VANHANH, SENSECITY, VINCOMTD, VINCOMLVV, VINCOMQ2", "Active", nowIso]);
+      sheet.appendRow(["tien", "123456", "ASM Tiên", "asm", "HCM", "DIAMOND, LYTT, NGA6, NTQ1, PTER, NGHUE, VINCOM, TAKA, OIKHIEM, AUCO, CHOA, TCHINH2, NGANHTHU, LVKHUONG, PDL, PDL2, AEONBT, CUCHI", "Active", nowIso]);
+      sheet.appendRow(["tin", "123456", "ASM Tín", "asm", "HCM, Miền Đông", "THUDUC, THUDUC2, BPHUOC, BINHLONG, BCDN, VINCOMBH, BIENHOA, BHNAQUOC, TAMHIEP, LONGKHANH, LONGTHANH, TAYNINH, BENLUC, LONGAN", "Active", nowIso]);
+      sheet.appendRow(["quan", "123456", "ASM Quân", "asm", "Miền Trung- Tây Nguyên", "QUANGTRI, BIGCHUE, HUE2, DN, DN2, DN3, DN4, DN5DBP, TAMKY, QNGAI, QUINHON2, QUYNHON3, NHT3, NHT2, CAMRANH, PHANRANG2, PHUYEN, QUYNHON", "Active", nowIso]);
+      sheet.appendRow(["ni", "123456", "ASM Ni", "asm", "HCM", "ONLINEWEB", "Active", nowIso]);
+      sheet.appendRow(["khoind", "khoi123", "ASM Khôi", "master", "ALL", "ALL", "Active", nowIso]);
+      Logger.log("✅ Đã khởi tạo sheet " + USER_SHEET_NAME + " với 10 tài khoản ASM chính thức (184 cửa hàng).");
     }
     return sheet;
   } catch(e) {
@@ -2648,5 +2660,120 @@ function toggleUserStatus(requesterUsername, targetUsername, newStatus) {
     return { success: false, error: "Không tìm thấy tài khoản " + targetUsername };
   } catch(e) {
     return { success: false, error: "Lỗi cập nhật trạng thái: " + e.toString() };
+  }
+}
+
+function syncASMUsersFromStoresInfo(requesterUsername, storeDataList) {
+  try {
+    if (!isUserAdminOrMaster(requesterUsername)) {
+      return { success: false, error: "Bạn không có quyền thực hiện đồng bộ tài khoản." };
+    }
+    if (!storeDataList || !Array.isArray(storeDataList) || storeDataList.length === 0) {
+      return { success: false, error: "Dữ liệu danh sách cửa hàng không hợp lệ." };
+    }
+    
+    // Group stores by ASM name
+    var asmMap = {};
+    var validStoreCount = 0;
+    
+    for (var i = 0; i < storeDataList.length; i++) {
+      var item = storeDataList[i];
+      if (!item || !item.code) continue;
+      var code = String(item.code).trim().toUpperCase();
+      var asmName = String(item.asm || "Khác").trim();
+      var region = String(item.region || "").trim();
+      if (!code) continue;
+      
+      validStoreCount++;
+      if (!asmMap[asmName]) {
+        asmMap[asmName] = {
+          asmName: asmName,
+          regions: [],
+          stores: []
+        };
+      }
+      if (region && asmMap[asmName].regions.indexOf(region) === -1) {
+        asmMap[asmName].regions.push(region);
+      }
+      if (asmMap[asmName].stores.indexOf(code) === -1) {
+        asmMap[asmName].stores.push(code);
+      }
+    }
+    
+    var sheet = initASMUsersSheet();
+    if (!sheet) return { success: false, error: "Không mở được bảng ASM_Users." };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var pIdx = headers.indexOf("password");
+    var nIdx = headers.indexOf("full_name");
+    var rIdx = headers.indexOf("role");
+    var regIdx = headers.indexOf("region");
+    var sIdx = headers.indexOf("stores");
+    var stIdx = headers.indexOf("status");
+    if (stIdx === -1) {
+      stIdx = headers.length;
+      sheet.getRange(1, stIdx + 1).setValue("status").setFontWeight("bold");
+    }
+    
+    // Map existing rows by username
+    var existingRows = {};
+    for (var r = 1; r < data.length; r++) {
+      var uName = String(data[r][uIdx]).trim().toLowerCase();
+      if (uName) existingRows[uName] = r + 1; // 1-indexed row
+    }
+    
+    function removeAccents(str) {
+      return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    }
+    
+    var syncedASMCount = 0;
+    var asmKeys = Object.keys(asmMap);
+    
+    for (var k = 0; k < asmKeys.length; k++) {
+      var asmName = asmKeys[k];
+      var asmObj = asmMap[asmName];
+      var uname = removeAccents(asmName);
+      if (!uname) uname = "asm_" + k;
+      
+      var fullName = "ASM " + asmName;
+      var role = (uname === "khoi" || uname === "khoind") ? "master" : "asm";
+      var regionStr = asmObj.regions.join(", ");
+      var storesStr = (uname === "khoi" || uname === "khoind") ? "ALL" : asmObj.stores.join(", ");
+      
+      if (existingRows[uname]) {
+        // Update existing row
+        var rowNum = existingRows[uname];
+        sheet.getRange(rowNum, nIdx + 1).setValue(fullName);
+        sheet.getRange(rowNum, rIdx + 1).setValue(role);
+        sheet.getRange(rowNum, regIdx + 1).setValue(regionStr);
+        sheet.getRange(rowNum, sIdx + 1).setValue(storesStr);
+      } else {
+        // Create new row
+        var defaultPass = (uname === "khoi") ? "khoi123" : "123456";
+        var newRow = [];
+        newRow[uIdx] = uname;
+        newRow[pIdx] = defaultPass;
+        newRow[nIdx] = fullName;
+        newRow[rIdx] = role;
+        newRow[regIdx] = regionStr;
+        newRow[sIdx] = storesStr;
+        newRow[stIdx] = "Active";
+        sheet.appendRow(newRow);
+      }
+      syncedASMCount++;
+    }
+    
+    return {
+      success: true,
+      validStoreCount: validStoreCount,
+      syncedASMCount: syncedASMCount,
+      message: "Đã đồng bộ thành công " + validStoreCount + " cửa hàng và " + syncedASMCount + " tài khoản ASM từ StoresInfo.xlsx!"
+    };
+  } catch(e) {
+    return { success: false, error: "Lỗi đồng bộ dữ liệu Excel: " + e.toString() };
   }
 }
