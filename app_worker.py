@@ -90,8 +90,8 @@ def send_email_for_store(loader, store_code, store_name, asm_name, report_date, 
             method="POST"
         )
         
-        # Adjust timeout to 120s as Base64 encoding files can take longer to process in GAS
-        with urllib.request.urlopen(req, timeout=120) as response:
+        # Set timeout to 25s to prevent blocking worker if GAS email processing is slow
+        with urllib.request.urlopen(req, timeout=25) as response:
             res_body = response.read().decode("utf-8")
             print(f"[Email] Raw response from GAS (first 1000 chars): {res_body[:1000]}")
             try:
