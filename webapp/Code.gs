@@ -1701,6 +1701,12 @@ function doPost(e) {
     var payload = postData.payload;
     var result = {};
     
+    if (action === "send_email") {
+      result = sendReportEmail(postData);
+    } else if (action === "getStoreData") {
+      result = getStoreData();
+    } else if (action === "getPendingIssues") {
+      result = getPendingIssues(payload);
     } else if (action === "loginUser") {
       if (Array.isArray(payload)) {
         result = loginUser(payload[0], payload[1]);
