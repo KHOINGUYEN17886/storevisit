@@ -1725,6 +1725,26 @@ function doPost(e) {
       } else {
         result = getHistoricalSubmissions();
       }
+    } else if (action === "getAllUsers") {
+      result = getAllUsers(payload[0] || payload);
+    } else if (action === "saveUserAccount") {
+      if (Array.isArray(payload)) {
+        result = saveUserAccount(payload[0], payload[1]);
+      } else {
+        result = saveUserAccount(postData.requesterUsername, payload);
+      }
+    } else if (action === "resetUserPasswordByAdmin") {
+      if (Array.isArray(payload)) {
+        result = resetUserPasswordByAdmin(payload[0], payload[1], payload[2]);
+      } else {
+        result = resetUserPasswordByAdmin(postData.requesterUsername, postData.targetUsername, postData.newPassword);
+      }
+    } else if (action === "toggleUserStatus") {
+      if (Array.isArray(payload)) {
+        result = toggleUserStatus(payload[0], payload[1], payload[2]);
+      } else {
+        result = toggleUserStatus(postData.requesterUsername, postData.targetUsername, postData.newStatus);
+      }
     } else if (action === "processForm") {
       result = processForm(payload);
     } else if (action === "updateIssueResolution") {
@@ -2431,5 +2451,200 @@ function getInspectionHistory(username, role, storesAllowedStr) {
     return { success: true, history: history };
   } catch(e) {
     return { success: false, error: "Lỗi tải lịch sử báo cáo: " + e.toString() };
+  }
+}
+
+// -------------------------------------------------------------
+// USER MANAGEMENT FUNCTIONS FOR MASTER & ADMIN ACCOUNTS
+// -------------------------------------------------------------
+function isUserAdminOrMaster(username) {
+  if (!username) return false;
+  var sheet = initASMUsersSheet();
+  if (!sheet) return false;
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return false;
+  var headers = data[0];
+  var uIdx = headers.indexOf("username");
+  var rIdx = headers.indexOf("role");
+  var searchUser = String(username).trim().toLowerCase();
+  
+  for (var i = 1; i < data.length; i++) {
+    var uVal = String(data[i][uIdx]).trim().toLowerCase();
+    if (uVal === searchUser) {
+      var role = String(data[i][rIdx] || "").trim().toLowerCase();
+      return (role === "master" || role === "admin");
+    }
+  }
+  return false;
+}
+
+function getAllUsers(requesterUsername) {
+  try {
+    if (!isUserAdminOrMaster(requesterUsername)) {
+      return { success: false, error: "Bạn không có quyền quản trị tài khoản người dùng." };
+    }
+    var sheet = initASMUsersSheet();
+    if (!sheet) return { success: false, error: "Không mở được bảng người dùng." };
+    
+    var data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { success: true, users: [] };
+    
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var nIdx = headers.indexOf("full_name");
+    var rIdx = headers.indexOf("role");
+    var regIdx = headers.indexOf("region");
+    var sIdx = headers.indexOf("stores");
+    var stIdx = headers.indexOf("status");
+    if (stIdx === -1) stIdx = headers.length;
+    
+    var users = [];
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if (!row[uIdx]) continue;
+      users.push({
+        username: String(row[uIdx]).trim(),
+        fullName: String(row[nIdx] || row[uIdx]).trim(),
+        role: String(row[rIdx] || "asm").trim().toLowerCase(),
+        region: String(row[regIdx] || "").trim(),
+        stores: String(row[sIdx] || "ALL").trim(),
+        status: String(row[stIdx] || "Active").trim()
+      });
+    }
+    return { success: true, users: users };
+  } catch(e) {
+    return { success: false, error: "Lỗi tải danh sách người dùng: " + e.toString() };
+  }
+}
+
+function saveUserAccount(requesterUsername, userData) {
+  try {
+    if (!isUserAdminOrMaster(requesterUsername)) {
+      return { success: false, error: "Bạn không có quyền thực hiện thao tác này." };
+    }
+    if (!userData || !userData.username) {
+      return { success: false, error: "Tên đăng nhập không được để trống." };
+    }
+    
+    var sheet = initASMUsersSheet();
+    if (!sheet) return { success: false, error: "Không mở được bảng người dùng." };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var pIdx = headers.indexOf("password");
+    var nIdx = headers.indexOf("full_name");
+    var rIdx = headers.indexOf("role");
+    var regIdx = headers.indexOf("region");
+    var sIdx = headers.indexOf("stores");
+    var stIdx = headers.indexOf("status");
+    if (stIdx === -1) {
+      stIdx = headers.length;
+      sheet.getRange(1, stIdx + 1).setValue("status").setFontWeight("bold");
+    }
+    
+    var targetUser = String(userData.username).trim().toLowerCase();
+    var foundIndex = -1;
+    
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][uIdx]).trim().toLowerCase() === targetUser) {
+        foundIndex = i + 1; // 1-indexed row in sheet
+        break;
+      }
+    }
+    
+    var roleVal = String(userData.role || "asm").trim().toLowerCase();
+    var regionVal = String(userData.region || "").trim();
+    var storesVal = String(userData.stores || "ALL").trim();
+    var fullNameVal = String(userData.fullName || userData.username).trim();
+    var statusVal = String(userData.status || "Active").trim();
+    
+    if (foundIndex > 0) {
+      // Update existing user
+      sheet.getRange(foundIndex, nIdx + 1).setValue(fullNameVal);
+      sheet.getRange(foundIndex, rIdx + 1).setValue(roleVal);
+      sheet.getRange(foundIndex, regIdx + 1).setValue(regionVal);
+      sheet.getRange(foundIndex, sIdx + 1).setValue(storesVal);
+      sheet.getRange(foundIndex, stIdx + 1).setValue(statusVal);
+      if (userData.password && String(userData.password).trim()) {
+        sheet.getRange(foundIndex, pIdx + 1).setValue(String(userData.password).trim());
+      }
+      return { success: true, message: "Đã cập nhật thông tin tài khoản " + userData.username + " thành công." };
+    } else {
+      // Add new user
+      var newPass = userData.password ? String(userData.password).trim() : "123456";
+      var newRow = [];
+      newRow[uIdx] = userData.username.trim();
+      newRow[pIdx] = newPass;
+      newRow[nIdx] = fullNameVal;
+      newRow[rIdx] = roleVal;
+      newRow[regIdx] = regionVal;
+      newRow[sIdx] = storesVal;
+      newRow[stIdx] = statusVal;
+      sheet.appendRow(newRow);
+      return { success: true, message: "Đã tạo mới tài khoản " + userData.username + " thành công." };
+    }
+  } catch(e) {
+    return { success: false, error: "Lỗi lưu tài khoản: " + e.toString() };
+  }
+}
+
+function resetUserPasswordByAdmin(requesterUsername, targetUsername, newPassword) {
+  try {
+    if (!isUserAdminOrMaster(requesterUsername)) {
+      return { success: false, error: "Bạn không có quyền reset mật khẩu tài khoản khác." };
+    }
+    if (!targetUsername || !newPassword) {
+      return { success: false, error: "Thiếu thông tin tài khoản hoặc mật khẩu mới." };
+    }
+    
+    var sheet = initASMUsersSheet();
+    if (!sheet) return { success: false, error: "Không mở được bảng người dùng." };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var pIdx = headers.indexOf("password");
+    
+    var target = String(targetUsername).trim().toLowerCase();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][uIdx]).trim().toLowerCase() === target) {
+        sheet.getRange(i + 1, pIdx + 1).setValue(String(newPassword).trim());
+        return { success: true, message: "Đã reset mật khẩu cho tài khoản " + targetUsername + " thành công!" };
+      }
+    }
+    return { success: false, error: "Không tìm thấy tài khoản " + targetUsername };
+  } catch(e) {
+    return { success: false, error: "Lỗi reset mật khẩu: " + e.toString() };
+  }
+}
+
+function toggleUserStatus(requesterUsername, targetUsername, newStatus) {
+  try {
+    if (!isUserAdminOrMaster(requesterUsername)) {
+      return { success: false, error: "Bạn không có quyền đổi trạng thái tài khoản." };
+    }
+    var sheet = initASMUsersSheet();
+    if (!sheet) return { success: false, error: "Không mở được bảng người dùng." };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var stIdx = headers.indexOf("status");
+    if (stIdx === -1) {
+      stIdx = headers.length;
+      sheet.getRange(1, stIdx + 1).setValue("status").setFontWeight("bold");
+    }
+    
+    var target = String(targetUsername).trim().toLowerCase();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][uIdx]).trim().toLowerCase() === target) {
+        sheet.getRange(i + 1, stIdx + 1).setValue(newStatus);
+        return { success: true, message: "Đã đổi trạng thái tài khoản " + targetUsername + " thành " + newStatus };
+      }
+    }
+    return { success: false, error: "Không tìm thấy tài khoản " + targetUsername };
+  } catch(e) {
+    return { success: false, error: "Lỗi cập nhật trạng thái: " + e.toString() };
   }
 }
