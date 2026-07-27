@@ -1726,7 +1726,8 @@ function doPost(e) {
         result = getHistoricalSubmissions();
       }
     } else if (action === "getAllUsers") {
-      result = getAllUsers(payload[0] || payload);
+      var reqUser = Array.isArray(payload) ? payload[0] : payload;
+      result = getAllUsers(reqUser);
     } else if (action === "saveUserAccount") {
       if (Array.isArray(payload)) {
         result = saveUserAccount(payload[0], payload[1]);
