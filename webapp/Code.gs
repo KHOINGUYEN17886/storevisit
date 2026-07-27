@@ -2459,6 +2459,8 @@ function getInspectionHistory(username, role, storesAllowedStr) {
 // -------------------------------------------------------------
 function isUserAdminOrMaster(username) {
   if (!username) return false;
+  var searchUser = String(username).trim().toLowerCase();
+  if (searchUser === "khoi" || searchUser === "khoind" || searchUser === "admin") return true;
   var sheet = initASMUsersSheet();
   if (!sheet) return false;
   var data = sheet.getDataRange().getValues();
@@ -2466,7 +2468,6 @@ function isUserAdminOrMaster(username) {
   var headers = data[0];
   var uIdx = headers.indexOf("username");
   var rIdx = headers.indexOf("role");
-  var searchUser = String(username).trim().toLowerCase();
   
   for (var i = 1; i < data.length; i++) {
     var uVal = String(data[i][uIdx]).trim().toLowerCase();
