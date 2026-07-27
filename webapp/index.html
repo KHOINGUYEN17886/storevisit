@@ -7,7 +7,7 @@
   <title>Báo cáo Kiểm tra Cửa hàng (StoreVisit Pro)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --brand-red: #C41E3A;
@@ -62,11 +62,25 @@
       border-radius: 1rem;
       box-shadow: 0 1px 4px rgba(0,0,0,.06);
       transition: all 0.2s ease;
+      margin-bottom: 25px;
+      overflow: hidden;
     }
     
     .card:hover {
       box-shadow: 0 4px 16px rgba(196,30,58,.10);
       border-color: #FBBCCA;
+    }
+
+    .card-header-custom {
+      background-color: rgba(27, 42, 74, 0.04);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 18px 24px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--brand-navy);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     
     .nav-tabs-container {
@@ -110,7 +124,6 @@
       box-shadow: 0 4px 12px rgba(196,30,58,0.3);
     }
     
-    /* Main Menu Pills custom styling - independent from Bootstrap Tab JS */
     #mainMenuTabs.main-menu-pills {
       border-bottom: none !important;
       display: flex;
@@ -147,96 +160,9 @@
       box-shadow: 0 4px 12px rgba(196,30,58,0.3);
     }
 
-    .btn-primary-custom {
-      background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
-      border: none;
-      color: white;
-      font-weight: 700;
-      padding: 10px 22px;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-    }
-    
-    .btn-primary-custom:hover {
-      background: linear-gradient(135deg, var(--brand-red-dark), #8B1225);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(196,30,58,.35);
-      color: white;
-    }
-    
-    .badge-gold {
-      background-color: var(--brand-gold);
-      color: white;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-  </style>
-</head>
-<body>
-
-<div id="overlay">
-  <div class="spinner-border text-danger" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 0.25em;"></div>
-  <h4 class="mt-4 fw-bold text-white" id="overlayTitle">Đang chuẩn bị báo cáo...</h4>
-  <p class="text-white-50 mt-1" id="overlayDesc">Quá trình này có thể mất từ 10-30 giây để xử lý tuần tự toàn bộ hình ảnh</p>
-</div>
-
-<div class="autosave-toast" id="autosaveToast">
-  <span class="spinner-grow spinner-grow-sm text-light me-2" role="status"></span>
-  Đã tự động lưu bản nháp...
-</div>
-
-<div class="app-header">
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div class="d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-center text-white fw-bold fs-5 shadow-sm rounded-3" style="width: 42px; height: 42px; background: linear-gradient(135deg, #C41E3A, #A01830);">
-          AP
-        </div>
-        <div>
-          <div class="app-title">
-            AN PHƯỚC <span class="badge-gold">StoreVisit Pro</span>
-          </div>
-          <div class="text-muted small">Hệ thống khảo sát & đánh giá vận hành cửa hàng</div>
-        </div>
-      </div>
-      <div id="userHeaderBar" class="d-none text-end bg-light border p-2 px-3 rounded-3 text-dark shadow-sm">
-        <span id="userDisplayName" class="fw-bold me-2 text-dark">👤 ASM Khôi</span>
-        <span id="userRoleBadge" class="badge bg-warning text-dark me-3">Master Account</span>
-        <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="showChangePasswordModal()">🔑 Đổi mật khẩu</button>
-        <button type="button" class="btn btn-sm btn-danger" onclick="logoutUser()">🚪 Đăng xuất</button>
-      </div>
-    </div>
-  </div>
-</div>
-    
-    .card {
-      border: none;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-      background-color: var(--card-bg);
-      margin-bottom: 25px;
-      overflow: hidden;
-    }
-    
-    .card-header-custom {
-      background-color: rgba(10, 35, 66, 0.03);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      padding: 18px 24px;
-      font-weight: 600;
-      font-size: 16px;
-      color: var(--primary-color);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
     .form-label {
       font-weight: 600;
-      color: var(--primary-color);
+      color: var(--brand-navy);
       margin-bottom: 8px;
       font-size: 14px;
     }
@@ -250,11 +176,10 @@
     }
     
     .form-control:focus, .form-select:focus {
-      border-color: var(--secondary-color);
-      box-shadow: 0 0 0 3px rgba(46, 91, 136, 0.15);
+      border-color: var(--brand-red);
+      box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.15);
     }
-    
-    /* Segmented Control Styling */
+
     .segmented-control {
       background-color: #f1f5f9;
       border-radius: 10px;
@@ -286,20 +211,19 @@
     .segment-btn.active[data-value="Đạt"] {
       background-color: var(--success-color);
       color: white;
-      box-shadow: 0 2px 5px rgba(39, 174, 96, 0.2);
+      box-shadow: 0 2px 5px rgba(22, 101, 52, 0.2);
     }
     .segment-btn.active[data-value="Không đạt"] {
       background-color: var(--danger-color);
       color: white;
-      box-shadow: 0 2px 5px rgba(192, 57, 43, 0.2);
+      box-shadow: 0 2px 5px rgba(153, 27, 27, 0.2);
     }
     .segment-btn.active[data-value="Không áp dụng"] {
       background-color: #64748b;
       color: white;
       box-shadow: 0 2px 5px rgba(100, 116, 139, 0.2);
     }
-    
-    /* Dynamic fields transitions */
+
     .collapse-field {
       max-height: 0;
       overflow: hidden;
@@ -321,20 +245,47 @@
       border-radius: 20px;
     }
     
-    .score-badge.tốt { background-color: rgba(39, 174, 96, 0.15); color: var(--success-color); }
-    .score-badge.đạt { background-color: rgba(243, 156, 18, 0.15); color: #d35400; }
-    .score-badge.chưa_đạt { background-color: rgba(192, 57, 43, 0.15); color: var(--danger-color); }
+    .score-badge.tốt { background-color: rgba(22, 101, 52, 0.15); color: var(--success-color); }
+    .score-badge.đạt { background-color: rgba(200, 169, 81, 0.2); color: #92400e; }
     .score-badge.chưa_đánh_giá { background-color: #f1f5f9; color: var(--text-muted); }
     .score-badge.không_áp_dụng { background-color: #cbd5e1; color: #334155; }
+
+    .btn-primary-custom {
+      background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+      border: none;
+      color: white;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
     
+    .btn-primary-custom:hover {
+      background: linear-gradient(135deg, var(--brand-red-dark), #8B1225);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(196,30,58,.35);
+      color: white;
+    }
+    
+    .badge-gold {
+      background-color: var(--brand-gold);
+      color: white;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     #overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(10, 35, 66, 0.85); z-index: 9999; display: none;
+      background: rgba(27, 42, 74, 0.92); z-index: 9999; display: none;
       justify-content: center; align-items: center; flex-direction: column;
       color: white;
       backdrop-filter: blur(5px);
     }
-    
+
     .checklist-row {
       padding: 15px 0;
       border-bottom: 1px solid #f1f5f9;
@@ -344,33 +295,18 @@
     }
     
     .issue-card {
-      border-left: 4px solid var(--accent-color);
-      background-color: rgba(243, 156, 18, 0.03);
+      border-left: 4px solid var(--brand-gold);
+      background-color: rgba(200, 169, 81, 0.08);
       padding: 12px 18px;
       border-radius: 8px;
       margin-top: 10px;
     }
-    
-    .btn-primary-custom {
-      background-color: var(--primary-color);
-      border-color: var(--primary-color);
-      color: white;
-      font-weight: 600;
-      padding: 12px 25px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-    }
-    
-    .btn-primary-custom:hover {
-      background-color: var(--secondary-color);
-      border-color: var(--secondary-color);
-    }
-    
+
     .autosave-toast {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: #334155;
+      background: #1B2A4A;
       color: white;
       padding: 10px 20px;
       border-radius: 30px;
@@ -386,7 +322,7 @@
       font-size: 11px;
       font-weight: bold;
       margin-left: 5px;
-      background-color: rgba(192, 57, 43, 0.1);
+      background-color: rgba(153, 27, 27, 0.1);
       padding: 2px 6px;
       border-radius: 4px;
     }
@@ -6462,8 +6398,8 @@
 
     const finalHtml = `
     <style>
-      .html-report-wrapper { font-family: 'Inter', 'Segoe UI', sans-serif; color: #1a1a2e; background: #fff; }
-      .html-report-cover { background: linear-gradient(135deg,#0a2342,#2e5b88); color:#fff; padding:40px; border-radius:0 0 24px 24px; margin-bottom:32px; }
+      .html-report-wrapper { font-family: 'Inter', 'Segoe UI', sans-serif; color: #111827; background: #fff; }
+      .html-report-cover { background: linear-gradient(135deg, #C41E3A, #A01830); color:#fff; padding:40px; border-radius:0 0 24px 24px; margin-bottom:32px; }
       .html-report-cover h1 { font-size:28px; font-weight:700; margin:0 0 8px; }
       .html-report-cover .meta { display:flex; gap:32px; flex-wrap:wrap; margin-top:20px; }
       .html-report-cover .meta-item { background:rgba(255,255,255,0.15); border-radius:12px; padding:12px 20px; }
@@ -6475,9 +6411,9 @@
       .html-report-score-badge { display:inline-block; padding:6px 14px; border-radius:20px; font-size:14px; font-weight:600; }
       .html-report-score-comment { font-size:11px; color:#888; margin-top:8px; font-style:italic; }
       .html-report-section { border:1px solid #e9ecef; border-radius:12px; overflow:hidden; }
-      .html-report-section-title { background:#f1f3f5; padding:12px 16px; font-size:15px; font-weight:600; color:#0a2342; }
+      .html-report-section-title { background:#F4F5F7; padding:12px 16px; font-size:15px; font-weight:700; color:#1B2A4A; }
       .html-report-checklist-table { border-collapse:collapse; }
-      .html-report-checklist-table th { background:#0a2342; color:#fff; padding:8px 12px; font-size:12px; text-align:left; }
+      .html-report-checklist-table th { background:#1B2A4A; color:#fff; padding:8px 12px; font-size:12px; text-align:left; }
       .html-report-checklist-table td { padding:8px 12px; font-size:13px; border-bottom:1px solid #f0f0f0; vertical-align:top; }
       .html-eval-pass td { background:#f0fff4; }
       .html-eval-fail td { background:#fff5f5; }
