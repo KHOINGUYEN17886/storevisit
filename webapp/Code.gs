@@ -1701,14 +1701,24 @@ function doPost(e) {
     var payload = postData.payload;
     var result = {};
     
-    if (action === "send_email") {
-      result = sendReportEmail(postData);
-    } else if (action === "getStoreData") {
-      result = getStoreData();
-    } else if (action === "getPendingIssues") {
-      result = getPendingIssues(payload);
+    } else if (action === "loginUser") {
+      if (Array.isArray(payload)) {
+        result = loginUser(payload[0], payload[1]);
+      } else {
+        result = loginUser(postData.username || payload, postData.password);
+      }
+    } else if (action === "changeUserPassword") {
+      if (Array.isArray(payload)) {
+        result = changeUserPassword(payload[0], payload[1], payload[2]);
+      } else {
+        result = changeUserPassword(postData.username, postData.oldPassword, postData.newPassword);
+      }
     } else if (action === "getHistoricalSubmissions") {
-      result = getHistoricalSubmissions();
+      if (Array.isArray(payload)) {
+        result = getHistoricalSubmissions(payload[0], payload[1], payload[2]);
+      } else {
+        result = getHistoricalSubmissions();
+      }
     } else if (action === "processForm") {
       result = processForm(payload);
     } else if (action === "updateIssueResolution") {
@@ -1720,7 +1730,6 @@ function doPost(e) {
     } else if (action === "logClientError") {
       result = logClientError(payload);
     } else if (action === "cleanupSubmissionUploads") {
-      // Polyfill đóng gói (submissionId, fileIds) thành mảng payload
       if (Array.isArray(payload)) {
         result = cleanupSubmissionUploads(payload[0], payload[1]);
       } else {

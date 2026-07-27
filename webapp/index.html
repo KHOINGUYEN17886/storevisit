@@ -355,11 +355,6 @@
           <div class="alert alert-danger d-none py-2 small" id="loginErrorMsg"></div>
           <button type="submit" class="btn btn-primary-custom w-100 mt-2" id="btnLoginSubmit">Đăng nhập ngay</button>
         </form>
-        <div class="mt-3 text-muted small border-top pt-2">
-          💡 <b>Tài khoản mặc định:</b><br>
-          • <b>Master (ASM Khôi):</b> User: <code>khoi</code> | Pass: <code>khoi123</code><br>
-          • <b>ASM Thường (Mẫu):</b> User: <code>nam</code> | Pass: <code>123456</code>
-        </div>
       </div>
     </div>
   </div>
@@ -1737,7 +1732,12 @@
     
     ScriptRunMock.prototype._call = function(action, args) {
       var self = this;
-      var payload = args[0] !== undefined ? args[0] : null;
+      var payload;
+      if (args.length > 1) {
+        payload = Array.prototype.slice.call(args);
+      } else {
+        payload = args[0] !== undefined ? args[0] : null;
+      }
       
       fetch(API_URL, {
         method: "POST",
@@ -1776,8 +1776,8 @@
     ScriptRunMock.prototype.uploadSubmissionImage = function() { this._call("uploadSubmissionImage", arguments); };
     ScriptRunMock.prototype.getSubmissionDetail = function() { this._call("getSubmissionDetail", arguments); };
     ScriptRunMock.prototype.logClientError = function() { this._call("logClientError", arguments); };
-    // cleanupSubmissionUploads nhận 2 tham số (submissionId, fileIds) — đóng gói thành mảng,
-    // doPost server-side unpack bằng apply khi payload là Array
+    ScriptRunMock.prototype.loginUser = function() { this._call("loginUser", arguments); };
+    ScriptRunMock.prototype.changeUserPassword = function() { this._call("changeUserPassword", arguments); };
     ScriptRunMock.prototype.cleanupSubmissionUploads = function() { this._call("cleanupSubmissionUploads", [Array.prototype.slice.call(arguments)]); };
 
     window.google.script.run = new ScriptRunMock();
