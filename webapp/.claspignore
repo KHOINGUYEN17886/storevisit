@@ -1,0 +1,6 @@
+**/*.js
+!store_data_map_new.js
+check_audit.js
+check_audit.js.js
+.git/**
+node_modules/**

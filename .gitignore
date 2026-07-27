@@ -1,0 +1,27 @@
+# Virtual Environment & Node Modules
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+
+# Temporary & Output Files
+temp/
+scratch/
+output/
+reports/
+logs/
+*.log
+*.cancel
+
+# Local Backups & Temp Clone
+backup_*/
+temp_*/
+version_*/
+
+# Credentials & Sensitive Configs
+config/google_credentials.json
+
+# IDE & System Files
+.claude/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,40 @@
+# Field Mapping Configuration
+
+store_code_mapping:
+  AEONBD: "AEONBD"
+  BARIA: "BARIA"
+  BD: "BDUONG"
+  DBT: "DBTRAC"
+  DIAN: "DIANBD"
+  FLDBD: "FLDBDUONG"
+  KHANHHOI: "KHANHHOI"
+  LOTTE7: "LOTTEQ7"
+  NTT: "NTT"
+  PMH1: "PMHNDC"
+  PMH3: "PMHNLB"
+  VT1: "VTAU4"
+  VT2: "VTAU2"
+  VT3: "VTAU3004"
+  ĐLBD: "DLBD"
+
+store_staff_workplace:
+  AEONBD: "Aeon Bình Dương"
+  BARIA: "Bà Rịa"
+  BDUONG: "Bình Dương"
+  DBTRAC: "Dương Bá Trạc"
+  DIANBD: "Dĩ An"
+  FLDBDUONG: "FLD Nguyễn Đình Chiểu - Bình Dương"
+  KHANHHOI: "Khánh Hội Q.4"
+  LOTTEQ7: "Lotte Q7"
+  NTT: "Nguyễn Thị Thập"
+  PMHNDC: "Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh"
+  PMHNLB: "Phú Mỹ Hưng 2 - Nguyễn Lương Bằng"
+  VTAU4: "Vũng Tàu 1 - Lê Hồng Phong"
+  VTAU2: "Vũng Tàu 2 - Ba Cu"
+  VTAU3004: "Vũng Tàu 3 - 30/4"
+  DLBD: "ĐẠI LỘ BÌNH DƯƠNG"
+
+product_period_variants:
+  nguyen_gia: "Nguyên giá"
+  sale: "Sale"
+  thanh_ly: "Thanh lý"

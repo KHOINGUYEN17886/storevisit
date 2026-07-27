@@ -1,0 +1,194 @@
+# Template Manifest Configuration
+template_version: "1.0.0"
+
+# Target templates configuration
+templates:
+  store_master: "Store_Report_Master.pptx"
+  cluster_master: "Cluster_Summary_Master.pptx"
+
+# Definitions of Slide IDs and required shapes for validation
+slides:
+  # Slide 0: Cover
+  STORE_COVER:
+    required_shapes:
+      - TXT_STORE_NAME
+      - TXT_REPORT_DATE
+      - TXT_ASM_NAME
+      - TXT_CHT_NAME
+
+  # Slide 1: General Info
+  STORE_GENERAL_INFO:
+    required_shapes:
+      - TXT_STORE_NAME
+      - TXT_STORE_ADDRESS
+      - TXT_REPORT_DATE
+      - TXT_TIME_START
+      - TXT_TIME_END
+      - TXT_ASM_NAME
+      - TXT_CHT_NAME
+      - TXT_CHP_NAME
+      - TXT_NV_1
+      - TXT_NV_2
+      - TXT_NV_3
+      - TXT_NV_4
+      - TXT_BV_1
+      - TXT_BV_2
+      - TXT_GENERAL_COMMENT
+
+  # Slide 2: Frontage & Exterior
+  STORE_FRONTAGE_PHOTOS:
+    required_shapes:
+      - PIC_FRONTAGE_1
+      - PIC_FRONTAGE_2
+      - PIC_FRONTAGE_3
+      - TXT_FRONTAGE_IMAGE_PLACEHOLDER_1
+      - TXT_FRONTAGE_IMAGE_PLACEHOLDER_2
+      - TXT_FRONTAGE_IMAGE_PLACEHOLDER_3
+      - TXT_FRONTAGE_COMMENTS
+
+  # Slide 3: Inner space
+  STORE_INNER_PHOTOS:
+    required_shapes:
+      - PIC_INNER_1
+      - PIC_INNER_2
+      - PIC_INNER_3
+      - TXT_INNER_IMAGE_PLACEHOLDER_1
+      - TXT_INNER_IMAGE_PLACEHOLDER_2
+      - TXT_INNER_IMAGE_PLACEHOLDER_3
+      - TXT_INNER_COMMENTS
+
+  # Slide 4: VM Error 1
+  STORE_VM_ERROR_1:
+    required_shapes:
+      - PIC_VM_BEFORE
+      - PIC_VM_AFTER
+      - PIC_VM_DETAIL
+      - TXT_VM_IMAGE_PLACEHOLDER_BEFORE
+      - TXT_VM_IMAGE_PLACEHOLDER_AFTER
+      - TXT_VM_IMAGE_PLACEHOLDER_DETAIL
+      - TXT_VM_ERROR_COMMENT
+
+  # Slide 5: VM Error 2
+  STORE_VM_ERROR_2:
+    required_shapes:
+      - PIC_VM_BEFORE
+      - PIC_VM_AFTER
+      - PIC_VM_DETAIL
+      - TXT_VM_IMAGE_PLACEHOLDER_BEFORE
+      - TXT_VM_IMAGE_PLACEHOLDER_AFTER
+      - TXT_VM_IMAGE_PLACEHOLDER_DETAIL
+      - TXT_VM_ERROR_COMMENT
+
+  # Slide 6: VM Error 3
+  STORE_VM_ERROR_3:
+    required_shapes:
+      - PIC_VM_BEFORE
+      - PIC_VM_AFTER
+      - PIC_VM_DETAIL
+      - TXT_VM_IMAGE_PLACEHOLDER_BEFORE
+      - TXT_VM_IMAGE_PLACEHOLDER_AFTER
+      - TXT_VM_IMAGE_PLACEHOLDER_DETAIL
+      - TXT_VM_ERROR_COMMENT
+
+  # Slide 7: VM Error 4
+  STORE_VM_ERROR_4:
+    required_shapes:
+      - PIC_VM_BEFORE
+      - PIC_VM_AFTER
+      - PIC_VM_DETAIL
+      - TXT_VM_IMAGE_PLACEHOLDER_BEFORE
+      - TXT_VM_IMAGE_PLACEHOLDER_AFTER
+      - TXT_VM_IMAGE_PLACEHOLDER_DETAIL
+      - TXT_VM_ERROR_COMMENT
+
+  # Slide 8: Stockroom & Cashier
+  STORE_STOCKROOM_CASHIER:
+    required_shapes:
+      - PIC_STOCKROOM
+      - PIC_FITTING_ROOM
+      - PIC_CASHIER
+      - TXT_STOCKROOM_IMAGE_PLACEHOLDER
+      - TXT_FITTING_ROOM_IMAGE_PLACEHOLDER
+      - TXT_CASHIER_IMAGE_PLACEHOLDER
+
+  # Slide 9: Competitor
+  STORE_COMPETITOR:
+    required_shapes:
+      - PIC_COMP_1
+      - PIC_COMP_2
+      - PIC_COMP_3
+      - TXT_COMP_IMAGE_PLACEHOLDER_1
+      - TXT_COMP_IMAGE_PLACEHOLDER_2
+      - TXT_COMP_IMAGE_PLACEHOLDER_3
+      - TXT_COMP_TRAFFIC
+      - TXT_COMP_COMPARISON
+      - TXT_COMP_PEAK_TIME
+      - TXT_COMP_ATTRACTION
+      - TXT_COMP_SERVICE_APPEARANCE
+      - TXT_COMP_ANALYSIS_SOLUTION
+
+  # Slide 10: Retail Revenue Performance
+  STORE_REVENUE:
+    required_shapes:
+      - KPI_REVENUE_ACTUAL
+      - KPI_REVENUE_TARGET
+      - KPI_REVENUE_ATTAINMENT
+      - KPI_REVENUE_PREV
+      - KPI_REVENUE_YOY
+      - TXT_REVENUE_COMMENT
+
+  # Slide 11: Stock & Inventory Age
+  STORE_STOCK_INVENTORY:
+    required_shapes:
+      - KPI_STOCK_TOTAL
+      - KPI_STOCK_NGUYEN_GIA
+      - KPI_STOCK_SALE
+      - KPI_STOCK_THANH_LY
+
+  # Slide 12: Top 10 Best Sellers
+  STORE_BEST_SELLERS:
+    required_shapes:
+      - TBL_BEST_SELLERS
+
+  # Slide 13: Top 10 Slow Sellers
+  STORE_SLOW_SELLERS:
+    required_shapes:
+      - TBL_SLOW_SELLERS
+
+  # Slide 14: Staff Assessment List
+  STORE_STAFF_LIST:
+    required_shapes:
+      - TBL_STORE_STAFF
+      
+  # Slide 15: Store Survey Support
+  STORE_SURVEY_SUPPORT:
+    required_shapes: []
+
+  # Slide 16: Outstanding Operational & CSVC Issues
+  STORE_PENDING_ISSUES:
+    required_shapes:
+      - TBL_PENDING_ISSUES
+      - TXT_CSVC_ISSUE_NOTE
+      - PIC_CSVC_ISSUE
+      - TXT_CSVC_IMAGE_PLACEHOLDER
+      - TXT_ACTION_PLAN_PROPOSALS
+
+  # Slide 17: Developer Proposals
+  STORE_DEV_PROPOSALS:
+    required_shapes:
+      - TXT_DEV_PROPOSALS
+
+  # Slide 18: Thank You
+  STORE_THANK_YOU:
+    required_shapes:
+      - TXT_FOOTER_INFO
+
+  # Cluster Slide (from Cluster Master template)
+  CLUSTER_COVER:
+    required_shapes:
+      - TXT_CLUSTER_NAME
+      - TXT_REPORT_DATE
+      - TXT_ASM_NAME
+
+  CLUSTER_SUMMARY:
+    required_shapes: []

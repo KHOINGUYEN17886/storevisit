@@ -1,0 +1,78 @@
+{
+  "2001": {
+    "response_id": "2001",
+    "store_code": "VINCOM",
+    "region": "Hồ Chí Minh",
+    "qlkd_asm": "Nguyễn Văn Nam (ASM Mock)",
+    "respondent_name": "Trần Thị CHT (Vincom)",
+    "respondent_role": "Cửa hàng trưởng",
+    "discussion_count": 3,
+    "survey_date": "15/06/2026",
+    "customer_change": "Khách hàng phân khúc cao cấp hỏi nhiều về dòng suit Pierre Cardin chất liệu nhẹ mát cho mùa hè.",
+    "demand_increase": [
+      "Pierre Cardin Suit",
+      "Light Fabric Shirts"
+    ],
+    "lost_sale_reasons": [
+      "Thiếu size",
+      "Chưa đúng mùa vụ"
+    ],
+    "lost_sale_top1": "Thiếu size",
+    "product_gap": [
+      "Bộ vest Pierre Cardin siêu nhẹ"
+    ],
+    "acceptable_price": "1.200.000–2.000.000 đồng",
+    "support_categories": [
+      "Sản phẩm",
+      "Truyền thông địa phương"
+    ],
+    "suggested_solution": "Bổ sung gấp các mẫu vest hè mỏng, chạy quảng cáo Target khu vực Quận 1.",
+    "photos": [
+      {
+        "index": 1,
+        "drive_url": "https://drive.google.com/open?id=mock_survey_id_1",
+        "local_path": "C:\\All_Report\\8_RETAIL_COMMANDER\\StoreVisit\\temp/survey_photos\\mock_survey_1.jpg"
+      }
+    ],
+    "local_opportunity": "Lễ hội mùa hè trung tâm thương mại Vincom Q.1",
+    "need_before_date": "01/07/2026",
+    "store_recommendation": "Cần ưu tiên phân bổ size L và XL cho Vest Pierre Cardin vì lượng khách trung niên thể hình lớn tăng cao.",
+    "status": "new",
+    "qc_status": "approved"
+  },
+  "2002": {
+    "response_id": "2002",
+    "store_code": "CMT8",
+    "region": "Hồ Chí Minh",
+    "qlkd_asm": "Nguyễn Văn Nam (ASM Mock)",
+    "respondent_name": "Lê Văn CHT (CMT8)",
+    "respondent_role": "Cửa hàng trưởng",
+    "discussion_count": 2,
+    "survey_date": "15/06/2026",
+    "customer_change": "Khách hỏi nhiều về quần short và áo thun polo trẻ trung đi du lịch hè.",
+    "demand_increase": [
+      "Quần short",
+      "Áo thun Polo"
+    ],
+    "lost_sale_reasons": [
+      "Không có mẫu phù hợp",
+      "Thiếu màu"
+    ],
+    "lost_sale_top1": "Không có mẫu phù hợp",
+    "product_gap": [
+      "Polo họa tiết năng động"
+    ],
+    "acceptable_price": "500.000–800.000 đồng",
+    "support_categories": [
+      "Sản phẩm",
+      "Công cụ bán hàng"
+    ],
+    "suggested_solution": "Thêm mẫu short kaki co giãn nhiều màu sắc.",
+    "photos": [],
+    "local_opportunity": "Đợt du lịch hè gia đình đầu tháng 7",
+    "need_before_date": "25/06/2026",
+    "store_recommendation": "Đề xuất cho CMT8 thêm các mã short màu sáng năng động.",
+    "status": "new",
+    "qc_status": "approved"
+  }
+}
