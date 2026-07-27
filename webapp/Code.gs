@@ -2278,17 +2278,17 @@ function initASMUsersSheet() {
       
       var nowIso = new Date().toISOString();
       // 10 Official ASM Accounts Seeded from StoresInfo.xlsx (184 stores total)
-      sheet.appendRow(["khoi", "khoi123", "ASM Khôi", "master", "ALL", "ALL", "Active", nowIso]);
-      sheet.appendRow(["dung", "123456", "ASM Dũng", "asm", "HCM, Miền Trung- Tây Nguyên", "CMT8, CHOA3, TCHINH, LBBICH, QBINH, KONTUM, GIALAI, PTHIET, DAKLAK, DAKLAK2, DAKLAK5, DAKNONG, DALAT, DALAT2, BAOLOC", "Active", nowIso]);
-      sheet.appendRow(["hn", "123456", "ASM Hà Nội", "asm", "HN", "HN1, HN2, HN3, HN4, HN5, HN6, HN8, HN10, HN11, HN12, HTMAU, HN15, HN16, HN17, HN18, HN19, HN20, HN21, HN22, HN23, HN24, HN25, HN26, CAUGIAYHN, HNTN, TUYENQUANG, HP, HP3, HP4, LACHTRAYHP, TBINH, QNINH, THANHHOA, VINH1, VINH2, HATINH, NINHBINH, HAGIANG, VIETTRI, BACNINH, NAMDINH, BACGIANG, VINHYEN, LAOCAI, YENBAI", "Active", nowIso]);
-      sheet.appendRow(["huong", "123456", "ASM Hương", "asm", "HCM, Miền Trung- Tây Nguyên, Miền Tây", "KINHDV, HAUGIANG, MYTHO, MYTHO2, CAYLAY, CAOLANH, HONGNGU, SADEC, LXUYEN, LONGXUYEN2, LONGXUYEN3, CHAUDOC, RGIA, RGIA2, RACHGIA3, HATIEN, BENTRE, VINHLONG, VINHLONG2, TRAVINH, CTHO, CTHO2, CTHO3, CTHO6, CANTHO3T2, APHAUGIANG, STR, STR2, BACLIEU, BACLIEU2, CMAU, CMAU2, FLDLTTON", "Active", nowIso]);
-      sheet.appendRow(["linh", "123456", "ASM Linh", "asm", "HCM", "SO1, HBT, CAOTH, NTMK, NDC, LVS, 185_3T2, 126_3T2, NVTROI, PDP, GOVAP, LOTTEGV, 901QT, LQDINH, NGUYENOANH, AEONTP, LETRONGTAN", "Active", nowIso]);
-      sheet.appendRow(["lam", "123456", "ASM Lâm", "asm", "HCM", "HVPLAZA, VANHANH, SENSECITY, VINCOMTD, VINCOMLVV, VINCOMQ2", "Active", nowIso]);
-      sheet.appendRow(["tien", "123456", "ASM Tiên", "asm", "HCM", "DIAMOND, LYTT, NGA6, NTQ1, PTER, NGHUE, VINCOM, TAKA, OIKHIEM, AUCO, CHOA, TCHINH2, NGANHTHU, LVKHUONG, PDL, PDL2, AEONBT, CUCHI", "Active", nowIso]);
-      sheet.appendRow(["tin", "123456", "ASM Tín", "asm", "HCM, Miền Đông", "THUDUC, THUDUC2, BPHUOC, BINHLONG, BCDN, VINCOMBH, BIENHOA, BHNAQUOC, TAMHIEP, LONGKHANH, LONGTHANH, TAYNINH, BENLUC, LONGAN", "Active", nowIso]);
-      sheet.appendRow(["quan", "123456", "ASM Quân", "asm", "Miền Trung- Tây Nguyên", "QUANGTRI, BIGCHUE, HUE2, DN, DN2, DN3, DN4, DN5DBP, TAMKY, QNGAI, QUINHON2, QUYNHON3, NHT3, NHT2, CAMRANH, PHANRANG2, PHUYEN, QUYNHON", "Active", nowIso]);
-      sheet.appendRow(["ni", "123456", "ASM Ni", "asm", "HCM", "ONLINEWEB", "Active", nowIso]);
-      sheet.appendRow(["khoind", "khoi123", "ASM Khôi", "master", "ALL", "ALL", "Active", nowIso]);
+      sheet.appendRow(["khoi", "khoi6868", "ASM Khôi", "master", "ALL", "ALL", "Active", nowIso]);
+      sheet.appendRow(["dung", "dung2026", "ASM Dũng", "asm", "HCM, Miền Trung- Tây Nguyên", "CMT8, CHOA3, TCHINH, LBBICH, QBINH, KONTUM, GIALAI, PTHIET, DAKLAK, DAKLAK2, DAKLAK5, DAKNONG, DALAT, DALAT2, BAOLOC", "Active", nowIso]);
+      sheet.appendRow(["hn", "hn2026", "ASM Hà Nội", "asm", "HN", "HN1, HN2, HN3, HN4, HN5, HN6, HN8, HN10, HN11, HN12, HTMAU, HN15, HN16, HN17, HN18, HN19, HN20, HN21, HN22, HN23, HN24, HN25, HN26, CAUGIAYHN, HNTN, TUYENQUANG, HP, HP3, HP4, LACHTRAYHP, TBINH, QNINH, THANHHOA, VINH1, VINH2, HATINH, NINHBINH, HAGIANG, VIETTRI, BACNINH, NAMDINH, BACGIANG, VINHYEN, LAOCAI, YENBAI", "Active", nowIso]);
+      sheet.appendRow(["huong", "huong2026", "ASM Hương", "asm", "HCM, Miền Trung- Tây Nguyên, Miền Tây", "KINHDV, HAUGIANG, MYTHO, MYTHO2, CAYLAY, CAOLANH, HONGNGU, SADEC, LXUYEN, LONGXUYEN2, LONGXUYEN3, CHAUDOC, RGIA, RGIA2, RACHGIA3, HATIEN, BENTRE, VINHLONG, VINHLONG2, TRAVINH, CTHO, CTHO2, CTHO3, CTHO6, CANTHO3T2, APHAUGIANG, STR, STR2, BACLIEU, BACLIEU2, CMAU, CMAU2, FLDLTTON", "Active", nowIso]);
+      sheet.appendRow(["linh", "linh2026", "ASM Linh", "asm", "HCM", "SO1, HBT, CAOTH, NTMK, NDC, LVS, 185_3T2, 126_3T2, NVTROI, PDP, GOVAP, LOTTEGV, 901QT, LQDINH, NGUYENOANH, AEONTP, LETRONGTAN", "Active", nowIso]);
+      sheet.appendRow(["lam", "lam2026", "ASM Lâm", "asm", "HCM", "HVPLAZA, VANHANH, SENSECITY, VINCOMTD, VINCOMLVV, VINCOMQ2", "Active", nowIso]);
+      sheet.appendRow(["tien", "tien2026", "ASM Tiên", "asm", "HCM", "DIAMOND, LYTT, NGA6, NTQ1, PTER, NGHUE, VINCOM, TAKA, OIKHIEM, AUCO, CHOA, TCHINH2, NGANHTHU, LVKHUONG, PDL, PDL2, AEONBT, CUCHI", "Active", nowIso]);
+      sheet.appendRow(["tin", "tin2026", "ASM Tín", "asm", "HCM, Miền Đông", "THUDUC, THUDUC2, BPHUOC, BINHLONG, BCDN, VINCOMBH, BIENHOA, BHNAQUOC, TAMHIEP, LONGKHANH, LONGTHANH, TAYNINH, BENLUC, LONGAN", "Active", nowIso]);
+      sheet.appendRow(["quan", "quan2026", "ASM Quân", "asm", "Miền Trung- Tây Nguyên", "QUANGTRI, BIGCHUE, HUE2, DN, DN2, DN3, DN4, DN5DBP, TAMKY, QNGAI, QUINHON2, QUYNHON3, NHT3, NHT2, CAMRANH, PHANRANG2, PHUYEN, QUYNHON", "Active", nowIso]);
+      sheet.appendRow(["ni", "ni2026", "ASM Ni", "asm", "HCM", "ONLINEWEB", "Active", nowIso]);
+      sheet.appendRow(["khoind", "khoi6868", "ASM Khôi", "master", "ALL", "ALL", "Active", nowIso]);
       Logger.log("✅ Đã khởi tạo sheet " + USER_SHEET_NAME + " với 10 tài khoản ASM chính thức (184 cửa hàng).");
     }
     return sheet;
