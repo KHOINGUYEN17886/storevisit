@@ -319,9 +319,80 @@
 </div>
 
 <div class="app-header">
-  <div class="container text-center">
-    <div class="app-title">STOREVISIT PRO</div>
-    <div class="text-white-50 small mt-1">Hệ thống báo cáo kiểm tra cửa hàng toàn diện</div>
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <div class="app-title">STOREVISIT PRO</div>
+        <div class="text-white-50 small mt-1">Hệ thống báo cáo kiểm tra cửa hàng toàn diện</div>
+      </div>
+      <div id="userHeaderBar" class="d-none text-end bg-white bg-opacity-10 p-2 px-3 rounded text-white shadow-sm">
+        <span id="userDisplayName" class="fw-bold me-2">👤 ASM Khôi</span>
+        <span id="userRoleBadge" class="badge bg-warning text-dark me-3">Master Account</span>
+        <button type="button" class="btn btn-sm btn-outline-light me-1" onclick="showChangePasswordModal()">🔑 Đổi mật khẩu</button>
+        <button type="button" class="btn btn-sm btn-danger" onclick="logoutUser()">🚪 Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      <div class="modal-header bg-dark text-white rounded-top-4 p-3">
+        <h5 class="modal-title mb-0 fw-bold fs-6">🔐 Đăng nhập StoreVisit Pro</h5>
+      </div>
+      <div class="modal-body p-4">
+        <form id="loginForm" onsubmit="submitLoginForm(event)">
+          <div class="mb-3">
+            <label class="form-label text-dark fw-bold small">Tên đăng nhập / Email</label>
+            <input type="text" class="form-control" id="loginUsername" placeholder="Nhập username (ví dụ: khoi, nam)..." required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-dark fw-bold small">Mật khẩu</label>
+            <input type="password" class="form-control" id="loginPassword" placeholder="Nhập mật khẩu..." required>
+          </div>
+          <div class="alert alert-danger d-none py-2 small" id="loginErrorMsg"></div>
+          <button type="submit" class="btn btn-primary-custom w-100 mt-2" id="btnLoginSubmit">Đăng nhập ngay</button>
+        </form>
+        <div class="mt-3 text-muted small border-top pt-2">
+          💡 <b>Tài khoản mặc định:</b><br>
+          • <b>Master (ASM Khôi):</b> User: <code>khoi</code> | Pass: <code>khoi123</code><br>
+          • <b>ASM Thường (Mẫu):</b> User: <code>nam</code> | Pass: <code>123456</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-primary text-white p-3">
+        <h5 class="modal-title fw-bold fs-6">🔑 Tự Đổi Mật Khẩu</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="changePassForm" onsubmit="submitChangePasswordForm(event)">
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Mật khẩu hiện tại</label>
+            <input type="password" class="form-control" id="oldPassword" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Mật khẩu mới (ít nhất 4 ký tự)</label>
+            <input type="password" class="form-control" id="newPassword" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Xác nhận mật khẩu mới</label>
+            <input type="password" class="form-control" id="confirmNewPassword" required>
+          </div>
+          <div class="alert alert-danger d-none py-2 small" id="changePassError"></div>
+          <div class="alert alert-success d-none py-2 small" id="changePassSuccess"></div>
+          <button type="submit" class="btn btn-primary w-100">Cập nhật mật khẩu</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -6613,6 +6684,10 @@
       return;
     }
 
+    var username = currentUser ? currentUser.username : "";
+    var role = currentUser ? currentUser.role : "asm";
+    var stores = currentUser ? currentUser.stores : "ALL";
+
     google.script.run
       .withSuccessHandler(function(res) {
         loader.classList.add('d-none');
@@ -6631,7 +6706,7 @@
         tableBody.innerHTML = `<tr><td colspan="5" class="text-danger">Lỗi kết nối: ${err.message}</td></tr>`;
         tableContainer.classList.remove('d-none');
       })
-      .getHistoricalSubmissions();
+      .getHistoricalSubmissions(username, role, stores);
   }
 
   function populateHistoryFilters(submissions) {
@@ -6967,6 +7042,216 @@
       renderGeneralPhotoPreviews(slot);
     });
   }
+
+  // -------------------------------------------------------------
+  // AUTHENTICATION & RBAC JARSCRIPT HANDLERS
+  // -------------------------------------------------------------
+  let currentUser = null;
+
+  function checkUserSession() {
+    try {
+      const saved = localStorage.getItem("storevisit_user");
+      if (saved) {
+        currentUser = JSON.parse(saved);
+        applyUserSession(currentUser);
+      } else {
+        showLoginModal();
+      }
+    } catch(e) {
+      showLoginModal();
+    }
+  }
+
+  function showLoginModal() {
+    const modalEl = document.getElementById("loginModal");
+    if (modalEl) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  }
+
+  function submitLoginForm(e) {
+    e.preventDefault();
+    const uInput = document.getElementById("loginUsername").value.trim();
+    const pInput = document.getElementById("loginPassword").value.trim();
+    const errBox = document.getElementById("loginErrorMsg");
+    const btn = document.getElementById("btnLoginSubmit");
+    
+    errBox.classList.add("d-none");
+    btn.disabled = true;
+    btn.textContent = "Đang kiểm tra...";
+
+    if (typeof google === "undefined" || !google.script || !google.script.run) {
+      // Offline fallback demo login
+      btn.disabled = false;
+      btn.textContent = "Đăng nhập ngay";
+      const isMaster = uInput.toLowerCase() === "khoi" || uInput.toLowerCase() === "khoind";
+      const demoUser = {
+        username: uInput,
+        fullName: isMaster ? "ASM Khôi" : (uInput === "nam" ? "Nguyễn Văn Nam" : uInput),
+        role: isMaster ? "master" : "asm",
+        region: isMaster ? "ALL" : "Miền Nam 1",
+        stores: isMaster ? "ALL" : "VINCOM, CMT8, AEONBD"
+      };
+      applyUserSession(demoUser);
+      const modal = bootstrap.Modal.getInstance(document.getElementById("loginModal"));
+      if (modal) modal.hide();
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.textContent = "Đăng nhập ngay";
+        if (res && res.success) {
+          applyUserSession(res.user);
+          const modal = bootstrap.Modal.getInstance(document.getElementById("loginModal"));
+          if (modal) modal.hide();
+        } else {
+          errBox.textContent = (res && res.error) ? res.error : "Đăng nhập thất bại.";
+          errBox.classList.remove("d-none");
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.textContent = "Đăng nhập ngay";
+        errBox.textContent = "Lỗi kết nối server: " + err.message;
+        errBox.classList.remove("d-none");
+      })
+      .loginUser(uInput, pInput);
+  }
+
+  function applyUserSession(user) {
+    currentUser = user;
+    localStorage.setItem("storevisit_user", JSON.stringify(user));
+    
+    const userBar = document.getElementById("userHeaderBar");
+    const nameEl = document.getElementById("userDisplayName");
+    const badgeEl = document.getElementById("userRoleBadge");
+    if (userBar && nameEl && badgeEl) {
+      userBar.classList.remove("d-none");
+      nameEl.textContent = `👤 ${user.fullName || user.username}`;
+      if (user.role === "master") {
+        badgeEl.textContent = "Master Account";
+        badgeEl.className = "badge bg-warning text-dark me-3";
+      } else {
+        badgeEl.textContent = user.region ? `ASM - ${user.region}` : "ASM";
+        badgeEl.className = "badge bg-info text-dark me-3";
+      }
+    }
+    
+    // Auto-select ASM Name in Form if matching
+    const asmSelect = document.getElementById("asmName");
+    if (asmSelect && user.fullName) {
+      let found = false;
+      for (let i = 0; i < asmSelect.options.length; i++) {
+        if (asmSelect.options[i].value.toLowerCase().includes(user.fullName.toLowerCase())) {
+          asmSelect.selectedIndex = i;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        const opt = document.createElement("option");
+        opt.value = user.fullName;
+        opt.textContent = user.fullName;
+        opt.selected = true;
+        asmSelect.appendChild(opt);
+      }
+    }
+    
+    filterStoreOptionsForUser();
+  }
+
+  function filterStoreOptionsForUser() {
+    if (!currentUser) return;
+    const storeSelect = document.getElementById("storeCode");
+    if (!storeSelect) return;
+    
+    if (currentUser.role === "master" || currentUser.stores === "ALL") {
+      for (let i = 0; i < storeSelect.options.length; i++) {
+        storeSelect.options[i].style.display = "";
+      }
+      return;
+    }
+    
+    const allowedList = (currentUser.stores || "").split(",").map(s => s.trim().toUpperCase());
+    for (let i = 0; i < storeSelect.options.length; i++) {
+      const val = storeSelect.options[i].value.toUpperCase();
+      if (!val) continue;
+      const match = allowedList.some(code => val.includes(code) || code.includes(val));
+      storeSelect.options[i].style.display = match ? "" : "none";
+    }
+  }
+
+  function logoutUser() {
+    if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+      localStorage.removeItem("storevisit_user");
+      window.location.reload();
+    }
+  }
+
+  function showChangePasswordModal() {
+    document.getElementById("changePassForm").reset();
+    document.getElementById("changePassError").classList.add("d-none");
+    document.getElementById("changePassSuccess").classList.add("d-none");
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("changePasswordModal"));
+    modal.show();
+  }
+
+  function submitChangePasswordForm(e) {
+    e.preventDefault();
+    if (!currentUser) return;
+    const oldP = document.getElementById("oldPassword").value;
+    const newP = document.getElementById("newPassword").value;
+    const confP = document.getElementById("confirmNewPassword").value;
+    const errBox = document.getElementById("changePassError");
+    const succBox = document.getElementById("changePassSuccess");
+    
+    errBox.classList.add("d-none");
+    succBox.classList.add("d-none");
+    
+    if (newP !== confP) {
+      errBox.textContent = "Mật khẩu mới và xác nhận mật khẩu không khớp nhau.";
+      errBox.classList.remove("d-none");
+      return;
+    }
+    
+    if (typeof google === "undefined" || !google.script || !google.script.run) {
+      succBox.textContent = "Đổi mật khẩu demo thành công!";
+      succBox.classList.remove("d-none");
+      setTimeout(() => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById("changePasswordModal"));
+        if (modal) modal.hide();
+      }, 1200);
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          succBox.textContent = res.message || "Đổi mật khẩu thành công!";
+          succBox.classList.remove("d-none");
+          setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById("changePasswordModal"));
+            if (modal) modal.hide();
+          }, 1200);
+        } else {
+          errBox.textContent = (res && res.error) ? res.error : "Lỗi đổi mật khẩu.";
+          errBox.classList.remove("d-none");
+        }
+      })
+      .withFailureHandler(function(err) {
+        errBox.textContent = "Lỗi kết nối: " + err.message;
+        errBox.classList.remove("d-none");
+      })
+      .changeUserPassword(currentUser.username, oldP, newP);
+  }
+
+  // Trigger Auth Check on Load
+  document.addEventListener("DOMContentLoaded", function() {
+    checkUserSession();
+  });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

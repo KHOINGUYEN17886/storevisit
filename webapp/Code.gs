@@ -1910,17 +1910,7 @@ function updateIssueResolution(payload) {
 // -------------------------------------------------------------
 // HISTORY & RE-EDITING (PHASE 3)
 // -------------------------------------------------------------
-function getHistoricalSubmissions() {
-  try {
-    var cache = CacheService.getScriptCache();
-    var cached = cache.get("historical_submissions_json");
-    if (cached) {
-      return { success: true, submissions: JSON.parse(cached) };
-    }
-  } catch(e) {
-    console.warn("History cache read error: " + e.toString());
-  }
-
+function getHistoricalSubmissions(username, role, storesAllowedStr) {
   try {
     var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
     var data = sheet.getDataRange().getValues();
@@ -1942,9 +1932,26 @@ function getHistoricalSubmissions() {
     var statusCol = headers.indexOf("Status");
     var checklistJsonCol = headers.indexOf("checklist_json");
     
+    var isMaster = (role === "master");
+    var allowedStores = [];
+    if (!isMaster && storesAllowedStr && storesAllowedStr !== "ALL") {
+      allowedStores = storesAllowedStr.split(",").map(function(s) { return s.trim().toUpperCase(); });
+    }
+
     var submissions = [];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
+      var storeCodeStr = storeCodeCol !== -1 ? String(row[storeCodeCol]).trim().toUpperCase() : "";
+      var cleanCode = storeCodeStr.indexOf(" - ") !== -1 ? storeCodeStr.split(" - ")[0].trim() : storeCodeStr;
+      var asmNameStr = asmCol !== -1 ? String(row[asmCol]).trim() : "";
+
+      // RBAC Filter: Master sees all. ASM sees assigned stores or submissions by their name/username.
+      if (!isMaster && allowedStores.length > 0) {
+        var matchStore = allowedStores.some(function(as) { return cleanCode.indexOf(as) !== -1 || as.indexOf(cleanCode) !== -1; });
+        var matchAsm = username && asmNameStr.toLowerCase().indexOf(String(username).toLowerCase()) !== -1;
+        if (!matchStore && !matchAsm) continue;
+      }
+
       var rawDate = row[dateCol];
       var dateStr = "";
       if (rawDate instanceof Date) {
@@ -1959,23 +1966,14 @@ function getHistoricalSubmissions() {
         storeCode: storeCodeCol !== -1 ? String(row[storeCodeCol]) : "",
         storeName: storeNameCol !== -1 ? String(row[storeNameCol]) : "",
         reportDate: dateStr,
-        asmName: asmCol !== -1 ? String(row[asmCol]) : "",
+        asmName: asmNameStr,
         status: statusCol !== -1 ? String(row[statusCol]) : "pending",
         hasChecklist: checklistJsonCol !== -1 && String(row[checklistJsonCol]).trim().length > 0
       });
     }
     
     submissions.reverse();
-    var result = { success: true, submissions: submissions };
-
-    try {
-      var cache = CacheService.getScriptCache();
-      cache.put("historical_submissions_json", JSON.stringify(submissions), 600);
-    } catch(e) {
-      console.warn("History cache write error: " + e.toString());
-    }
-
-    return result;
+    return { success: true, submissions: submissions };
   } catch (e) {
     return { success: false, error: e.toString() };
   }
@@ -2219,4 +2217,204 @@ function getOrCreateReportsFolder() {
     console.warn("Failed to cache REPORTS_FOLDER_ID: " + e.toString());
   }
   return folder;
+}
+
+// -------------------------------------------------------------
+// USER AUTHENTICATION & ROLE-BASED ACCESS CONTROL (RBAC)
+// -------------------------------------------------------------
+var USER_SHEET_NAME = "ASM_Users";
+
+function initASMUsersSheet() {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(USER_SHEET_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(USER_SHEET_NAME);
+      var headers = ["username", "password", "full_name", "role", "region", "stores", "created_at"];
+      sheet.appendRow(headers);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
+      
+      // Default Seed Accounts:
+      // Master Account (ASM Khôi) - Full access
+      sheet.appendRow(["khoi", "khoi123", "ASM Khôi", "master", "ALL", "ALL", new Date().toISOString()]);
+      // Standard ASM Accounts (Sample Clusters)
+      sheet.appendRow(["nam", "123456", "Nguyễn Văn Nam", "asm", "Miền Nam 1", "VINCOM, CMT8, AEONBD, DONGNAI, VTAU4", new Date().toISOString()]);
+      // Master Khôi fallback username
+      sheet.appendRow(["khoind", "khoi123", "ASM Khôi", "master", "ALL", "ALL", new Date().toISOString()]);
+      Logger.log("✅ Đã khởi tạo sheet " + USER_SHEET_NAME + " với tài khoản Master khoi & khoind.");
+    }
+    return sheet;
+  } catch(e) {
+    Logger.log("Lỗi khởi tạo ASM_Users sheet: " + e.toString());
+    return null;
+  }
+}
+
+function loginUser(username, password) {
+  try {
+    if (!username || !password) {
+      return { success: false, error: "Vui lòng nhập tên đăng nhập và mật khẩu." };
+    }
+    var sheet = initASMUsersSheet();
+    if (!sheet) {
+      return { success: false, error: "Không thể mở cơ sở dữ liệu người dùng." };
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    if (data.length <= 1) {
+      return { success: false, error: "Chưa có tài khoản nào được tạo." };
+    }
+    
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var pIdx = headers.indexOf("password");
+    var nIdx = headers.indexOf("full_name");
+    var rIdx = headers.indexOf("role");
+    var regIdx = headers.indexOf("region");
+    var sIdx = headers.indexOf("stores");
+    
+    var searchUser = String(username).trim().toLowerCase();
+    var searchPass = String(password).trim();
+    
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      var uVal = String(row[uIdx]).trim().toLowerCase();
+      var pVal = String(row[pIdx]).trim();
+      
+      if (uVal === searchUser) {
+        if (pVal === searchPass) {
+          var userObj = {
+            username: String(row[uIdx]).trim(),
+            fullName: String(row[nIdx] || row[uIdx]).trim(),
+            role: String(row[rIdx] || "asm").trim().toLowerCase(),
+            region: String(row[regIdx] || "").trim(),
+            stores: String(row[sIdx] || "ALL").trim()
+          };
+          return { success: true, user: userObj };
+        } else {
+          return { success: false, error: "Mật khẩu không chính xác." };
+        }
+      }
+    }
+    
+    return { success: false, error: "Tên đăng nhập không tồn tại." };
+  } catch(e) {
+    return { success: false, error: "Lỗi hệ thống đăng nhập: " + e.toString() };
+  }
+}
+
+function changeUserPassword(username, oldPassword, newPassword) {
+  try {
+    if (!username || !oldPassword || !newPassword) {
+      return { success: false, error: "Thiếu thông tin mật khẩu cũ hoặc mật khẩu mới." };
+    }
+    if (String(newPassword).trim().length < 4) {
+      return { success: false, error: "Mật khẩu mới phải có ít nhất 4 ký tự." };
+    }
+    
+    var sheet = initASMUsersSheet();
+    if (!sheet) return { success: false, error: "Không mở được bảng người dùng." };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var pIdx = headers.indexOf("password");
+    
+    var searchUser = String(username).trim().toLowerCase();
+    var searchOldPass = String(oldPassword).trim();
+    
+    for (var i = 1; i < data.length; i++) {
+      var uVal = String(data[i][uIdx]).trim().toLowerCase();
+      var pVal = String(data[i][pIdx]).trim();
+      
+      if (uVal === searchUser) {
+        if (pVal !== searchOldPass) {
+          return { success: false, error: "Mật khẩu hiện tại không đúng." };
+        }
+        sheet.getRange(i + 1, pIdx + 1).setValue(String(newPassword).trim());
+        return { success: true, message: "Đổi mật khẩu thành công!" };
+      }
+    }
+    return { success: false, error: "Không tìm thấy tài khoản để đổi mật khẩu." };
+  } catch(e) {
+    return { success: false, error: "Lỗi đổi mật khẩu: " + e.toString() };
+  }
+}
+
+function getInspectionHistory(username, role, storesAllowedStr) {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) return { success: false, error: "Không tìm thấy sheet báo cáo." };
+    
+    var data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { success: true, history: [] };
+    
+    var headers = data[0];
+    var subIdIdx = headers.indexOf("submission_id");
+    var dateIdx = headers.indexOf("Ngày kiểm tra");
+    var storeIdx = headers.indexOf("Mã cửa hàng");
+    var asmIdx = headers.indexOf("QLKD/ASM");
+    var chtIdx = headers.indexOf("Tên CHT");
+    var frontageIdx = headers.indexOf("rating_frontage");
+    var innerIdx = headers.indexOf("rating_inner");
+    var merchIdx = headers.indexOf("rating_merch");
+    var staffIdx = headers.indexOf("rating_staff");
+    var csvcIdx = headers.indexOf("rating_csvc");
+    var issuesIdx = headers.indexOf("Vấn đề tồn đọng");
+    var planIdx = headers.indexOf("Kế hoạch khắc phục");
+    var deadlineIdx = headers.indexOf("Thời hạn xử lý");
+    var jsonIdx = headers.indexOf("checklist_json");
+    var statusIdx = headers.indexOf("Status");
+    
+    var history = [];
+    var isMaster = (role === "master");
+    
+    var allowedStores = [];
+    if (!isMaster && storesAllowedStr && storesAllowedStr !== "ALL") {
+      allowedStores = storesAllowedStr.split(",").map(function(s) { return s.trim().toUpperCase(); });
+    }
+    
+    // Reverse loop to get latest submissions first
+    for (var i = data.length - 1; i >= 1; i--) {
+      var row = data[i];
+      var storeCode = String(row[storeIdx] || "").trim().toUpperCase();
+      if (storeCode.indexOf(" - ") !== -1) {
+        storeCode = storeCode.split(" - ")[0].trim();
+      }
+      
+      // Filter logic: Master sees all; ASM sees assigned stores or created by them
+      if (!isMaster && allowedStores.length > 0) {
+        var asmRowName = String(row[asmIdx] || "").trim().toLowerCase();
+        var matchStore = allowedStores.some(function(as) { return storeCode.indexOf(as) !== -1 || as.indexOf(storeCode) !== -1; });
+        var matchAsm = (asmRowName.indexOf(String(username).toLowerCase()) !== -1);
+        if (!matchStore && !matchAsm) continue;
+      }
+      
+      history.push({
+        rowIndex: i + 1,
+        submissionId: String(row[subIdIdx] || ""),
+        reportDate: String(row[dateIdx] || ""),
+        storeCode: String(row[storeIdx] || ""),
+        asmName: String(row[asmIdx] || ""),
+        chtName: String(row[chtIdx] || ""),
+        ratingFrontage: String(row[frontageIdx] || "Chưa đánh giá"),
+        ratingInner: String(row[innerIdx] || "Chưa đánh giá"),
+        ratingMerch: String(row[merchIdx] || "Chưa đánh giá"),
+        ratingStaff: String(row[staffIdx] || "Chưa đánh giá"),
+        ratingCSVC: String(row[csvcIdx] || "Chưa đánh giá"),
+        pendingIssues: String(row[issuesIdx] || ""),
+        actionPlan: String(row[planIdx] || ""),
+        actionDeadline: String(row[deadlineIdx] || ""),
+        status: String(row[statusIdx] || ""),
+        checklistJson: String(row[jsonIdx] || "")
+      });
+      
+      if (history.length >= 150) break; // Limit 150 recent items for fast load
+    }
+    
+    return { success: true, history: history };
+  } catch(e) {
+    return { success: false, error: "Lỗi tải lịch sử báo cáo: " + e.toString() };
+  }
 }
