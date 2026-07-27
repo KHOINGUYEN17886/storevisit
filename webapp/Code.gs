@@ -1757,7 +1757,8 @@ function doPost(e) {
     } else if (action === "updateIssueResolution") {
       result = updateIssueResolution(payload);
     } else if (action === "uploadSubmissionImage") {
-      result = uploadSubmissionImage(payload);
+      var postPayload = Array.isArray(payload) ? payload[0] : payload;
+      result = uploadSubmissionImage(postPayload);
     } else if (action === "getSubmissionDetail") {
       result = getSubmissionDetail(payload);
     } else if (action === "logClientError") {
