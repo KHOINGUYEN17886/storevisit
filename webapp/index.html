@@ -2680,6 +2680,16 @@
 
       activeStoreData = data;
 
+      // P1-A fix 29-07: hồ sơ cửa hàng (profiles) chỉ có ở data live, không có ở storeData
+      // hardcoded ban đầu. Nếu store đã được chọn TRƯỚC KHI profiles tải xong (race
+      // condition lúc mở lại bản nháp), phải áp lại quy tắc "bảo vệ" ngay khi profiles về.
+      if (typeof getActiveStoreProfile === 'function' && typeof setSecurityGuardApplicable === 'function') {
+        try {
+          var _reapplyProfile = getActiveStoreProfile();
+          setSecurityGuardApplicable(_reapplyProfile ? !!_reapplyProfile.has_guard : true);
+        } catch (eGuard) { /* checklist chưa render kịp — bỏ qua, sẽ được set khi đổi cửa hàng */ }
+      }
+
       // Preserve currently selected values to prevent reset on async load
       var prevAsm = document.getElementById('asmName') ? document.getElementById('asmName').value : '';
       var prevRegion = document.getElementById('regionSelect') ? document.getElementById('regionSelect').value : '';
@@ -4530,6 +4540,22 @@
           if (b.getAttribute('data-value') === item.eval) b.classList.add('active');
         });
       }
+
+      // Đồng bộ vào DOM — nếu không, syncAllChecklistDetailsToState() lúc submit sẽ
+      // đọc lại input rỗng và GHI ĐÈ na_reason đã set ở trên (bug LotteMart Q7 29-07).
+      var naInput = document.getElementById('na_reason_' + item.id);
+      if (naInput) naInput.value = item.na_reason;
+
+      if (item.eval === "Không đạt") {
+        toggleContainerInputs('fail_details_' + item.id, true, isApplicable);
+        toggleContainerInputs('na_details_' + item.id, false, false);
+      } else if (item.eval === "Không áp dụng") {
+        toggleContainerInputs('fail_details_' + item.id, false, false);
+        toggleContainerInputs('na_details_' + item.id, isApplicable, isApplicable);
+      } else {
+        toggleContainerInputs('fail_details_' + item.id, false, false);
+        toggleContainerInputs('na_details_' + item.id, false, false);
+      }
     });
     if (!isApplicable) {
       section.adjusted = false;
@@ -5371,7 +5397,16 @@
           recalculateSection(secKey);
         }
       }
-      
+
+      // P1-A fix 29-07: tự chữa bản nháp cũ bị lưu sai (na_reason rỗng do thiếu đồng bộ
+      // DOM trước khi lưu) — áp lại quy tắc "bảo vệ" theo store profile ngay khi khôi phục.
+      if (typeof getActiveStoreProfile === 'function' && typeof setSecurityGuardApplicable === 'function') {
+        try {
+          var _draftProfile = getActiveStoreProfile();
+          setSecurityGuardApplicable(_draftProfile ? !!_draftProfile.has_guard : true);
+        } catch (eGuard2) { /* bỏ qua, sẽ tự sửa khi profiles tải xong (xem initDropdowns) */ }
+      }
+
       // Load overall rating manual override values
       if (draft.overall) {
         formData.overall = draft.overall;
@@ -7520,6 +7555,14 @@
         const checklist = JSON.parse(rowData.checklist_json);
         if (checklist.sections) {
           formData.sections = checklist.sections;
+          // P1-A fix 29-07: bản ghi cũ có thể bị lưu thiếu na_reason cho mục "bảo vệ"
+          // (bug đã sửa) — áp lại quy tắc theo store profile để tự chữa khi mở lại sửa.
+          if (typeof getActiveStoreProfile === 'function' && typeof setSecurityGuardApplicable === 'function') {
+            try {
+              const _editProfile = getActiveStoreProfile();
+              setSecurityGuardApplicable(_editProfile ? !!_editProfile.has_guard : true);
+            } catch (eGuard3) { /* bỏ qua */ }
+          }
         }
         if (checklist.general_photos) {
           Object.assign(generalPhotos, checklist.general_photos);
