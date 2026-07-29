@@ -1863,6 +1863,18 @@ function doPost(e) {
       } else {
         result = getIssuesDashboard(postData.username, postData.role, postData.storesAllowed);
       }
+    } else if (action === "getManagementReport") {
+      if (Array.isArray(payload)) {
+        result = getManagementReport(payload[0], payload[1], payload[2], payload[3], payload[4]);
+      } else {
+        result = getManagementReport(postData.username, postData.role, postData.storesAllowed, postData.year, postData.month);
+      }
+    } else if (action === "setMinVisitPct") {
+      if (Array.isArray(payload)) {
+        result = setMinVisitPct(payload[0], payload[1]);
+      } else {
+        result = setMinVisitPct(postData.requesterUsername, postData.newPct);
+      }
     } else if (action === "getSubmissionDetail") {
       result = getSubmissionDetail(payload);
     } else if (action === "logClientError") {
@@ -2376,6 +2388,247 @@ function escalateOverdueIssues() {
     }
   } catch (e) {
     console.warn("escalateOverdueIssues lỗi: " + e.toString());
+  }
+}
+
+// =============================================================
+// MANAGEMENT REPORT — Báo cáo Quản trị Tổng hợp (Master/Admin + ASM)
+// Chưa có sheet Settings nào trong hệ thống — dùng PropertiesService
+// theo đúng pattern getOrCreateReportsFolder() (Code.gs ~2664) cho
+// chỉ tiêu ghé thăm tối thiểu, Master/Admin chỉnh được từ UI.
+// =============================================================
+var MIN_VISIT_PCT_KEY = "MIN_VISIT_PCT_PER_ASM";
+var MIN_VISIT_PCT_DEFAULT = 80;
+
+function getMinVisitPct() {
+  try {
+    var v = PropertiesService.getScriptProperties().getProperty(MIN_VISIT_PCT_KEY);
+    var n = Number(v);
+    return (v && !isNaN(n)) ? n : MIN_VISIT_PCT_DEFAULT;
+  } catch (e) { return MIN_VISIT_PCT_DEFAULT; }
+}
+
+function setMinVisitPct(requesterUsername, newPct) {
+  if (!isUserAdminOrMaster(requesterUsername)) {
+    return { success: false, error: "Chỉ Master/Admin được thay đổi chỉ tiêu ghé thăm." };
+  }
+  var n = Number(newPct);
+  if (isNaN(n) || n < 0 || n > 100) {
+    return { success: false, error: "Chỉ tiêu phải là số từ 0 đến 100." };
+  }
+  try {
+    PropertiesService.getScriptProperties().setProperty(MIN_VISIT_PCT_KEY, String(n));
+    return { success: true, value: n };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// Roster ASM thật (loại master/admin + pseudo-ASM "khac") kèm danh sách cửa hàng quản lý
+// — dùng làm mẫu số cho % hoàn thành chỉ tiêu, và để suy ra "cửa hàng này thuộc ASM nào"
+// một cách đáng tin cậy (không dựa vào text tự do cột QLKD/ASM vốn có thể lệch dấu/định
+// dạng — theo đúng phát hiện audit RBAC 29-07).
+function _getAsmRoster_() {
+  var sheet = initASMUsersSheet();
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var headers = data[0];
+  var uIdx = headers.indexOf("username");
+  var nIdx = headers.indexOf("full_name");
+  var rIdx = headers.indexOf("role");
+  var sIdx = headers.indexOf("stores");
+  var stIdx = headers.indexOf("status");
+  var out = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var role = String(row[rIdx] || "").trim().toLowerCase();
+    var uname = String(row[uIdx] || "").trim().toLowerCase();
+    if (role === "master" || role === "admin" || uname === "khac") continue;
+    var storesStr = String(row[sIdx] || "").trim();
+    if (!storesStr || storesStr === "ALL") continue;
+    var storeList = storesStr.split(",").map(function(s) { return s.trim().toUpperCase(); }).filter(Boolean);
+    out.push({
+      username: String(row[uIdx]).trim(),
+      fullName: String(row[nIdx] || row[uIdx]).trim(),
+      status: String(row[stIdx] || "Active").trim(),
+      stores: storeList
+    });
+  }
+  return out;
+}
+
+// Parse 1 ô ngày kiểm tra (Date object hoặc string 'yyyy-MM-dd'/'dd/MM/yyyy') → {year, month} (1-12) hoặc null.
+// Cùng cách phòng thủ Date-vs-string như processForm (~L822-835) và getHistoricalSubmissions (~L2427-2433).
+function _parseReportDateYM_(rawDate) {
+  try {
+    if (rawDate instanceof Date) {
+      return { year: rawDate.getFullYear(), month: rawDate.getMonth() + 1 };
+    }
+    var s = String(rawDate || "").trim();
+    if (!s) return null;
+    var m1 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m1) return { year: parseInt(m1[1], 10), month: parseInt(m1[2], 10) };
+    var m2 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m2) return { year: parseInt(m2[3], 10), month: parseInt(m2[2], 10) };
+    return null;
+  } catch (e) { return null; }
+}
+
+// Báo cáo tổng hợp theo kỳ (tháng/năm): lượt ghé, % hoàn thành chỉ tiêu từng ASM,
+// phân bố đánh giá 5 hạng mục tổng, lỗi phát sinh theo 15 hạng mục con + mức độ.
+// RBAC lọc NGAY TRONG hàm (không lọc ở client) — Master/Admin thấy toàn bộ,
+// ASM chỉ thấy phần của mình, theo đúng pattern getIssuesDashboard (~L2280).
+function getManagementReport(username, role, storesAllowedStr, year, month) {
+  try {
+    var roleLc = String(role || "").toLowerCase();
+    var isMaster = (roleLc === "master" || roleLc === "admin");
+    var allowedSet = null;
+    if (!isMaster && storesAllowedStr && String(storesAllowedStr).trim() && String(storesAllowedStr).trim().toUpperCase() !== "ALL") {
+      allowedSet = {};
+      String(storesAllowedStr).split(",").forEach(function(s) {
+        var c = s.trim().toUpperCase();
+        if (c) allowedSet[c] = true;
+      });
+    }
+
+    var now = new Date();
+    year = parseInt(year, 10); if (!year || isNaN(year)) year = now.getFullYear();
+    month = parseInt(month, 10); if (!month || isNaN(month) || month < 1 || month > 12) month = now.getMonth() + 1;
+
+    // ---- 1. Roster ASM + bảng tra "cửa hàng này thuộc ASM nào" ----
+    var roster = _getAsmRoster_();
+    var storeOwner = {};
+    roster.forEach(function(asm) {
+      asm.stores.forEach(function(sc) { storeOwner[sc] = asm.username; });
+    });
+
+    // ---- 2. Form Responses: lượt ghé trong kỳ + phân bố đánh giá 5 hạng mục ----
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEET_NAME);
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return String(h).trim(); });
+    var col = {};
+    ["Mã cửa hàng", "Ngày kiểm tra", "QLKD/ASM", "Status",
+     "rating_frontage", "rating_inner", "rating_merch", "rating_staff", "rating_csvc"].forEach(function(h) {
+      col[h] = headers.indexOf(h);
+    });
+
+    var visitedByAsm = {};        // asm.username -> { storeCode: true }
+    var visitedByStore = {};      // storeCode -> số lượt ghé trong kỳ
+    var visitorOfStore = {};      // storeCode -> tên người ghé gần nhất (hiển thị, không dùng tính %)
+    var unattributedStores = {};  // storeCode -> true — đã ghé nhưng KHÔNG thuộc stores của bất kỳ ASM nào trong roster hiện tại (dữ liệu ASM_Users lệch/thiếu sync)
+    var ratingDist = { frontage: {}, inner: {}, merch: {}, staff: {}, csvc: {} };
+    var totalVisits = 0;
+
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      var status = String(row[col["Status"]] || "").trim().toLowerCase();
+      if (status === "draft") continue;
+      var ym = _parseReportDateYM_(row[col["Ngày kiểm tra"]]);
+      if (!ym || ym.year !== year || ym.month !== month) continue;
+
+      var storeCodeRaw = String(row[col["Mã cửa hàng"]] || "").trim().toUpperCase();
+      var storeCode = storeCodeRaw.indexOf(" - ") >= 0 ? storeCodeRaw.split(" - ")[0].trim() : storeCodeRaw;
+      if (!storeCode) continue;
+      if (allowedSet && !allowedSet[storeCode]) continue;
+
+      totalVisits++;
+      visitedByStore[storeCode] = (visitedByStore[storeCode] || 0) + 1;
+      visitorOfStore[storeCode] = String(row[col["QLKD/ASM"]] || "").trim();
+
+      var owner = storeOwner[storeCode];
+      if (owner) {
+        if (!visitedByAsm[owner]) visitedByAsm[owner] = {};
+        visitedByAsm[owner][storeCode] = true;
+      } else {
+        unattributedStores[storeCode] = true;
+      }
+
+      ["frontage", "inner", "merch", "staff", "csvc"].forEach(function(cat) {
+        var val = String(row[col["rating_" + cat]] || "").trim();
+        if (!val) return;
+        ratingDist[cat][val] = (ratingDist[cat][val] || 0) + 1;
+      });
+    }
+
+    // ---- 3. % hoàn thành chỉ tiêu theo ASM (Master thấy tất cả; ASM chỉ thấy dòng của mình) ----
+    var minPct = getMinVisitPct();
+    var byAsm = [];
+    roster.forEach(function(asm) {
+      if (!isMaster && String(username || "").trim().toLowerCase() !== asm.username.toLowerCase()) return;
+      var visitedCodes = Object.keys(visitedByAsm[asm.username] || {});
+      var total = asm.stores.length;
+      var pct = total > 0 ? Math.round((visitedCodes.length / total) * 1000) / 10 : 0;
+      byAsm.push({
+        username: asm.username, fullName: asm.fullName, status: asm.status,
+        total_stores: total, visited_stores: visitedCodes.length,
+        pct: pct, meets_target: pct >= minPct,
+        visited_store_list: visitedCodes
+      });
+    });
+    byAsm.sort(function(a, b) { return a.pct - b.pct; });
+
+    // ---- 4. Issues_Register: lỗi PHÁT SINH trong kỳ (khác getIssuesDashboard vốn chỉ tính đang mở) ----
+    var secLabels = _issueSecLabels_();
+    var issuesSheet = _getIssuesSheet_();
+    var iCol = _issueColMap_(issuesSheet);
+    var iLast = issuesSheet.getLastRow();
+    var byCategory = {};
+    var bySeverity = { "Nhẹ": 0, "Trung bình": 0, "Nghiêm trọng": 0 };
+    var issuesDetail = [];
+    var seriousCount = 0;
+
+    if (iLast >= 2) {
+      var iData = issuesSheet.getRange(2, 1, iLast - 1, ISSUE_HEADERS.length).getValues();
+      for (var ir = 0; ir < iData.length; ir++) {
+        var irow = iData[ir];
+        var createdYm = _parseReportDateYM_(irow[iCol.created_date]);
+        if (!createdYm || createdYm.year !== year || createdYm.month !== month) continue;
+        var sc = String(irow[iCol.store_code]).trim().toUpperCase();
+        if (allowedSet && !allowedSet[sc]) continue;
+
+        var secKey = String(irow[iCol.section_key] || "");
+        var sev = String(irow[iCol.severity] || "");
+        byCategory[secKey] = (byCategory[secKey] || 0) + 1;
+        if (bySeverity.hasOwnProperty(sev)) bySeverity[sev]++;
+        if (sev === "Nghiêm trọng") seriousCount++;
+
+        issuesDetail.push({
+          store_code: sc, store_name: irow[iCol.store_name],
+          section_key: secKey, section_label: secLabels[secKey] || secKey,
+          item_label: irow[iCol.item_label], severity: sev,
+          status: irow[iCol.status], created_date: irow[iCol.created_date],
+          assignee: irow[iCol.assignee]
+        });
+      }
+    }
+    var byCategoryList = Object.keys(byCategory).map(function(k) {
+      return { section_key: k, section_label: secLabels[k] || k, count: byCategory[k] };
+    }).sort(function(a, b) { return b.count - a.count; });
+
+    return {
+      success: true,
+      period: { year: year, month: month },
+      min_visit_pct: minPct,
+      is_master_view: isMaster,
+      kpis: {
+        total_visits: totalVisits,
+        stores_visited: Object.keys(visitedByStore).length,
+        total_issues: issuesDetail.length,
+        serious_issues: seriousCount,
+        unattributed_stores: Object.keys(unattributedStores).length
+      },
+      unattributed_store_list: isMaster ? Object.keys(unattributedStores) : [],
+      by_asm: byAsm,
+      rating_distribution: ratingDist,
+      by_category: byCategoryList,
+      by_severity: bySeverity,
+      issues_detail: issuesDetail,
+      visitor_of_store: visitorOfStore
+    };
+  } catch (e) {
+    return { success: false, error: e.toString() };
   }
 }
 

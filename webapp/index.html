@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --brand-red: #C41E3A;
@@ -327,6 +328,16 @@
       padding: 2px 6px;
       border-radius: 4px;
     }
+
+    /* Báo Cáo Tổng Hợp — In/Xuất PDF: chỉ in đúng nội dung dashboard đang mở,
+       giữ nguyên canvas biểu đồ Chart.js (window.print() trên trang hiện tại,
+       KHÔNG clone innerHTML sang cửa sổ mới — canvas sẽ mất nội dung nếu clone). */
+    @media print {
+      body.mr-print-mode > *:not(.container) { display: none !important; }
+      body.mr-print-mode .container > *:not(#main-view-management-report) { display: none !important; }
+      body.mr-print-mode #main-view-management-report .no-print { display: none !important; }
+      body.mr-print-mode #main-view-management-report { display: block !important; }
+    }
   </style>
 </head>
 <body>
@@ -438,6 +449,9 @@
       </li>
       <li class="main-menu-item">
         <button class="main-menu-btn" id="menu-cc-tab" onclick="switchMainMenu('command-center')" type="button"><i class="bi bi-clipboard2-pulse"></i> Command Center</button>
+      </li>
+      <li class="main-menu-item">
+        <button class="main-menu-btn" id="menu-mgmtreport-tab" onclick="switchMainMenu('management-report')" type="button"><i class="bi bi-graph-up-arrow"></i> Báo Cáo Tổng Hợp</button>
       </li>
       <li class="main-menu-item">
         <button class="main-menu-btn" id="menu-history-tab" onclick="switchMainMenu('history')" type="button"><i class="bi bi-clock-history"></i> Lịch Sử Kiểm Tra</button>
@@ -1773,6 +1787,7 @@
         </div>
 
         <div id="ccContent" class="d-none">
+          <div class="alert alert-danger d-none" id="ccErrorBox"></div>
           <div class="row g-2 mb-4" id="ccKpiRow"></div>
 
           <h6 class="fw-bold mb-2"><i class="bi bi-shop"></i> Theo cửa hàng</h6>
@@ -1808,6 +1823,88 @@
                 </tr>
               </thead>
               <tbody id="ccOpenIssuesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW: BÁO CÁO TỔNG HỢP (Master/Admin toàn hệ thống, ASM chỉ thấy phần của mình) -->
+  <div id="main-view-management-report" class="main-view-section d-none">
+    <div class="card">
+      <div class="card-header-custom d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span><i class="bi bi-graph-up-arrow"></i> Báo Cáo Tổng Hợp</span>
+        <div class="d-flex flex-wrap align-items-center gap-2 no-print">
+          <select class="form-select form-select-sm" id="mrMonthSelect" style="width:auto" onchange="loadManagementReport()"></select>
+          <select class="form-select form-select-sm" id="mrYearSelect" style="width:auto" onchange="loadManagementReport()"></select>
+          <button class="btn btn-sm btn-outline-primary" onclick="loadManagementReport()"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+          <button class="btn btn-sm btn-success" onclick="printManagementReport()"><i class="bi bi-printer"></i> In / Xuất PDF</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="mrLoading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Đang tải báo cáo...</p>
+        </div>
+
+        <div id="mrContent" class="d-none">
+          <div class="alert alert-danger d-none" id="mrErrorBox"></div>
+          <div class="row g-2 mb-4" id="mrKpiRow"></div>
+
+          <div class="card border mb-4 no-print" id="mrQuotaConfigCard">
+            <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
+              <label class="fw-bold small mb-0">Chỉ tiêu ghé thăm tối thiểu / ASM / tháng (%):</label>
+              <input type="number" class="form-control form-control-sm" id="mrMinPctInput" style="width:90px" min="0" max="100">
+              <button class="btn btn-sm btn-primary" id="mrSaveQuotaBtn" onclick="saveMinVisitPct()">Lưu</button>
+              <span class="small text-muted" id="mrQuotaReadonly" style="display:none"></span>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2"><i class="bi bi-person-check"></i> % Hoàn thành chỉ tiêu ghé thăm theo ASM</h6>
+          <div class="table-responsive mb-4">
+            <table class="table table-sm table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>ASM</th>
+                  <th class="text-center">Đã ghé / Tổng CH</th>
+                  <th style="min-width:180px">% Hoàn thành</th>
+                  <th>Danh sách cửa hàng đã ghé</th>
+                </tr>
+              </thead>
+              <tbody id="mrAsmBody"></tbody>
+            </table>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <h6 class="fw-bold mb-2"><i class="bi bi-bar-chart"></i> Đánh giá 5 hạng mục tổng</h6>
+              <div class="card border p-2"><canvas id="mrCategoryChart" height="220"></canvas></div>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold mb-2"><i class="bi bi-pie-chart"></i> Phân bố lỗi theo mức độ</h6>
+              <div class="card border p-2"><canvas id="mrSeverityChart" height="220"></canvas></div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-2"><i class="bi bi-list-columns-reverse"></i> Lỗi theo hạng mục (tổng hợp)</h6>
+          <div class="card border p-2 mb-4"><canvas id="mrCategoryIssueChart" height="180"></canvas></div>
+
+          <h6 class="fw-bold mb-2"><i class="bi bi-card-checklist"></i> Chi tiết lỗi phát sinh trong kỳ</h6>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Cửa hàng</th>
+                  <th>Hạng mục</th>
+                  <th>Mô tả</th>
+                  <th>Mức độ</th>
+                  <th>Trạng thái</th>
+                  <th>Người phụ trách</th>
+                  <th>Ngày phát sinh</th>
+                </tr>
+              </thead>
+              <tbody id="mrIssuesBody"></tbody>
             </table>
           </div>
         </div>
@@ -2031,6 +2128,8 @@
     ScriptRunMock.prototype.resolveIssueCAPA = function() { this._call("resolveIssueCAPA", arguments); };
     ScriptRunMock.prototype.verifyIssueCAPA = function() { this._call("verifyIssueCAPA", arguments); };
     ScriptRunMock.prototype.getIssuesDashboard = function() { this._call("getIssuesDashboard", arguments); };
+    ScriptRunMock.prototype.getManagementReport = function() { this._call("getManagementReport", arguments); };
+    ScriptRunMock.prototype.setMinVisitPct = function() { this._call("setMinVisitPct", arguments); };
     ScriptRunMock.prototype.getSubmissionDetail = function() { this._call("getSubmissionDetail", arguments); };
     ScriptRunMock.prototype.logClientError = function() { this._call("logClientError", arguments); };
     ScriptRunMock.prototype.loginUser = function() { this._call("loginUser", arguments); };
@@ -6581,6 +6680,11 @@
       document.getElementById('main-view-command-center').classList.remove('d-none');
       document.getElementById('menu-cc-tab').classList.add('active');
       loadIssuesDashboard();
+    } else if (view === 'management-report') {
+      document.getElementById('main-view-management-report').classList.remove('d-none');
+      document.getElementById('menu-mgmtreport-tab').classList.add('active');
+      initManagementReportPeriodFilter();
+      loadManagementReport();
     } else if (view === 'history') {
       document.getElementById('main-view-history').classList.remove('d-none');
       document.getElementById('menu-history-tab').classList.add('active');
@@ -6604,10 +6708,15 @@
     loading.classList.remove('d-none');
     content.classList.add('d-none');
 
+    var errorBox = document.getElementById('ccErrorBox');
+    errorBox.classList.add('d-none');
+    errorBox.textContent = '';
+
     if (typeof google === 'undefined' || !google.script || !google.script.run) {
       loading.classList.add('d-none');
       content.classList.remove('d-none');
-      content.innerHTML = '<div class="alert alert-warning">Ứng dụng đang chạy offline / local. Không thể tải Command Center.</div>';
+      errorBox.textContent = 'Ứng dụng đang chạy offline / local. Không thể tải Command Center.';
+      errorBox.classList.remove('d-none');
       return;
     }
 
@@ -6620,7 +6729,8 @@
         loading.classList.add('d-none');
         content.classList.remove('d-none');
         if (!res || !res.success) {
-          content.innerHTML = '<div class="alert alert-danger">Lỗi: ' + (res ? res.error : 'Không xác định') + '</div>';
+          errorBox.textContent = 'Lỗi: ' + (res ? res.error : 'Không xác định');
+          errorBox.classList.remove('d-none');
           return;
         }
         renderIssuesDashboard(res);
@@ -6628,7 +6738,8 @@
       .withFailureHandler(function(err) {
         loading.classList.add('d-none');
         content.classList.remove('d-none');
-        content.innerHTML = '<div class="alert alert-danger">Lỗi kết nối: ' + err.message + '</div>';
+        errorBox.textContent = 'Lỗi kết nối: ' + err.message;
+        errorBox.classList.remove('d-none');
       })
       .getIssuesDashboard(username, role, stores);
   }
@@ -6744,6 +6855,260 @@
       })
       .withFailureHandler(function(err) { alert('Lỗi kết nối: ' + err.message); })
       .verifyIssueCAPA(payload);
+  }
+
+  // -------------------------------------------------------------
+  // BÁO CÁO TỔNG HỢP — Management Report (Master/Admin + ASM scoped)
+  // -------------------------------------------------------------
+  var mrCategoryChartInstance = null;
+  var mrSeverityChartInstance = null;
+  var mrCategoryIssueChartInstance = null;
+  var mrLastReport = null;
+
+  var MR_MONTH_LABELS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  var MR_CATEGORY_LABELS = { frontage: 'Mặt tiền', inner: 'Không gian trong', merch: 'Trưng bày VM', staff: 'Nhân sự', csvc: 'CSVC' };
+  var MR_RATING_COLORS = { 'Tốt': '#198754', 'Đạt': '#0d6efd', 'Chưa đạt': '#dc3545', 'Không áp dụng': '#adb5bd', 'Chưa đánh giá': '#ffc107' };
+  var MR_SEVERITY_COLORS = { 'Nhẹ': '#ffc107', 'Trung bình': '#fd7e14', 'Nghiêm trọng': '#dc3545' };
+
+  function initManagementReportPeriodFilter() {
+    var monthSel = document.getElementById('mrMonthSelect');
+    var yearSel = document.getElementById('mrYearSelect');
+    if (!monthSel || !yearSel) return;
+    var now = new Date();
+    if (monthSel.options.length === 0) {
+      MR_MONTH_LABELS.forEach(function(label, idx) {
+        var opt = document.createElement('option');
+        opt.value = String(idx + 1);
+        opt.textContent = label;
+        monthSel.appendChild(opt);
+      });
+      monthSel.value = String(now.getMonth() + 1);
+    }
+    if (yearSel.options.length === 0) {
+      var curY = now.getFullYear();
+      for (var y = curY; y >= curY - 2; y--) {
+        var yopt = document.createElement('option');
+        yopt.value = String(y);
+        yopt.textContent = 'Năm ' + y;
+        yearSel.appendChild(yopt);
+      }
+      yearSel.value = String(curY);
+    }
+  }
+
+  function loadManagementReport() {
+    var loading = document.getElementById('mrLoading');
+    var content = document.getElementById('mrContent');
+    loading.classList.remove('d-none');
+    content.classList.add('d-none');
+
+    var errorBox = document.getElementById('mrErrorBox');
+    errorBox.classList.add('d-none');
+    errorBox.textContent = '';
+
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      loading.classList.add('d-none');
+      content.classList.remove('d-none');
+      errorBox.textContent = 'Ứng dụng đang chạy offline / local. Không thể tải báo cáo.';
+      errorBox.classList.remove('d-none');
+      return;
+    }
+
+    var username = currentUser ? currentUser.username : '';
+    var role = currentUser ? currentUser.role : 'asm';
+    var stores = currentUser ? currentUser.stores : 'ALL';
+    var year = document.getElementById('mrYearSelect').value;
+    var month = document.getElementById('mrMonthSelect').value;
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        loading.classList.add('d-none');
+        content.classList.remove('d-none');
+        if (!res || !res.success) {
+          errorBox.textContent = 'Lỗi: ' + (res ? res.error : 'Không xác định');
+          errorBox.classList.remove('d-none');
+          return;
+        }
+        mrLastReport = res;
+        renderManagementReport(res);
+      })
+      .withFailureHandler(function(err) {
+        loading.classList.add('d-none');
+        content.classList.remove('d-none');
+        errorBox.textContent = 'Lỗi kết nối: ' + err.message;
+        errorBox.classList.remove('d-none');
+      })
+      .getManagementReport(username, role, stores, year, month);
+  }
+
+  function renderManagementReport(res) {
+    var avgPct = 0;
+    if (res.by_asm && res.by_asm.length > 0) {
+      var sum = 0;
+      res.by_asm.forEach(function(a) { sum += a.pct; });
+      avgPct = Math.round((sum / res.by_asm.length) * 10) / 10;
+    }
+
+    var kpis = [
+      { label: 'Tổng lượt ghé', value: res.kpis.total_visits, cls: 'text-dark' },
+      { label: 'Cửa hàng đã ghé', value: res.kpis.stores_visited, cls: 'text-primary' },
+      { label: 'Lỗi phát sinh', value: res.kpis.total_issues, cls: 'text-warning' },
+      { label: 'Lỗi nghiêm trọng', value: res.kpis.serious_issues, cls: 'text-danger' }
+    ];
+    if (res.is_master_view) {
+      kpis.push({ label: '% TB hoàn thành chỉ tiêu', value: avgPct + '%', cls: (avgPct >= res.min_visit_pct ? 'text-success' : 'text-danger') });
+      if (res.kpis.unattributed_stores > 0) {
+        kpis.push({ label: 'CH đã ghé nhưng chưa gán ASM', value: res.kpis.unattributed_stores, cls: 'text-danger' });
+      }
+    }
+    var kpiHtml = '';
+    kpis.forEach(function(k) {
+      kpiHtml += '<div class="col-6 col-md-2"><div class="card border text-center py-2"><div class="fs-4 fw-bold ' + k.cls + '">' + k.value + '</div><div class="small text-muted">' + k.label + '</div></div></div>';
+    });
+    document.getElementById('mrKpiRow').innerHTML = kpiHtml;
+
+    var warnBox = document.getElementById('mrErrorBox');
+    if (res.is_master_view && res.unattributed_store_list && res.unattributed_store_list.length > 0) {
+      warnBox.className = 'alert alert-warning';
+      warnBox.innerHTML = '<strong>⚠️ ' + res.unattributed_store_list.length + ' cửa hàng đã ghé trong kỳ nhưng không thuộc danh sách quản lý của bất kỳ ASM nào</strong> (dữ liệu bảng ASM_Users có thể chưa sync với StoresInfo.xlsx mới nhất — dùng nút "Sync StoresInfo.xlsx" ở phần Quản Lý Tài Khoản): ' + res.unattributed_store_list.join(', ');
+      warnBox.classList.remove('d-none');
+    } else {
+      warnBox.className = 'alert alert-danger d-none';
+    }
+
+    // Cấu hình chỉ tiêu — chỉ Master/Admin sửa được
+    var minPctInput = document.getElementById('mrMinPctInput');
+    var saveBtn = document.getElementById('mrSaveQuotaBtn');
+    var readonlySpan = document.getElementById('mrQuotaReadonly');
+    if (res.is_master_view) {
+      minPctInput.style.display = '';
+      saveBtn.style.display = '';
+      readonlySpan.style.display = 'none';
+      minPctInput.value = res.min_visit_pct;
+    } else {
+      minPctInput.style.display = 'none';
+      saveBtn.style.display = 'none';
+      readonlySpan.style.display = '';
+      readonlySpan.textContent = res.min_visit_pct + '% (do Master/Admin quy định)';
+    }
+
+    // Bảng % hoàn thành chỉ tiêu theo ASM
+    var asmRows = '';
+    if (!res.by_asm || res.by_asm.length === 0) {
+      asmRows = '<tr><td colspan="4" class="text-center text-muted py-3">Không có dữ liệu.</td></tr>';
+    } else {
+      res.by_asm.forEach(function(a) {
+        var barColor = a.meets_target ? 'bg-success' : 'bg-danger';
+        var storeListText = a.visited_store_list && a.visited_store_list.length > 0 ? a.visited_store_list.join(', ') : '<span class="text-muted">Chưa ghé cửa hàng nào trong kỳ</span>';
+        asmRows += '<tr>' +
+          '<td>' + a.fullName + '</td>' +
+          '<td class="text-center">' + a.visited_stores + ' / ' + a.total_stores + '</td>' +
+          '<td><div class="progress" style="height:18px"><div class="progress-bar ' + barColor + '" style="width:' + Math.min(a.pct, 100) + '%">' + a.pct + '%</div></div></td>' +
+          '<td class="small">' + storeListText + '</td>' +
+          '</tr>';
+      });
+    }
+    document.getElementById('mrAsmBody').innerHTML = asmRows;
+
+    // Biểu đồ 1: đánh giá 5 hạng mục tổng (stacked bar)
+    var catKeys = Object.keys(MR_CATEGORY_LABELS);
+    var ratingValues = ['Tốt', 'Đạt', 'Chưa đạt', 'Không áp dụng', 'Chưa đánh giá'];
+    var catDatasets = ratingValues.map(function(rv) {
+      return {
+        label: rv,
+        backgroundColor: MR_RATING_COLORS[rv],
+        data: catKeys.map(function(ck) { return (res.rating_distribution[ck] && res.rating_distribution[ck][rv]) || 0; })
+      };
+    });
+    if (mrCategoryChartInstance) mrCategoryChartInstance.destroy();
+    mrCategoryChartInstance = new Chart(document.getElementById('mrCategoryChart'), {
+      type: 'bar',
+      data: { labels: catKeys.map(function(ck) { return MR_CATEGORY_LABELS[ck]; }), datasets: catDatasets },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+
+    // Biểu đồ 2: phân bố lỗi theo mức độ (donut)
+    var sevLabels = Object.keys(res.by_severity);
+    if (mrSeverityChartInstance) mrSeverityChartInstance.destroy();
+    mrSeverityChartInstance = new Chart(document.getElementById('mrSeverityChart'), {
+      type: 'doughnut',
+      data: {
+        labels: sevLabels,
+        datasets: [{ data: sevLabels.map(function(l) { return res.by_severity[l]; }), backgroundColor: sevLabels.map(function(l) { return MR_SEVERITY_COLORS[l] || '#6c757d'; }) }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Biểu đồ 3: lỗi theo 15 hạng mục con (horizontal bar)
+    var byCat = res.by_category || [];
+    if (mrCategoryIssueChartInstance) mrCategoryIssueChartInstance.destroy();
+    mrCategoryIssueChartInstance = new Chart(document.getElementById('mrCategoryIssueChart'), {
+      type: 'bar',
+      data: {
+        labels: byCat.map(function(c) { return c.section_label; }),
+        datasets: [{ label: 'Số lỗi', data: byCat.map(function(c) { return c.count; }), backgroundColor: '#C41E3A' }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+
+    // Bảng chi tiết lỗi
+    var issues = res.issues_detail || [];
+    var issueRows = '';
+    if (issues.length === 0) {
+      issueRows = '<tr><td colspan="7" class="text-center text-success py-4"><i class="bi bi-check-circle-fill"></i> Không có lỗi nào phát sinh trong kỳ.</td></tr>';
+    } else {
+      issues.forEach(function(i) {
+        var sevBadge = '<span class="badge ' + (i.severity === 'Nghiêm trọng' ? 'bg-danger' : (i.severity === 'Trung bình' ? 'bg-warning text-dark' : 'bg-info text-dark')) + '">' + i.severity + '</span>';
+        var d = i.created_date ? new Date(i.created_date) : null;
+        var dateStr = (d && !isNaN(d.getTime())) ? (String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear()) : '';
+        issueRows += '<tr>' +
+          '<td>' + i.store_code + (i.store_name ? '<br><small class="text-muted">' + i.store_name + '</small>' : '') + '</td>' +
+          '<td>' + i.section_label + '</td>' +
+          '<td>' + (i.item_label || '') + '</td>' +
+          '<td>' + sevBadge + '</td>' +
+          '<td>' + (i.status || '') + '</td>' +
+          '<td>' + (i.assignee || '') + '</td>' +
+          '<td>' + dateStr + '</td>' +
+          '</tr>';
+      });
+    }
+    document.getElementById('mrIssuesBody').innerHTML = issueRows;
+  }
+
+  function saveMinVisitPct() {
+    var input = document.getElementById('mrMinPctInput');
+    var val = Number(input.value);
+    if (isNaN(val) || val < 0 || val > 100) {
+      alert('Chỉ tiêu phải là số từ 0 đến 100.');
+      return;
+    }
+    var requester = currentUser ? currentUser.username : '';
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          alert('Đã cập nhật chỉ tiêu ghé thăm: ' + res.value + '%');
+          loadManagementReport();
+        } else {
+          alert('Lỗi: ' + (res ? res.error : 'Không xác định'));
+        }
+      })
+      .withFailureHandler(function(err) { alert('Lỗi kết nối: ' + err.message); })
+      .setMinVisitPct(requester, val);
+  }
+
+  function printManagementReport() {
+    document.body.classList.add('mr-print-mode');
+    window.print();
+    setTimeout(function() { document.body.classList.remove('mr-print-mode'); }, 500);
   }
 
   // -------------------------------------------------------------
