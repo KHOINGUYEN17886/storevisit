@@ -1836,6 +1836,12 @@ function doPost(e) {
       } else {
         result = toggleUserStatus(postData.requesterUsername, postData.targetUsername, postData.newStatus);
       }
+    } else if (action === "deleteUserAccount") {
+      if (Array.isArray(payload)) {
+        result = deleteUserAccount(payload[0], payload[1]);
+      } else {
+        result = deleteUserAccount(postData.requesterUsername, postData.targetUsername);
+      }
     } else if (action === "syncASMUsersFromStoresInfo") {
       if (Array.isArray(payload)) {
         result = syncASMUsersFromStoresInfo(payload[0], payload[1]);
@@ -3345,6 +3351,49 @@ function toggleUserStatus(requesterUsername, targetUsername, newStatus) {
     return { success: false, error: "Không tìm thấy tài khoản " + targetUsername };
   } catch(e) {
     return { success: false, error: "Lỗi cập nhật trạng thái: " + e.toString() };
+  }
+}
+
+// Xóa hẳn 1 dòng tài khoản khỏi ASM_Users (dùng để dọn tài khoản test/rác — khác
+// toggleUserStatus vốn chỉ khóa/mở, không xóa dòng). Chặn tự xóa chính mình và
+// chặn xóa nếu đó là tài khoản master cuối cùng, tránh tự khóa hệ thống.
+function deleteUserAccount(requesterUsername, targetUsername) {
+  try {
+    if (!isUserAdminOrMaster(requesterUsername)) {
+      return { success: false, error: "Bạn không có quyền xóa tài khoản." };
+    }
+    var target = String(targetUsername).trim().toLowerCase();
+    var requester = String(requesterUsername).trim().toLowerCase();
+    if (target === requester) {
+      return { success: false, error: "Không thể tự xóa tài khoản đang đăng nhập." };
+    }
+
+    var sheet = initASMUsersSheet();
+    if (!sheet) return { success: false, error: "Không mở được bảng người dùng." };
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var rIdx = headers.indexOf("role");
+
+    var masterCount = 0;
+    var targetRow = -1;
+    for (var i = 1; i < data.length; i++) {
+      var role = String(data[i][rIdx] || "").trim().toLowerCase();
+      if (role === "master" || role === "admin") masterCount++;
+      if (String(data[i][uIdx]).trim().toLowerCase() === target) targetRow = i + 1;
+    }
+    if (targetRow < 0) return { success: false, error: "Không tìm thấy tài khoản " + targetUsername };
+
+    var targetRole = String(sheet.getRange(targetRow, rIdx + 1).getValue() || "").trim().toLowerCase();
+    if ((targetRole === "master" || targetRole === "admin") && masterCount <= 1) {
+      return { success: false, error: "Không thể xóa tài khoản quản trị cuối cùng." };
+    }
+
+    sheet.deleteRow(targetRow);
+    return { success: true, message: "Đã xóa tài khoản " + targetUsername };
+  } catch (e) {
+    return { success: false, error: "Lỗi xóa tài khoản: " + e.toString() };
   }
 }
 

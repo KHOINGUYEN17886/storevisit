@@ -2138,6 +2138,7 @@
     ScriptRunMock.prototype.saveUserAccount = function() { this._call("saveUserAccount", arguments); };
     ScriptRunMock.prototype.resetUserPasswordByAdmin = function() { this._call("resetUserPasswordByAdmin", arguments); };
     ScriptRunMock.prototype.toggleUserStatus = function() { this._call("toggleUserStatus", arguments); };
+    ScriptRunMock.prototype.deleteUserAccount = function() { this._call("deleteUserAccount", arguments); };
     ScriptRunMock.prototype.syncASMUsersFromStoresInfo = function() { this._call("syncASMUsersFromStoresInfo", arguments); };
     ScriptRunMock.prototype.cleanupSubmissionUploads = function() { this._call("cleanupSubmissionUploads", [Array.prototype.slice.call(arguments)]); };
 
@@ -8452,7 +8453,8 @@
         '<td class="text-end">' +
           '<button class="btn btn-sm btn-outline-primary me-1" onclick="openEditUserModal(\'' + escapeHtml(u.username) + '\')"><i class="bi bi-pencil-square"></i> Sửa</button>' +
           '<button class="btn btn-sm btn-outline-warning text-dark me-1" onclick="openResetPassModal(\'' + escapeHtml(u.username) + '\')"><i class="bi bi-key-fill"></i> Reset Pass</button>' +
-          '<button class="btn btn-sm ' + (isInactive ? 'btn-outline-success' : 'btn-outline-danger') + '" onclick="toggleUserStatusAction(\'' + escapeHtml(u.username) + '\', \'' + (isInactive ? 'Active' : 'Inactive') + '\')">' + (isInactive ? 'Mở' : 'Khóa') + '</button>' +
+          '<button class="btn btn-sm ' + (isInactive ? 'btn-outline-success' : 'btn-outline-danger') + ' me-1" onclick="toggleUserStatusAction(\'' + escapeHtml(u.username) + '\', \'' + (isInactive ? 'Active' : 'Inactive') + '\')">' + (isInactive ? 'Mở' : 'Khóa') + '</button>' +
+          '<button class="btn btn-sm btn-outline-secondary" onclick="deleteUserAccountAction(\'' + escapeHtml(u.username) + '\')"><i class="bi bi-trash3"></i></button>' +
         '</td>' +
       '</tr>';
     });
@@ -8593,6 +8595,22 @@
         alert("Lỗi kết nối: " + (err.message || err));
       })
       .toggleUserStatus(currentUser.username, username, newStatus);
+  }
+
+  function deleteUserAccountAction(username) {
+    if (!confirm("XÓA VĨNH VIỄN tài khoản " + username + "? Hành động này không thể hoàn tác.")) return;
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          loadAllUsers();
+        } else {
+          alert("Lỗi: " + (res ? res.error : "Không thể xóa tài khoản"));
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert("Lỗi kết nối: " + (err.message || err));
+      })
+      .deleteUserAccount(currentUser.username, username);
   }
 
   // Trigger Auth Check on Load
