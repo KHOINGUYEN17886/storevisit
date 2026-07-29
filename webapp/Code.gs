@@ -67,6 +67,13 @@ var REQUIRED_CHECKLIST_SCHEMA = {
   "staff": ["S1", "S2", "S3", "S4"]
 };
 
+// Section ĐIỀU KIỆN: chỉ có ở một số loại cửa hàng (theo STORE_PROFILE_MAP).
+// KHÔNG đưa vào REQUIRED_CHECKLIST_SCHEMA để không ép CH không áp dụng phải có.
+// security_guard: chỉ CH mặt phố có bán AP-PIE (has_guard=true). Mall/AB-only/online không có.
+var CONDITIONAL_CHECKLIST_SCHEMA = {
+  "security_guard": ["BV1", "BV2", "BV3", "BV4", "BV5", "BV6", "BV7"]
+};
+
 var SERIOUS_ITEMS = ["K5", "TN1", "TN5"];
 
 var VALID_EVALS = [
@@ -139,7 +146,10 @@ function getStoreData() {
     var cache = CacheService.getScriptCache();
     var cached = cache.get("store_data_json");
     if (cached) {
-      return JSON.parse(cached);
+      var cachedObj = JSON.parse(cached);
+      // Đính hồ sơ cửa hàng (brand/storetype/has_guard) — KHÔNG cache để tránh vượt 100KB.
+      cachedObj.profiles = (typeof STORE_PROFILE_MAP !== "undefined") ? STORE_PROFILE_MAP : {};
+      return cachedObj;
     }
   } catch(e) {
     console.warn("Cache read error: " + e.toString());
@@ -237,8 +247,10 @@ function getStoreData() {
       console.warn("Cache write error: " + e.toString());
     }
 
+    // Đính profiles SAU khi cache (không đưa vào blob cache).
+    result.profiles = (typeof STORE_PROFILE_MAP !== "undefined") ? STORE_PROFILE_MAP : {};
     return result;
-    
+
   } catch (e) {
     console.error('getStoreData error: ' + e.message);
     return _buildFallbackStoreData();
@@ -254,6 +266,7 @@ function _buildFallbackStoreData() {
     regions:          regions,
     mapping_by_asm:   STORE_DATA_MAP.mapping_by_asm,
     mapping_by_region: STORE_DATA_MAP.mapping_by_region,
+    profiles:         (typeof STORE_PROFILE_MAP !== "undefined") ? STORE_PROFILE_MAP : {},
     source:           'fallback'
   };
 }
@@ -438,8 +451,13 @@ function isValidUploadSlot(slot) {
         return true;
       }
     }
+    for (var cKey in CONDITIONAL_CHECKLIST_SCHEMA) {
+      if (CONDITIONAL_CHECKLIST_SCHEMA[cKey].includes(itemId)) {
+        return true;
+      }
+    }
   }
-  
+
   return false;
 }
 
@@ -525,6 +543,32 @@ function uploadSubmissionImage(payload) {
     }
     
     var folder = getOrCreateStorePhotosFolder();
+
+    // ── IDEMPOTENCY: nếu slot này đã upload trước đó (retry sau khi mất phản hồi,
+    // hoặc GỬI lại lần 2), trả lại file cũ thay vì tạo bản trùng. Chống file mồ côi.
+    try {
+      var dedupePrefix = submissionId + "__" + slot + "__";
+      var dupIt = folder.searchFiles('title contains "' + dedupePrefix + '"');
+      while (dupIt.hasNext()) {
+        var exist = dupIt.next();
+        if (exist.getName().indexOf(dedupePrefix) === 0) {
+          var em = exist.getMimeType();
+          if (em && em.indexOf("image/") === 0) {
+            return {
+              success: true,
+              fileId: exist.getId(),
+              slot: slot,
+              name: exist.getName(),
+              deduped: true
+            };
+          }
+        }
+      }
+    } catch (dedupeErr) {
+      // Search fail (chưa index kịp) → cứ tạo mới; không chặn luồng.
+      console.warn("Dedupe search lỗi: " + dedupeErr.toString());
+    }
+
     var ext = "jpg";
     if (mimeType === "image/png") ext = "png";
     else if (mimeType === "image/gif") ext = "gif";
@@ -550,6 +594,36 @@ function uploadSubmissionImage(payload) {
       success: false,
       error: e.toString()
     };
+  }
+}
+
+// -------------------------------------------------------------
+// RESUME RECONCILE — trả về các slot đã upload thành công cho 1 submission
+// Client dùng để BỎ QUA ảnh đã tải khi mở lại form / gửi lại (chống up lặp).
+// -------------------------------------------------------------
+function getUploadedSlots(submissionId) {
+  try {
+    if (!validateSubmissionId(submissionId)) {
+      return { success: false, error: "submission_id không hợp lệ." };
+    }
+    var folder = getOrCreateStorePhotosFolder();
+    var prefix = submissionId + "__";
+    var it = folder.searchFiles('title contains "' + prefix + '"');
+    var slots = {};
+    while (it.hasNext()) {
+      var f = it.next();
+      var name = f.getName();
+      if (name.indexOf(prefix) !== 0) continue;
+      var rest = name.substring(prefix.length);   // slot__timestamp.ext
+      var sepIdx = rest.indexOf("__");
+      if (sepIdx <= 0) continue;
+      var slot = rest.substring(0, sepIdx);
+      // Nếu nhiều file cùng slot (hiếm), giữ file đầu tìm được.
+      if (!slots[slot]) slots[slot] = f.getId();
+    }
+    return { success: true, slots: slots, count: Object.keys(slots).length };
+  } catch (e) {
+    return { success: false, error: e.toString() };
   }
 }
 
@@ -894,7 +968,11 @@ function processForm(formObject) {
     // Validate Checklist items & Drive file existences
     var sections = checklistObj.sections || {};
     var requiredSections = Object.keys(REQUIRED_CHECKLIST_SCHEMA);
-    
+    // Section điều kiện (vd security_guard): chỉ validate NẾU cửa hàng có gửi lên.
+    Object.keys(CONDITIONAL_CHECKLIST_SCHEMA).forEach(function(ck) {
+      if (sections[ck]) requiredSections.push(ck);
+    });
+
     requiredSections.forEach(function(secKey) {
       var secVal = sections[secKey];
       if (!secVal) {
@@ -905,7 +983,7 @@ function processForm(formObject) {
         throw new Error("Dữ liệu phần " + secKey + " rỗng hoặc không hợp lệ.");
       }
       
-      var requiredIds = REQUIRED_CHECKLIST_SCHEMA[secKey];
+      var requiredIds = REQUIRED_CHECKLIST_SCHEMA[secKey] || CONDITIONAL_CHECKLIST_SCHEMA[secKey];
       var receivedIds = items.map(function(it) { return it.id; });
       
       // Duplicates check
@@ -1198,7 +1276,7 @@ function processForm(formObject) {
       { key: "frontage", subSecs: ["frontage"] },
       { key: "inner", subSecs: ["inner"] },
       { key: "merch", subSecs: ["merch_ap", "merch_pie", "merch_anamai", "merch_bonjour", "merch_pk"] },
-      { key: "csvc", subSecs: ["stockroom", "fitting_room", "toilet", "fire_safety", "cashier", "packaging_security"] },
+      { key: "csvc", subSecs: ["stockroom", "fitting_room", "toilet", "fire_safety", "cashier", "packaging_security", "security_guard"] },
       { key: "staff", subSecs: ["staff"] }
     ];
     
@@ -1536,6 +1614,18 @@ function processForm(formObject) {
       console.warn("Failed to clear caches: " + e.toString());
     }
 
+    // CAPA: đồng bộ vấn đề "Không đạt" vào Sổ Issues_Register (bỏ qua khi lưu nháp).
+    if (!isDraftFlag) {
+      try {
+        var _sc = String(formObject.storeCode || "");
+        var _scCode = _sc.indexOf(" - ") >= 0 ? _sc.split(" - ")[0] : _sc;
+        var _scName = _sc.indexOf(" - ") >= 0 ? _sc.substring(_sc.indexOf(" - ") + 3) : "";
+        syncIssuesFromSubmission_(formObject.submission_id, _scCode, _scName, formObject.asmName, checklistObj);
+      } catch (capaErr) {
+        console.warn("CAPA sync lỗi (không chặn submit): " + capaErr.toString());
+      }
+    }
+
     return { success: true };
     
   } catch (e) {
@@ -1759,6 +1849,20 @@ function doPost(e) {
     } else if (action === "uploadSubmissionImage") {
       var postPayload = Array.isArray(payload) ? payload[0] : payload;
       result = uploadSubmissionImage(postPayload);
+    } else if (action === "getUploadedSlots") {
+      result = getUploadedSlots(Array.isArray(payload) ? payload[0] : payload);
+    } else if (action === "getStoreOpenIssues") {
+      result = getStoreOpenIssues(Array.isArray(payload) ? payload[0] : payload);
+    } else if (action === "resolveIssueCAPA") {
+      result = resolveIssueCAPA(Array.isArray(payload) ? payload[0] : payload);
+    } else if (action === "verifyIssueCAPA") {
+      result = verifyIssueCAPA(Array.isArray(payload) ? payload[0] : payload);
+    } else if (action === "getIssuesDashboard") {
+      if (Array.isArray(payload)) {
+        result = getIssuesDashboard(payload[0], payload[1], payload[2]);
+      } else {
+        result = getIssuesDashboard(postData.username, postData.role, postData.storesAllowed);
+      }
     } else if (action === "getSubmissionDetail") {
       result = getSubmissionDetail(payload);
     } else if (action === "logClientError") {
@@ -1947,6 +2051,331 @@ function updateIssueResolution(payload) {
     return { success: false, error: e.toString() };
   } finally {
     lock.releaseLock();
+  }
+}
+
+// =============================================================
+// CAPA — ISSUES REGISTER (Sổ theo dõi khắc phục — vòng đời độc lập)
+// Tách khỏi checklist_json từng dòng: mỗi vấn đề = 1 dòng có vòng đời
+// Open → In-Progress → Resolved → Verified → Closed, aging/SLA, carry-over,
+// escalation. Nguồn tạo: item "Không đạt" tại processForm.
+// =============================================================
+var ISSUES_SHEET = "Issues_Register";
+var ISSUE_HEADERS = [
+  "issue_id", "store_code", "store_name", "asm_name", "section_key", "section_label",
+  "item_id", "item_label", "description", "severity", "assignee",
+  "created_date", "due_date", "status", "escalation_level", "repeat_count",
+  "photo_before", "resolved_by", "resolved_date", "photo_after", "resolution_note",
+  "verified_by", "verified_date", "source_submission_id", "last_updated"
+];
+// SLA theo mức độ (ngày) → due_date = created + SLA
+var ISSUE_SLA_DAYS = { "Nghiêm trọng": 3, "Trung bình": 7, "Nhẹ": 14 };
+var ISSUE_OPEN_STATES = ["Open", "In-Progress", "Resolved"];  // chưa đóng
+
+function _getIssuesSheet_() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(ISSUES_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(ISSUES_SHEET);
+    sheet.getRange(1, 1, 1, ISSUE_HEADERS.length).setValues([ISSUE_HEADERS]);
+    sheet.setFrozenRows(1);
+    sheet.getRange(1, 1, 1, ISSUE_HEADERS.length).setFontWeight("bold");
+  }
+  return sheet;
+}
+
+function _issueColMap_(sheet) {
+  var hdr = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), ISSUE_HEADERS.length)).getValues()[0];
+  var map = {};
+  hdr.forEach(function(h, i) { map[String(h).trim()] = i; });
+  return map;
+}
+
+function _issueLogicalKey_(storeCode, secKey, itemId) {
+  return storeCode + "|" + secKey + "|" + itemId;
+}
+
+function _daysBetween_(a, b) {
+  return Math.floor((b.getTime() - a.getTime()) / (24 * 3600 * 1000));
+}
+
+// Gọi từ processForm (chỉ khi KHÔNG phải draft). Tạo/refresh issue Open cho mỗi item "Không đạt".
+function syncIssuesFromSubmission_(submissionId, storeCode, storeName, asmName, checklistObj) {
+  try {
+    var sheet = _getIssuesSheet_();
+    var col = _issueColMap_(sheet);
+    var last = sheet.getLastRow();
+    var data = last >= 2 ? sheet.getRange(2, 1, last - 1, ISSUE_HEADERS.length).getValues() : [];
+
+    // Lập chỉ mục dòng mới nhất theo logical key
+    var latestByKey = {};
+    for (var r = 0; r < data.length; r++) {
+      var row = data[r];
+      var k = _issueLogicalKey_(row[col.store_code], row[col.section_key], row[col.item_id]);
+      latestByKey[k] = { rowIdx: r + 2, row: row };
+    }
+
+    var secLabels = _issueSecLabels_();
+    var sections = (checklistObj && checklistObj.sections) || {};
+    var now = new Date();
+    var appended = [];
+
+    for (var secKey in sections) {
+      var sec = sections[secKey];
+      if (!sec || !sec.items) continue;
+      sec.items.forEach(function(item) {
+        if (item.eval !== "Không đạt") return;
+        var key = _issueLogicalKey_(storeCode, secKey, item.id);
+        var existing = latestByKey[key];
+        var severity = item.severity || (SERIOUS_ITEMS.indexOf(item.id) >= 0 ? "Nghiêm trọng" : "Trung bình");
+        var sla = ISSUE_SLA_DAYS[severity] || 7;
+        var due = new Date(now.getTime() + sla * 24 * 3600 * 1000);
+
+        if (existing && ISSUE_OPEN_STATES.indexOf(String(existing.row[col.status])) >= 0) {
+          // Vẫn đang mở → refresh mô tả + last_updated (giữ nguyên created/due/status)
+          sheet.getRange(existing.rowIdx, col.description + 1).setValue(item.note || "");
+          sheet.getRange(existing.rowIdx, col.last_updated + 1).setValue(now);
+          if (item.photo_before) sheet.getRange(existing.rowIdx, col.photo_before + 1).setValue(item.photo_before);
+        } else {
+          // Chưa có, hoặc đã đóng trước đó (tái phát) → tạo dòng Open mới
+          var repeat = existing ? (Number(existing.row[col.repeat_count]) || 0) + 1 : 0;
+          var newRow = new Array(ISSUE_HEADERS.length).fill("");
+          newRow[col.issue_id] = key + "|" + now.getTime();
+          newRow[col.store_code] = storeCode;
+          newRow[col.store_name] = storeName || "";
+          newRow[col.asm_name] = asmName || "";
+          newRow[col.section_key] = secKey;
+          newRow[col.section_label] = secLabels[secKey] || secKey;
+          newRow[col.item_id] = item.id;
+          newRow[col.item_label] = item.label || "";
+          newRow[col.description] = item.note || "";
+          newRow[col.severity] = severity;
+          newRow[col.assignee] = item.assignee || "CHT";
+          newRow[col.created_date] = now;
+          newRow[col.due_date] = due;
+          newRow[col.status] = "Open";
+          newRow[col.escalation_level] = 0;
+          newRow[col.repeat_count] = repeat;
+          newRow[col.photo_before] = item.photo_before || "";
+          newRow[col.source_submission_id] = submissionId;
+          newRow[col.last_updated] = now;
+          appended.push(newRow);
+        }
+      });
+    }
+    if (appended.length > 0) {
+      sheet.getRange(sheet.getLastRow() + 1, 1, appended.length, ISSUE_HEADERS.length).setValues(appended);
+    }
+    return { success: true, created: appended.length };
+  } catch (e) {
+    console.warn("syncIssuesFromSubmission_ lỗi: " + e.toString());
+    return { success: false, error: e.toString() };
+  }
+}
+
+function _issueSecLabels_() {
+  return {
+    "frontage": "Mặt tiền", "inner": "Không gian trong",
+    "merch_ap": "Trưng bày An Phước", "merch_pie": "Trưng bày Pierre Cardin",
+    "merch_anamai": "Trưng bày Anamai", "merch_bonjour": "Trưng bày Bonjour",
+    "merch_pk": "Phụ kiện", "stockroom": "Kho hàng", "fitting_room": "Phòng thử đồ",
+    "toilet": "Nhà vệ sinh", "fire_safety": "PCCC & Thoát hiểm", "cashier": "Thu ngân",
+    "packaging_security": "Bao bì & An ninh", "staff": "Nhân sự", "security_guard": "Bảo vệ"
+  };
+}
+
+// Trả về issue chưa đóng của 1 store (carry-over sang lần kiểm tra sau).
+function getStoreOpenIssues(storeCode) {
+  try {
+    var sheet = _getIssuesSheet_();
+    var col = _issueColMap_(sheet);
+    var last = sheet.getLastRow();
+    if (last < 2) return { success: true, issues: [] };
+    var data = sheet.getRange(2, 1, last - 1, ISSUE_HEADERS.length).getValues();
+    var now = new Date();
+    var out = [];
+    for (var r = 0; r < data.length; r++) {
+      var row = data[r];
+      if (String(row[col.store_code]).trim() !== String(storeCode).trim()) continue;
+      var status = String(row[col.status]);
+      if (ISSUE_OPEN_STATES.indexOf(status) < 0) continue;
+      var created = row[col.created_date] ? new Date(row[col.created_date]) : now;
+      var due = row[col.due_date] ? new Date(row[col.due_date]) : now;
+      var aging = _daysBetween_(created, now);
+      var overdue = (status !== "Resolved") && (now.getTime() > due.getTime());
+      out.push({
+        issue_id: row[col.issue_id], section_key: row[col.section_key],
+        section_label: row[col.section_label], item_id: row[col.item_id],
+        item_label: row[col.item_label], description: row[col.description],
+        severity: row[col.severity], assignee: row[col.assignee],
+        status: status, aging_days: aging, overdue: overdue,
+        due_date: row[col.due_date], repeat_count: row[col.repeat_count],
+        photo_before: row[col.photo_before], escalation_level: row[col.escalation_level]
+      });
+    }
+    // Nghiêm trọng + quá hạn lên đầu
+    out.sort(function(a, b) { return (b.overdue - a.overdue) || (b.aging_days - a.aging_days); });
+    return { success: true, issues: out };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function _findIssueRow_(sheet, col, issueId) {
+  var last = sheet.getLastRow();
+  if (last < 2) return -1;
+  var ids = sheet.getRange(2, col.issue_id + 1, last - 1, 1).getValues();
+  for (var r = 0; r < ids.length; r++) {
+    if (String(ids[r][0]) === String(issueId)) return r + 2;
+  }
+  return -1;
+}
+
+// CHT báo đã khắc phục (kèm ảnh after) → Resolved (chưa đóng, chờ ASM verify).
+function resolveIssueCAPA(payload) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(10000); } catch (e) { return { success: false, error: "Hệ thống đang bận." }; }
+  try {
+    var sheet = _getIssuesSheet_();
+    var col = _issueColMap_(sheet);
+    var rowIdx = _findIssueRow_(sheet, col, payload.issue_id);
+    if (rowIdx < 0) return { success: false, error: "Không tìm thấy vấn đề." };
+    var now = new Date();
+    sheet.getRange(rowIdx, col.status + 1).setValue("Resolved");
+    sheet.getRange(rowIdx, col.resolved_by + 1).setValue(payload.resolved_by || "CHT");
+    sheet.getRange(rowIdx, col.resolved_date + 1).setValue(now);
+    sheet.getRange(rowIdx, col.photo_after + 1).setValue(payload.photo_after || "");
+    sheet.getRange(rowIdx, col.resolution_note + 1).setValue(payload.note || "");
+    sheet.getRange(rowIdx, col.last_updated + 1).setValue(now);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  } finally { lock.releaseLock(); }
+}
+
+// ASM xác nhận ở lần thăm sau: pass=true → Verified→Closed; pass=false → trả về In-Progress.
+function verifyIssueCAPA(payload) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(10000); } catch (e) { return { success: false, error: "Hệ thống đang bận." }; }
+  try {
+    var sheet = _getIssuesSheet_();
+    var col = _issueColMap_(sheet);
+    var rowIdx = _findIssueRow_(sheet, col, payload.issue_id);
+    if (rowIdx < 0) return { success: false, error: "Không tìm thấy vấn đề." };
+    var now = new Date();
+    var pass = (payload.pass === true || payload.pass === "true");
+    sheet.getRange(rowIdx, col.status + 1).setValue(pass ? "Closed" : "In-Progress");
+    if (pass) {
+      sheet.getRange(rowIdx, col.verified_by + 1).setValue(payload.verified_by || "ASM");
+      sheet.getRange(rowIdx, col.verified_date + 1).setValue(now);
+    }
+    sheet.getRange(rowIdx, col.last_updated + 1).setValue(now);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  } finally { lock.releaseLock(); }
+}
+
+// Command Center: tổng hợp cho Master/ASM theo phạm vi cửa hàng.
+function getIssuesDashboard(username, role, storesAllowedStr) {
+  try {
+    var sheet = _getIssuesSheet_();
+    var col = _issueColMap_(sheet);
+    var last = sheet.getLastRow();
+    var allowed = null;
+    if (storesAllowedStr && String(storesAllowedStr).trim() && String(role).toLowerCase() !== "master") {
+      allowed = {};
+      String(storesAllowedStr).split(",").forEach(function(s) { allowed[s.trim()] = true; });
+    }
+    var now = new Date();
+    var byStore = {}, totals = { open: 0, in_progress: 0, resolved: 0, closed: 0, overdue: 0, total: 0 };
+    var repeatOffenders = {};
+    var rows = [];
+    if (last >= 2) {
+      var data = sheet.getRange(2, 1, last - 1, ISSUE_HEADERS.length).getValues();
+      for (var r = 0; r < data.length; r++) {
+        var row = data[r];
+        var sc = String(row[col.store_code]).trim();
+        if (allowed && !allowed[sc]) continue;
+        var status = String(row[col.status]);
+        var created = row[col.created_date] ? new Date(row[col.created_date]) : now;
+        var due = row[col.due_date] ? new Date(row[col.due_date]) : now;
+        var isOpen = ISSUE_OPEN_STATES.indexOf(status) >= 0;
+        var overdue = isOpen && status !== "Resolved" && now.getTime() > due.getTime();
+        totals.total++;
+        if (status === "Open") totals.open++;
+        else if (status === "In-Progress") totals.in_progress++;
+        else if (status === "Resolved") totals.resolved++;
+        else if (status === "Closed") totals.closed++;
+        if (overdue) totals.overdue++;
+        if (!byStore[sc]) byStore[sc] = { store_code: sc, store_name: row[col.store_name], open: 0, overdue: 0, closed: 0 };
+        if (isOpen) byStore[sc].open++;
+        if (overdue) byStore[sc].overdue++;
+        if (status === "Closed") byStore[sc].closed++;
+        if (Number(row[col.repeat_count]) >= 2) {
+          var rk = sc + "|" + row[col.item_id];
+          repeatOffenders[rk] = { store: sc, item: row[col.item_label], count: Number(row[col.repeat_count]) };
+        }
+        if (isOpen) {
+          rows.push({
+            issue_id: row[col.issue_id], store_code: sc, store_name: row[col.store_name],
+            section_label: row[col.section_label], item_label: row[col.item_label],
+            severity: row[col.severity], assignee: row[col.assignee], status: status,
+            aging_days: _daysBetween_(created, now), overdue: overdue, due_date: row[col.due_date]
+          });
+        }
+      }
+    }
+    rows.sort(function(a, b) { return (b.overdue - a.overdue) || (b.aging_days - a.aging_days); });
+    var storeList = Object.keys(byStore).map(function(k) { return byStore[k]; })
+                      .sort(function(a, b) { return b.overdue - a.overdue || b.open - a.open; });
+    return {
+      success: true, totals: totals, by_store: storeList,
+      open_issues: rows, repeat_offenders: Object.keys(repeatOffenders).map(function(k) { return repeatOffenders[k]; })
+    };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// Trigger chạy hằng ngày: leo thang issue quá hạn + email nhắc ASM.
+function escalateOverdueIssues() {
+  try {
+    var sheet = _getIssuesSheet_();
+    var col = _issueColMap_(sheet);
+    var last = sheet.getLastRow();
+    if (last < 2) return;
+    var data = sheet.getRange(2, 1, last - 1, ISSUE_HEADERS.length).getValues();
+    var now = new Date();
+    var byAsm = {};
+    for (var r = 0; r < data.length; r++) {
+      var row = data[r];
+      var status = String(row[col.status]);
+      if (ISSUE_OPEN_STATES.indexOf(status) < 0 || status === "Resolved") continue;
+      var due = row[col.due_date] ? new Date(row[col.due_date]) : now;
+      if (now.getTime() <= due.getTime()) continue;
+      var overdueDays = _daysBetween_(due, now);
+      // leo thang mỗi 3 ngày quá hạn
+      var newLevel = Math.min(3, Math.floor(overdueDays / 3) + 1);
+      if (newLevel > (Number(row[col.escalation_level]) || 0)) {
+        sheet.getRange(r + 2, col.escalation_level + 1).setValue(newLevel);
+        sheet.getRange(r + 2, col.last_updated + 1).setValue(now);
+      }
+      var asm = String(row[col.asm_name] || "");
+      if (!byAsm[asm]) byAsm[asm] = [];
+      byAsm[asm].push(row[col.store_name] + " — " + row[col.item_label] + " (quá hạn " + overdueDays + " ngày)");
+    }
+    for (var asmName in byAsm) {
+      var email = getAsmEmail(asmName);
+      if (!email) continue;
+      var body = "Các vấn đề tồn đọng QUÁ HẠN cần xử lý:\n\n- " + byAsm[asmName].join("\n- ") +
+                 "\n\nVui lòng đôn đốc cửa hàng khắc phục và xác nhận trên hệ thống StoreVisit.";
+      try {
+        MailApp.sendEmail(email, "[StoreVisit] Nhắc việc: vấn đề tồn đọng quá hạn", body);
+      } catch (mailErr) { console.warn("Escalation mail lỗi: " + mailErr.toString()); }
+    }
+  } catch (e) {
+    console.warn("escalateOverdueIssues lỗi: " + e.toString());
   }
 }
 

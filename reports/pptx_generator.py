@@ -10,9 +10,41 @@ from pptx.enum.shapes import MSO_SHAPE, MSO_SHAPE_TYPE
 from data.models import StoreReportData
 from .image_processor import ImageProcessor
 
+# ── DESIGN TOKENS (SSOT màu & font cho toàn bộ báo cáo) ─────────────────────────
+# Font chuẩn: Be Vietnam Pro (đã cài per-user + nên embed vào template master).
+FONT_PRIMARY = "Be Vietnam Pro"
+# Bảng màu thương hiệu An Phước — dùng tường minh, KHÔNG kế thừa màu placeholder xám.
+CLR_NAVY   = RGBColor(0x0A, 0x23, 0x42)   # tiêu đề / heading
+CLR_INK    = RGBColor(0x1A, 0x1A, 0x1A)   # body text (gần đen, rõ nét)
+CLR_MUTED  = RGBColor(0x55, 0x5F, 0x6B)   # chú thích phụ (đủ đậm, không mờ)
+CLR_OK     = RGBColor(0x1E, 0x8E, 0x3E)   # Tốt / Đạt
+CLR_WARN   = RGBColor(0xF2, 0x99, 0x00)   # cảnh báo
+CLR_ERR    = RGBColor(0xC0, 0x39, 0x2B)   # Chưa đạt / lỗi
+
+
+def _is_placeholder_gray(rgb) -> bool:
+    """True nếu màu là xám nhạt kiểu hint placeholder (cần thay bằng màu đậm).
+    Giữ nguyên các màu bão hoà (KPI, rating) và màu tối thực sự."""
+    try:
+        r, g, b = rgb[0], rgb[1], rgb[2]
+    except Exception:
+        return False
+    mx, mn = max(r, g, b), min(r, g, b)
+    is_grayish = (mx - mn) <= 28          # gần như xám (R≈G≈B)
+    luminance = 0.299 * r + 0.587 * g + 0.114 * b
+    return is_grayish and luminance >= 110  # xám sáng → coi là placeholder hint
+
+
 class PPTXGenerator:
     def __init__(self, template_path: str):
         self.template_path = template_path
+        # Narrator LLM (Gemini→Groq→Claude→rule-based); tự tắt nếu không có API key.
+        try:
+            from reports.narrator import get_narrator
+            self.narrator = get_narrator()
+        except Exception as _e:
+            self.narrator = None
+            print(f"[PPTXGenerator] Narrator không khả dụng, dùng template: {_e}")
 
     def generate_store_report(self, data: StoreReportData, output_path: str, temp_image_paths: dict):
         """
@@ -96,8 +128,20 @@ class PPTXGenerator:
                 else:
                     self._fill_text(info_slide, shape_name, "(Trống)")
 
-            # Overall comment: neutral fallback, do not copy frontage comment
-            self._fill_text(info_slide, "TXT_GENERAL_COMMENT", "Không ghi nhận nhận xét tổng quan bổ sung tại thời điểm kiểm tra.")
+            # Overall comment: "Nhận định chung của QLKD" — humanized qua narrator, grounded theo dữ liệu.
+            _general_fallback = "Không ghi nhận nhận xét tổng quan bổ sung tại thời điểm kiểm tra."
+            general_text = _general_fallback
+            try:
+                facts = self._build_exec_facts(data, c_data)
+                if facts and self.narrator is not None:
+                    general_text = self.narrator.executive_summary(
+                        facts=facts,
+                        store_name=data.metadata.store_name,
+                        fallback=_general_fallback,
+                    )
+            except Exception as _e:
+                print(f"[narrator] exec summary lỗi, dùng fallback: {_e}")
+            self._fill_text(info_slide, "TXT_GENERAL_COMMENT", general_text)
 
         # 3. STORE_FRONTAGE_PHOTOS & STORE_INNER_PHOTOS (Merging if both have no photos)
         frontage_slide = slide_map.get("STORE_FRONTAGE_PHOTOS")
@@ -177,7 +221,7 @@ class PPTXGenerator:
             
             p1 = tf_1.paragraphs[0]
             p1.text = "I. ĐÁNH GIÁ MẶT TIỀN CỬA HÀNG"
-            p1.font.name = "Inter"
+            p1.font.name = FONT_PRIMARY
             p1.font.size = Pt(14)
             p1.font.bold = True
             p1.font.color.rgb = RGBColor(12, 35, 64)
@@ -185,13 +229,13 @@ class PPTXGenerator:
             
             p1_rate = tf_1.add_paragraph()
             p1_rate.text = f"Xếp loại ngoại quan: {front_rating}"
-            p1_rate.font.name = "Inter"
+            p1_rate.font.name = FONT_PRIMARY
             p1_rate.font.size = Pt(11)
             p1_rate.font.bold = True
             p1_rate.font.color.rgb = RGBColor(220, 100, 50) if front_rating == "Chưa đạt" else RGBColor(40, 160, 80)
             p1_rate.space_after = Pt(12)
             
-            self._add_multiline_paragraphs(tf_1, front_comment, font_name="Inter", font_size=10.5, color_rgb=RGBColor(0, 0, 0))
+            self._add_multiline_paragraphs(tf_1, front_comment, font_name=FONT_PRIMARY, font_size=10.5, color_rgb=RGBColor(0, 0, 0))
             
             # Column 2: Inner
             tb_2 = frontage_slide.shapes.add_textbox(Inches(10.0), Inches(2.2), Inches(8.5), Inches(7.5))
@@ -200,7 +244,7 @@ class PPTXGenerator:
             
             p2 = tf_2.paragraphs[0]
             p2.text = "II. ĐÁNH GIÁ KHÔNG GIAN BÊN TRONG"
-            p2.font.name = "Inter"
+            p2.font.name = FONT_PRIMARY
             p2.font.size = Pt(14)
             p2.font.bold = True
             p2.font.color.rgb = RGBColor(12, 35, 64)
@@ -208,20 +252,20 @@ class PPTXGenerator:
             
             p2_rate = tf_2.add_paragraph()
             p2_rate.text = f"Xếp loại bên trong: {inner_rating}"
-            p2_rate.font.name = "Inter"
+            p2_rate.font.name = FONT_PRIMARY
             p2_rate.font.size = Pt(11)
             p2_rate.font.bold = True
             p2_rate.font.color.rgb = RGBColor(220, 100, 50) if inner_rating == "Chưa đạt" else RGBColor(40, 160, 80)
             p2_rate.space_after = Pt(12)
             
-            self._add_multiline_paragraphs(tf_2, inner_comment, font_name="Inter", font_size=10.5, color_rgb=RGBColor(0, 0, 0))
+            self._add_multiline_paragraphs(tf_2, inner_comment, font_name=FONT_PRIMARY, font_size=10.5, color_rgb=RGBColor(0, 0, 0))
             
             # Rename slide main header title
             for s in frontage_slide.shapes:
                 if s.has_text_frame and ("MẶT TIỀN" in s.text_frame.text or "NGOẠI QUAN" in s.text_frame.text):
                     s.text_frame.text = "2.1. ĐÁNH GIÁ MẶT TIỀN & BÊN TRONG CỬA HÀNG"
                     if s.text_frame.paragraphs and s.text_frame.paragraphs[0].runs:
-                        s.text_frame.paragraphs[0].runs[0].font.name = "Inter"
+                        s.text_frame.paragraphs[0].runs[0].font.name = FONT_PRIMARY
                         s.text_frame.paragraphs[0].runs[0].font.bold = True
             
             # Delete inner slide
@@ -463,7 +507,7 @@ class PPTXGenerator:
                             label_stock.width = new_width
                             label_stock.text_frame.text = "Ảnh kho/phòng thử"
                             if label_stock.text_frame.paragraphs and label_stock.text_frame.paragraphs[0].runs:
-                                label_stock.text_frame.paragraphs[0].runs[0].font.name = "Inter"
+                                label_stock.text_frame.paragraphs[0].runs[0].font.name = FONT_PRIMARY
                                 
                         self._fill_image_slot(stock_cashier_slide, "PIC_STOCKROOM", "TXT_STOCKROOM_IMAGE_PLACEHOLDER", img_path)
                     else:
@@ -784,7 +828,7 @@ class PPTXGenerator:
                                 # Add question run
                                 run_q = p.add_run()
                                 run_q.text = f"{q_key}. {q_text}: "
-                                run_q.font.name = "Inter"
+                                run_q.font.name = FONT_PRIMARY
                                 run_q.font.size = Pt(8.5)
                                 run_q.font.bold = True
                                 run_q.font.color.rgb = RGBColor(10, 35, 66)
@@ -798,7 +842,7 @@ class PPTXGenerator:
                                 if not ans_str or ans_str == "[object Object]" or ans_str.lower() in ["none", "nan", "null"]:
                                     ans_str = "Chưa trả lời"
                                 run_a.text = ans_str
-                                run_a.font.name = "Inter"
+                                run_a.font.name = FONT_PRIMARY
                                 run_a.font.size = Pt(8.5)
                                 run_a.font.italic = True
                                 run_a.font.color.rgb = RGBColor(0, 128, 128)
@@ -946,7 +990,7 @@ class PPTXGenerator:
                     
                     p_title = tf.paragraphs[0]
                     p_title.text = titles[idx]
-                    p_title.font.name = "Inter"
+                    p_title.font.name = FONT_PRIMARY
                     p_title.font.size = Pt(10)
                     p_title.font.bold = True
                     p_title.font.color.rgb = RGBColor(12, 35, 64)
@@ -954,7 +998,7 @@ class PPTXGenerator:
                     
                     p_content = tf.add_paragraph()
                     p_content.text = contents[idx]
-                    p_content.font.name = "Inter"
+                    p_content.font.name = FONT_PRIMARY
                     p_content.font.size = Pt(8.5)
                     p_content.font.color.rgb = RGBColor(0, 0, 0)
             else:
@@ -1181,9 +1225,45 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
         # Clean up unused placeholder shapes and overlay texts from remaining slides
         self._cleanup_unused_placeholders(prs)
 
+        # Chuẩn hoá font toàn bộ về Be Vietnam Pro (diệt font lạ như Abadi/Inter còn sót
+        # ở text tĩnh của template) → hết tình trạng "font không đều".
+        self._normalize_fonts(prs)
+
         # Save presentation
         prs.save(output_path)
         print(f"Generated individual store report: {output_path}")
+
+    # Font ký hiệu/icon — KHÔNG đổi (giữ nguyên để không vỡ icon).
+    _SYMBOL_FONTS = ("wingding", "webding", "symbol", "segoe mdl", "segoe fluent",
+                     "material", "font awesome", "glyphicon")
+
+    def _normalize_fonts(self, prs):
+        """Đặt mọi run text về FONT_PRIMARY, trừ font ký hiệu. Bao gồm cả bảng & group shapes."""
+        def _fix_tf(tf):
+            for p in tf.paragraphs:
+                for r in p.runs:
+                    fn = (r.font.name or "").lower()
+                    if fn and any(sym in fn for sym in self._SYMBOL_FONTS):
+                        continue
+                    r.font.name = FONT_PRIMARY
+
+        def _walk(shapes):
+            for sh in shapes:
+                try:
+                    if sh.shape_type == MSO_SHAPE_TYPE.GROUP:
+                        _walk(sh.shapes)
+                        continue
+                except Exception:
+                    pass
+                if getattr(sh, "has_text_frame", False) and sh.has_text_frame:
+                    _fix_tf(sh.text_frame)
+                if getattr(sh, "has_table", False) and sh.has_table:
+                    for row in sh.table.rows:
+                        for cell in row.cells:
+                            _fix_tf(cell.text_frame)
+
+        for slide in prs.slides:
+            _walk(slide.shapes)
 
     def _get_slide_id(self, slide) -> str:
         for shape in slide.shapes:
@@ -1316,20 +1396,20 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
         for shape in slide.shapes:
             if shape.name == shape_name and shape.has_text_frame:
                 # 1. Detect original style from template
-                font_name = "Inter"
+                font_name = FONT_PRIMARY
                 template_font_size = None
-                text_color = RGBColor(0, 0, 0)
-                
+                text_color = CLR_INK
+
                 if shape.text_frame.paragraphs and shape.text_frame.paragraphs[0].runs:
                     run = shape.text_frame.paragraphs[0].runs[0]
-                    if run.font.name:
-                        font_name = run.font.name
+                    # Font: luôn chuẩn hoá về FONT_PRIMARY để hết tình trạng font không đều.
                     if run.font.size:
                         template_font_size = run.font.size.pt
                     try:
-                        if run.font.color and run.font.color.rgb:
+                        # Chỉ kế thừa màu template nếu KHÔNG phải xám placeholder mờ.
+                        if run.font.color and run.font.color.rgb and not _is_placeholder_gray(run.font.color.rgb):
                             text_color = run.font.color.rgb
-                    except AttributeError:
+                    except (AttributeError, TypeError):
                         pass
                 
                 # Use template font size if caller passed the default 14
@@ -1389,7 +1469,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
                 txt = shape.text_frame.text.strip()
                 if shape.name == name_or_prefix or txt.startswith(name_or_prefix):
                     # 1. Detect original style
-                    font_name = "Inter"
+                    font_name = FONT_PRIMARY
                     template_font_size = None
                     text_color = RGBColor(0, 0, 0)
                     
@@ -1446,7 +1526,68 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
                         p.font.color.rgb = text_color
                     return
 
-    def _add_multiline_paragraphs(self, tf, text: str, font_name: str = "Inter", font_size: float = 10.5, color_rgb = RGBColor(0, 0, 0), bold: bool = False):
+    def _build_exec_facts(self, data, c_data) -> list:
+        """Thu thập các dữ kiện CÓ THẬT từ báo cáo để làm nguyên liệu cho narrator.
+        Chỉ đưa vào dữ liệu tồn tại — không suy diễn, không bịa."""
+        facts = []
+        # 1. Doanh thu
+        try:
+            rev = data.revenue
+            if rev and (rev.revenue_actual or rev.revenue_target):
+                s = f"Doanh thu thực hiện {rev.revenue_actual:,.0f} VNĐ"
+                if rev.attainment_pct:
+                    s += f", đạt {rev.attainment_pct:.0f}% chỉ tiêu"
+                if getattr(rev, 'yoy_change_pct', 0):
+                    _d = rev.yoy_change_pct
+                    s += f", {'tăng' if _d >= 0 else 'giảm'} {abs(_d):.0f}% so với cùng kỳ năm trước"
+                facts.append(s + ".")
+        except Exception:
+            pass
+        # 2. Đánh giá các hạng mục (từ form_response)
+        try:
+            fr = data.form_response
+            if fr:
+                rating_map = [
+                    ("Mặt tiền", getattr(fr, 'rating_frontage', '')),
+                    ("Không gian trong", getattr(fr, 'rating_inner', '')),
+                    ("Trưng bày hàng hoá", getattr(fr, 'rating_merch', '')),
+                    ("Nhân sự", getattr(fr, 'rating_staff', '')),
+                    ("Cơ sở vật chất", getattr(fr, 'rating_csvc', '')),
+                ]
+                good = [n for n, r in rating_map if r == "Tốt"]
+                weak = [n for n, r in rating_map if r == "Chưa đạt"]
+                if good:
+                    facts.append("Các hạng mục đạt tốt: " + ", ".join(good) + ".")
+                if weak:
+                    facts.append("Các hạng mục CHƯA đạt cần khắc phục: " + ", ".join(weak) + ".")
+        except Exception:
+            pass
+        # 3. Các lỗi cụ thể (Không đạt) từ checklist_json
+        try:
+            sections = (c_data or {}).get("sections", {})
+            fails = []
+            for sec in sections.values():
+                for item in (sec.get("items") or []):
+                    if item.get("eval") == "Không đạt":
+                        lbl = item.get("label", "").strip()
+                        note = (item.get("note") or "").strip()
+                        if lbl:
+                            fails.append(lbl + (f" ({note})" if note else ""))
+            for f in fails[:6]:
+                facts.append("Lỗi ghi nhận: " + f + ".")
+        except Exception:
+            pass
+        # 4. Tồn kho
+        try:
+            st = data.stock
+            if st and st.total_qty:
+                facts.append(f"Tổng tồn kho {st.total_qty:,} sản phẩm "
+                             f"(nguyên giá {st.qty_nguyen_gia:,}, sale {st.qty_sale:,}, thanh lý {st.qty_thanh_ly:,}).")
+        except Exception:
+            pass
+        return facts
+
+    def _add_multiline_paragraphs(self, tf, text: str, font_name: str = FONT_PRIMARY, font_size: float = 10.5, color_rgb = RGBColor(0, 0, 0), bold: bool = False):
         """Helper to append multiple paragraphs for multi-line text, styling each paragraph individually."""
         lines = str(text).split("\n")
         # Enable word wrap and narrow margins
@@ -1537,7 +1678,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
                 p.alignment = PP_ALIGN.CENTER
                 if p.runs:
                     run = p.runs[0]
-                    run.font.name = "Inter"
+                    run.font.name = FONT_PRIMARY
                     run.font.size = Pt(12)
                     run.font.color.rgb = RGBColor(0, 0, 0)
                 txt_shape.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
@@ -1599,7 +1740,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
                         p.alignment = PP_ALIGN.CENTER
                         if p.runs:
                             run = p.runs[0]
-                            run.font.name = "Inter"
+                            run.font.name = FONT_PRIMARY
                             run.font.size = Pt(12)
                             run.font.color.rgb = RGBColor(0, 0, 0)
                         txt_s.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
@@ -1769,7 +1910,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
                 p.alignment = PP_ALIGN.LEFT
                 if p.runs:
                     run = p.runs[0]
-                    run.font.name = "Inter"
+                    run.font.name = FONT_PRIMARY
                     run.font.size = Pt(9)
                     run.font.bold = True
                     run.font.color.rgb = RGBColor(0, 0, 0)
@@ -1883,7 +2024,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
             else:
                 p = tf.add_paragraph()
             p.text = line
-            p.font.name = "Inter"
+            p.font.name = FONT_PRIMARY
             p.font.size = Pt(font_size)
             p.font.bold = bold
             p.font.color.rgb = color
@@ -1902,7 +2043,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
     def _set_cell_text_preserve_format(self, cell, text):
         """Write text to cell, preserving font name, size, bold, color, and paragraph alignment from cell's first run."""
         text = str(text)
-        font_name = "Inter"
+        font_name = FONT_PRIMARY
         font_size = Pt(11)
         bold = False
         color = RGBColor(0, 0, 0)
@@ -2018,7 +2159,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
             img_shape.text = "Ảnh sản phẩm\n(Tỷ lệ 1:1)"
             p_img = img_shape.text_frame.paragraphs[0]
             p_img.alignment = PP_ALIGN.CENTER
-            p_img.font.name = "Inter"
+            p_img.font.name = FONT_PRIMARY
             p_img.font.size = Pt(9)
             p_img.font.color.rgb = RGBColor(0, 0, 0)
             img_shape.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
@@ -2037,7 +2178,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
             # Row 1: STT and SKU
             p1 = tf.paragraphs[0]
             p1.text = f"STT {item.rank}. SKU: {item.sku}"
-            p1.font.name = "Inter"
+            p1.font.name = FONT_PRIMARY
             p1.font.size = Pt(9.5)
             p1.font.bold = True
             p1.font.color.rgb = RGBColor(10, 35, 66)
@@ -2046,7 +2187,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
             # Row 2: Product Name
             p2 = tf.add_paragraph()
             p2.text = item.product_name
-            p2.font.name = "Inter"
+            p2.font.name = FONT_PRIMARY
             p2.font.size = Pt(9)
             p2.font.color.rgb = RGBColor(0, 0, 0)
             p2.space_after = Pt(2)
@@ -2057,7 +2198,7 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
                 p3.text = f"Hiệu: {item.brand}\nBán: {item.sales_4w:,.0f} | Tồn: {item.stock_qty:,.0f}"
             else:
                 p3.text = f"Hiệu: {item.brand}\nTồn: {item.stock_qty:,.0f} | Tuổi: {item.age_days} ngày"
-            p3.font.name = "Inter"
+            p3.font.name = FONT_PRIMARY
             p3.font.size = Pt(8.5)
             p3.font.bold = True
             p3.font.color.rgb = RGBColor(0, 0, 0)
