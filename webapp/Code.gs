@@ -2444,7 +2444,9 @@ function _getAsmRoster_() {
     var row = data[i];
     var role = String(row[rIdx] || "").trim().toLowerCase();
     var uname = String(row[uIdx] || "").trim().toLowerCase();
+    var acctStatus = String(row[stIdx] || "Active").trim().toLowerCase();
     if (role === "master" || role === "admin" || uname === "khac") continue;
+    if (acctStatus !== "active") continue; // loại tài khoản test/khóa (Inactive) — tránh chiếm nhầm quyền sở hữu cửa hàng của ASM thật
     var storesStr = String(row[sIdx] || "").trim();
     if (!storesStr || storesStr === "ALL") continue;
     var storeList = storesStr.split(",").map(function(s) { return s.trim().toUpperCase(); }).filter(Boolean);
