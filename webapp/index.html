@@ -8187,26 +8187,31 @@
       }
     }
     
-    // Auto-select ASM Name in Form if matching
+    // Auto-select ASM Name in Form if matching.
+    // Fix 29-07: user.fullName luôn có tiền tố "ASM " (vd "ASM Dũng") trong khi option
+    // value trong dropdown là tên ngắn ("Dũng") lấy từ sheet StoreMapping — so sánh cũ
+    // `optionValue.includes(fullName)` là NGƯỢC chiều nên KHÔNG BAO GIỜ khớp, luôn rơi
+    // vào nhánh "not found" tạo ra 1 option rác "ASM Dũng" không tồn tại trong
+    // storeData.mapping_by_asm → updateStoreList() trả về 0 cửa hàng cho MỌI ASM đăng
+    // nhập. Sửa: bỏ tiền tố ASM/QLKD trước khi so khớp 2 chiều, và không tạo option rác.
     const asmSelect = document.getElementById("asmName");
     if (asmSelect && user.fullName) {
+      const normalizedFull = user.fullName.replace(/^(ASM|QLKD)\s+/i, '').trim().toLowerCase();
       let found = false;
       for (let i = 0; i < asmSelect.options.length; i++) {
-        if (asmSelect.options[i].value.toLowerCase().includes(user.fullName.toLowerCase())) {
+        const optVal = asmSelect.options[i].value.trim().toLowerCase();
+        if (!optVal) continue;
+        if (optVal === normalizedFull || normalizedFull.includes(optVal) || optVal.includes(normalizedFull)) {
           asmSelect.selectedIndex = i;
           found = true;
           break;
         }
       }
-      if (!found) {
-        const opt = document.createElement("option");
-        opt.value = user.fullName;
-        opt.textContent = user.fullName;
-        opt.selected = true;
-        asmSelect.appendChild(opt);
+      if (found && typeof updateStoreList === 'function') {
+        updateStoreList();
       }
     }
-    
+
     filterStoreOptionsForUser();
   }
 
