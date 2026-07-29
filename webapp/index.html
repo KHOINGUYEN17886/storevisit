@@ -4399,7 +4399,16 @@
         // Update input values in UI
         const naInput = document.getElementById(`na_reason_${item.id}`);
         if (naInput) naInput.value = item.na_reason;
-        
+
+        // Xoá sạch input lỗi cũ trong DOM khi ép item về N/A — tránh giá trị còn sót
+        // trong ô ẩn bị syncAllChecklistDetailsToState() đọc nhầm lúc submit sau này.
+        if (!isPresent) {
+          if (document.getElementById(`fail_note_${item.id}`)) document.getElementById(`fail_note_${item.id}`).value = "";
+          if (document.getElementById(`fail_severity_${item.id}`)) document.getElementById(`fail_severity_${item.id}`).value = item.severity;
+          if (document.getElementById(`fail_assignee_${item.id}`)) document.getElementById(`fail_assignee_${item.id}`).value = item.assignee;
+          if (document.getElementById(`fail_deadline_${item.id}`)) document.getElementById(`fail_deadline_${item.id}`).value = "";
+        }
+
         // Hide/show details containers
         if (item.eval === "Không đạt") {
           toggleContainerInputs(`fail_details_${item.id}`, true, isPresent);
@@ -4545,6 +4554,13 @@
       // đọc lại input rỗng và GHI ĐÈ na_reason đã set ở trên (bug LotteMart Q7 29-07).
       var naInput = document.getElementById('na_reason_' + item.id);
       if (naInput) naInput.value = item.na_reason;
+
+      if (!isApplicable) {
+        if (document.getElementById('fail_note_' + item.id)) document.getElementById('fail_note_' + item.id).value = "";
+        if (document.getElementById('fail_severity_' + item.id)) document.getElementById('fail_severity_' + item.id).value = item.severity;
+        if (document.getElementById('fail_assignee_' + item.id)) document.getElementById('fail_assignee_' + item.id).value = item.assignee;
+        if (document.getElementById('fail_deadline_' + item.id)) document.getElementById('fail_deadline_' + item.id).value = "";
+      }
 
       if (item.eval === "Không đạt") {
         toggleContainerInputs('fail_details_' + item.id, true, isApplicable);
@@ -7563,9 +7579,61 @@
               setSecurityGuardApplicable(_editProfile ? !!_editProfile.has_guard : true);
             } catch (eGuard3) { /* bỏ qua */ }
           }
+
+          // Fix 29-07: populateFormForEdit trước đây KHÔNG đồng bộ formData.sections
+          // ngược ra DOM (segmented buttons, na_reason, fail_note/severity/assignee/
+          // deadline) như loadDraft() đã làm đúng — khiến sửa lại báo cáo cũ có mục
+          // "Không đạt"/"Không áp dụng" bị syncAllChecklistDetailsToState() ghi đè
+          // bằng giá trị rỗng lúc submit (báo lỗi sai hoặc mất dữ liệu note/hạn xử lý).
+          var _ffeKeys = Object.keys(formData.sections);
+          for (var _ffeI = 0; _ffeI < _ffeKeys.length; _ffeI++) {
+            var _ffeSecKey = _ffeKeys[_ffeI], _ffeSecVal = formData.sections[_ffeKeys[_ffeI]];
+            _ffeSecVal.items.forEach(function(item) {
+              var segmented = document.getElementById('segmented_' + item.id);
+              if (!segmented) return;
+              segmented.querySelectorAll('.segment-btn').forEach(function(b) {
+                b.classList.remove('active');
+                if (b.getAttribute('data-value') === item.eval) b.classList.add('active');
+              });
+
+              if (document.getElementById('fail_note_' + item.id)) document.getElementById('fail_note_' + item.id).value = item.note || '';
+              if (document.getElementById('fail_resolved_' + item.id)) document.getElementById('fail_resolved_' + item.id).value = item.resolved || '';
+              if (document.getElementById('fail_severity_' + item.id)) document.getElementById('fail_severity_' + item.id).value = item.severity || '';
+              if (document.getElementById('fail_assignee_' + item.id)) document.getElementById('fail_assignee_' + item.id).value = item.assignee || '';
+              if (document.getElementById('fail_deadline_' + item.id)) document.getElementById('fail_deadline_' + item.id).value = item.deadline || '';
+              if (document.getElementById('na_reason_' + item.id)) document.getElementById('na_reason_' + item.id).value = item.na_reason || '';
+
+              if (item.eval === "Không đạt") {
+                toggleContainerInputs('fail_details_' + item.id, true, true);
+                toggleContainerInputs('na_details_' + item.id, false, false);
+                if (typeof toggleResolvedFields === 'function') toggleResolvedFields(item.id);
+              } else if (item.eval === "Không áp dụng") {
+                toggleContainerInputs('fail_details_' + item.id, false, false);
+                toggleContainerInputs('na_details_' + item.id, true, true);
+              } else {
+                toggleContainerInputs('fail_details_' + item.id, false, false);
+                toggleContainerInputs('na_details_' + item.id, false, false);
+              }
+            });
+            if (typeof recalculateSection === 'function') recalculateSection(_ffeSecKey);
+          }
+          if (typeof recalculateAllOverallRatings === 'function') recalculateAllOverallRatings();
         }
         if (checklist.general_photos) {
           Object.assign(generalPhotos, checklist.general_photos);
+          // Fix 29-07: khôi phục checkbox N/A + ô lý do cho ảnh tổng quan (trước đây
+          // cũng bị bỏ sót như checklist items — xem ghi chú ở nhánh checklist.sections).
+          for (var _ffeSlot in generalPhotos) {
+            if (_ffeSlot.endsWith('_na') || _ffeSlot.endsWith('_na_reason')) continue;
+            var _ffeNaVal = generalPhotos[_ffeSlot + '_na'];
+            if (_ffeNaVal) {
+              var _ffeChk = document.getElementById('na_gphoto_' + _ffeSlot);
+              if (_ffeChk) _ffeChk.checked = true;
+              if (typeof toggleGeneralPhotoNA === 'function') toggleGeneralPhotoNA(_ffeSlot);
+              var _ffeReasonInput = document.getElementById('na_reason_' + _ffeSlot);
+              if (_ffeReasonInput) _ffeReasonInput.value = generalPhotos[_ffeSlot + '_na_reason'] || '';
+            }
+          }
         }
         if (checklist.competitor) {
           Object.assign(competitorPhotos, checklist.competitor);
