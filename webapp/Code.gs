@@ -2442,18 +2442,21 @@ function _getAsmRoster_() {
   var headers = data[0];
   var uIdx = headers.indexOf("username");
   var nIdx = headers.indexOf("full_name");
-  var rIdx = headers.indexOf("role");
   var sIdx = headers.indexOf("stores");
   var stIdx = headers.indexOf("status");
   var out = [];
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
-    var role = String(row[rIdx] || "").trim().toLowerCase();
     var uname = String(row[uIdx] || "").trim().toLowerCase();
     var acctStatus = String(row[stIdx] || "Active").trim().toLowerCase();
-    if (role === "master" || role === "admin" || uname === "khac") continue;
+    if (uname === "khac") continue;
     if (acctStatus !== "active") continue; // loại tài khoản test/khóa (Inactive) — tránh chiếm nhầm quyền sở hữu cửa hàng của ASM thật
     var storesStr = String(row[sIdx] || "").trim();
+    // Master/Admin THUẦN quản trị (stores="ALL", không có cửa hàng riêng) không tham gia
+    // % coverage. Nhưng Master/Admin VẪN đồng thời là ASM có cửa hàng riêng (vd Khôi quản
+    // 17 CH thật theo StoresInfo.xlsx) thì vẫn tính — role không còn là điều kiện loại trừ,
+    // chỉ "có danh sách cửa hàng thật hay không" mới quyết định (theo yêu cầu 29-07: Khôi
+    // muốn phần coverage riêng của mình như mọi ASM khác, không mất vì đang là Master).
     if (!storesStr || storesStr === "ALL") continue;
     var storeList = storesStr.split(",").map(function(s) { return s.trim().toUpperCase(); }).filter(Boolean);
     out.push({
@@ -3476,7 +3479,11 @@ function syncASMUsersFromStoresInfo(requesterUsername, storeDataList) {
       var fullName = "ASM " + asmName;
       var role = (uname === "khoi" || uname === "khoind") ? "master" : "asm";
       var regionStr = asmObj.regions.join(", ");
-      var storesStr = (uname === "khoi" || uname === "khoind") ? "ALL" : asmObj.stores.join(", ");
+      // Fix 29-07: Master (Khôi) VẪN có danh sách cửa hàng riêng thật theo StoresInfo.xlsx —
+      // trước đây ép "ALL" khiến Khôi không được tính % coverage như các ASM khác dù có
+      // đi kiểm tra cửa hàng của mình. Giữ role="master" (không đổi quyền quản trị) nhưng
+      // dùng danh sách cửa hàng thật để _getAsmRoster_() có thể tính coverage cho Khôi.
+      var storesStr = asmObj.stores.join(", ");
       
       if (existingRows[uname]) {
         // Update existing row
