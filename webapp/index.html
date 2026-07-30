@@ -1986,6 +1986,28 @@
               <tbody id="mrIssuesBody"></tbody>
             </table>
           </div>
+
+          <div class="card border mt-4 d-none no-print" id="mrStorageCard">
+            <div class="card-header-custom d-flex align-items-center justify-content-between">
+              <span><i class="bi bi-hdd-stack"></i> Dung lượng lưu trữ ảnh (Master/Admin)</span>
+              <button class="btn btn-sm btn-outline-secondary" onclick="loadStorageStats()"><i class="bi bi-arrow-clockwise"></i> Kiểm tra dung lượng</button>
+            </div>
+            <div class="card-body">
+              <div id="mrStorageLoading" class="text-muted small d-none"><span class="spinner-border spinner-border-sm me-2"></span>Đang duyệt thư mục ảnh — có thể mất chút thời gian...</div>
+              <div id="mrStorageResult" class="d-none">
+                <div class="row g-2 mb-2">
+                  <div class="col-6 col-md-3"><div class="card border text-center py-2"><div class="fs-5 fw-bold" id="mrStorageTotalFiles">0</div><div class="small text-muted">Tổng số ảnh</div></div></div>
+                  <div class="col-6 col-md-3"><div class="card border text-center py-2"><div class="fs-5 fw-bold" id="mrStorageTotalSize">0</div><div class="small text-muted">Dung lượng ước tính</div></div></div>
+                </div>
+                <table class="table table-sm table-borderless mb-0">
+                  <thead><tr><th>≤ 6 tháng</th><th>6–12 tháng</th><th>12–24 tháng</th><th>&gt; 24 tháng</th></tr></thead>
+                  <tbody><tr id="mrStorageBucketsRow"></tr></tbody>
+                </table>
+                <div class="alert alert-warning py-2 small d-none" id="mrStorageTruncatedNote">⚠️ Thư mục có hơn 5000 ảnh — số liệu trên chỉ tính 5000 ảnh đầu, chưa phải tổng đầy đủ.</div>
+                <div class="small text-muted">Chỉ để theo dõi — hệ thống KHÔNG tự động xóa ảnh nào. Quyết định chính sách giữ/xóa là của bạn.</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2001,10 +2023,26 @@
           <button class="btn btn-sm btn-success" onclick="printHtmlReport()"><i class="bi bi-printer"></i> In / Lưu PDF</button>
         </div>
       </div>
+      <div class="card-body">
+        <div class="row g-2 mb-3 no-print">
+          <div class="col-md-5">
+            <label class="form-label small text-muted">Chọn cửa hàng để xem báo cáo cũ:</label>
+            <select class="form-select form-select-sm" id="htmlPreviewStoreFilter" onchange="handleHtmlPreviewStoreChange()">
+              <option value="">-- Chọn cửa hàng --</option>
+            </select>
+          </div>
+          <div class="col-md-7">
+            <label class="form-label small text-muted">Chọn báo cáo (theo ngày):</label>
+            <select class="form-select form-select-sm" id="htmlPreviewReportSelect" onchange="handleHtmlPreviewReportChange()" disabled>
+              <option value="">-- Chọn cửa hàng trước --</option>
+            </select>
+          </div>
+        </div>
+      </div>
       <div class="card-body p-0">
         <div id="htmlPreviewPlaceholder" class="text-center py-5 text-muted">
           <i class="bi bi-file-earmark-text" style="font-size:3rem"></i>
-          <p class="mt-3">Chưa có báo cáo nào được tải.<br>Bấm <strong>"Tải từ Form hiện tại"</strong> hoặc chọn <strong>"Xem HTML"</strong> trong tab Lịch sử.</p>
+          <p class="mt-3">Chưa có báo cáo nào được tải.<br>Chọn cửa hàng + báo cáo ở trên, bấm <strong>"Tải từ Form hiện tại"</strong>, hoặc chọn <strong>"Xem HTML"</strong> trong tab Lịch sử.</p>
         </div>
         <div id="htmlPreviewContent" style="display:none;"></div>
       </div>
@@ -2207,6 +2245,7 @@
     ScriptRunMock.prototype.getIssuesDashboard = function() { this._call("getIssuesDashboard", arguments); };
     ScriptRunMock.prototype.getManagementReport = function() { this._call("getManagementReport", arguments); };
     ScriptRunMock.prototype.setMinVisitPct = function() { this._call("setMinVisitPct", arguments); };
+    ScriptRunMock.prototype.getStorageStats = function() { this._call("getStorageStats", arguments); };
     ScriptRunMock.prototype.getSubmissionDetail = function() { this._call("getSubmissionDetail", arguments); };
     ScriptRunMock.prototype.logClientError = function() { this._call("logClientError", arguments); };
     ScriptRunMock.prototype.loginUser = function() { this._call("loginUser", arguments); };
@@ -6810,6 +6849,7 @@
     } else if (view === 'html-preview') {
       document.getElementById('main-view-html-preview').classList.remove('d-none');
       document.getElementById('menu-htmlpreview-tab').classList.add('active');
+      initHtmlPreviewBrowser();
     } else if (view === 'users-mgmt') {
       document.getElementById('main-view-users-mgmt').classList.remove('d-none');
       document.getElementById('menu-users-tab').classList.add('active');
@@ -7195,6 +7235,7 @@
       readonlySpan.style.display = '';
       readonlySpan.textContent = res.min_visit_pct + '% (do Master/Admin quy định)';
     }
+    document.getElementById('mrStorageCard').classList.toggle('d-none', !res.is_master_view);
 
     // Bảng % hoàn thành chỉ tiêu theo ASM
     var asmRows = '';
@@ -7339,6 +7380,46 @@
       .setMinVisitPct(requester, val);
   }
 
+  function formatBytes(bytes) {
+    if (!bytes) return '0 MB';
+    var mb = bytes / (1024 * 1024);
+    if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
+    return mb.toFixed(1) + ' MB';
+  }
+
+  function loadStorageStats() {
+    var loading = document.getElementById('mrStorageLoading');
+    var result = document.getElementById('mrStorageResult');
+    loading.classList.remove('d-none');
+    result.classList.add('d-none');
+
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      loading.classList.add('d-none');
+      alert('Ứng dụng đang chạy offline / local. Không thể kiểm tra dung lượng.');
+      return;
+    }
+    var requester = currentUser ? currentUser.username : '';
+    google.script.run
+      .withSuccessHandler(function(res) {
+        loading.classList.add('d-none');
+        if (!res || !res.success) {
+          alert('Lỗi: ' + (res ? res.error : 'Không xác định'));
+          return;
+        }
+        result.classList.remove('d-none');
+        document.getElementById('mrStorageTotalFiles').textContent = res.total_files;
+        document.getElementById('mrStorageTotalSize').textContent = formatBytes(res.total_bytes);
+        document.getElementById('mrStorageBucketsRow').innerHTML =
+          '<td>' + res.buckets['0_6m'] + '</td><td>' + res.buckets['6_12m'] + '</td><td>' + res.buckets['12_24m'] + '</td><td>' + res.buckets['over_24m'] + '</td>';
+        document.getElementById('mrStorageTruncatedNote').classList.toggle('d-none', !res.truncated);
+      })
+      .withFailureHandler(function(err) {
+        loading.classList.add('d-none');
+        alert('Lỗi kết nối: ' + err.message);
+      })
+      .getStorageStats(requester);
+  }
+
   function printManagementReport() {
     document.body.classList.add('mr-print-mode');
     window.print();
@@ -7349,6 +7430,81 @@
   // HTML REPORT PREVIEW ENGINE
   // -------------------------------------------------------------
   let currentHtmlReportData = null;
+
+  // Report browser — chọn Cửa hàng + Báo cáo bất kỳ đã tồn tại để xem lại HTML
+  // (fix 30-07: trước đây tab này chỉ xem được báo cáo vừa nộp hoặc phải vòng qua
+  // Lịch Sử). Không lưu gì mới — chỉ dựng lại HTML từ dữ liệu sẵn có qua viewSubmissionAsHtml().
+  function initHtmlPreviewBrowser() {
+    if (!allHistoricalSubmissions || allHistoricalSubmissions.length === 0) {
+      if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+      var username = currentUser ? currentUser.username : '';
+      var role = currentUser ? currentUser.role : 'asm';
+      var stores = currentUser ? currentUser.stores : 'ALL';
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success) {
+            allHistoricalSubmissions = res.submissions || [];
+            populateHtmlPreviewStoreFilter();
+          }
+        })
+        .withFailureHandler(function() {})
+        .getHistoricalSubmissions(username, role, stores);
+      return;
+    }
+    populateHtmlPreviewStoreFilter();
+  }
+
+  function populateHtmlPreviewStoreFilter() {
+    var select = document.getElementById('htmlPreviewStoreFilter');
+    if (!select) return;
+    var prevVal = select.value;
+    var uniqueStores = {};
+    allHistoricalSubmissions.forEach(function(sub) {
+      if (sub.storeCode) uniqueStores[sub.storeCode] = true;
+    });
+    var codes = Object.keys(uniqueStores).sort();
+    select.innerHTML = '<option value="">-- Chọn cửa hàng --</option>';
+    codes.forEach(function(code) {
+      var opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = code;
+      select.appendChild(opt);
+    });
+    if (prevVal && uniqueStores[prevVal]) {
+      select.value = prevVal;
+      handleHtmlPreviewStoreChange();
+    }
+  }
+
+  function handleHtmlPreviewStoreChange() {
+    var storeSelect = document.getElementById('htmlPreviewStoreFilter');
+    var reportSelect = document.getElementById('htmlPreviewReportSelect');
+    var storeCode = storeSelect.value;
+
+    if (!storeCode) {
+      reportSelect.innerHTML = '<option value="">-- Chọn cửa hàng trước --</option>';
+      reportSelect.disabled = true;
+      return;
+    }
+
+    var matches = allHistoricalSubmissions.filter(function(sub) { return sub.storeCode === storeCode; });
+    reportSelect.innerHTML = '<option value="">-- Chọn báo cáo --</option>';
+    matches.forEach(function(sub) {
+      var opt = document.createElement('option');
+      opt.value = sub.rowIdx;
+      var statusText = sub.status === 'done' ? 'Đã hoàn thành' : (sub.status === 'draft' ? 'Bản nháp' : 'Đang xử lý');
+      opt.textContent = sub.reportDate + ' — ' + statusText + (sub.inspectionMode === 'cross' ? ' (Chéo)' : (sub.inspectionMode === 'opening' ? ' (Khai trương)' : ''));
+      reportSelect.appendChild(opt);
+    });
+    reportSelect.disabled = matches.length === 0;
+  }
+
+  function handleHtmlPreviewReportChange() {
+    var reportSelect = document.getElementById('htmlPreviewReportSelect');
+    var rowIdx = reportSelect.value;
+    if (!rowIdx) return;
+    viewSubmissionAsHtml(parseInt(rowIdx, 10));
+  }
 
   function loadHtmlPreviewFromForm() {
     // Collect form data snapshot

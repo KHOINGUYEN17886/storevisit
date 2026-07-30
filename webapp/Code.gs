@@ -1899,6 +1899,8 @@ function doPost(e) {
       } else {
         result = setMinVisitPct(postData.requesterUsername, postData.newPct);
       }
+    } else if (action === "getStorageStats") {
+      result = getStorageStats(Array.isArray(payload) ? payload[0] : payload);
     } else if (action === "getSubmissionDetail") {
       result = getSubmissionDetail(payload);
     } else if (action === "logClientError") {
@@ -2275,6 +2277,46 @@ function setMinVisitPct(requesterUsername, newPct) {
   try {
     PropertiesService.getScriptProperties().setProperty(MIN_VISIT_PCT_KEY, String(n));
     return { success: true, value: n };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// Bảng theo dõi dung lượng Drive (30-07) — CHỈ đọc, không xóa/sửa file nào.
+// Duyệt thư mục ảnh (StoreVisit_Photos), cộng dồn tổng số file/dung lượng, chia theo
+// mốc tuổi file để user tự quyết định chính sách giữ/xóa sau (không tự động xóa gì).
+var STORAGE_STATS_FILE_CAP = 5000; // an toàn cho giới hạn 6 phút/lần chạy Apps Script
+
+function getStorageStats(requesterUsername) {
+  if (!isUserAdminOrMaster(requesterUsername)) {
+    return { success: false, error: "Chỉ Master/Admin được xem thống kê dung lượng." };
+  }
+  try {
+    var folder = getOrCreateStorePhotosFolder();
+    var files = folder.getFiles();
+    var now = new Date();
+    var totalFiles = 0, totalBytes = 0, truncated = false;
+    var buckets = { "0_6m": 0, "6_12m": 0, "12_24m": 0, "over_24m": 0 };
+
+    while (files.hasNext()) {
+      if (totalFiles >= STORAGE_STATS_FILE_CAP) { truncated = true; break; }
+      var file = files.next();
+      totalFiles++;
+      totalBytes += file.getSize();
+      var ageMonths = (now.getTime() - file.getDateCreated().getTime()) / (30 * 24 * 3600 * 1000);
+      if (ageMonths <= 6) buckets["0_6m"]++;
+      else if (ageMonths <= 12) buckets["6_12m"]++;
+      else if (ageMonths <= 24) buckets["12_24m"]++;
+      else buckets["over_24m"]++;
+    }
+
+    return {
+      success: true,
+      total_files: totalFiles,
+      total_bytes: totalBytes,
+      buckets: buckets,
+      truncated: truncated
+    };
   } catch (e) {
     return { success: false, error: e.toString() };
   }
