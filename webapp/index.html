@@ -436,16 +436,38 @@
   </div>
 </div>
 
+<!-- RESOLVE ISSUE MODAL (Command Center) -->
+<div class="modal fade" id="resolveIssueModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-success text-white p-3">
+        <h5 class="modal-title fw-bold fs-6"><i class="bi bi-check-circle"></i> Xác nhận đã khắc phục</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="resolveIssueId">
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Ghi chú khắc phục</label>
+          <textarea class="form-control" id="resolveIssueNote" rows="3" placeholder="Mô tả những gì đã sửa..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Ảnh sau khi khắc phục (không bắt buộc)</label>
+          <input type="file" class="form-control" id="resolveIssuePhoto" accept="image/*">
+        </div>
+        <div class="alert alert-danger d-none py-2 small" id="resolveIssueError"></div>
+        <button type="button" class="btn btn-success w-100" id="resolveIssueSubmitBtn" onclick="submitResolveIssueForm()">Xác nhận hoàn thành</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container">
-  
+
   <!-- MAIN NAVIGATION MENU -->
   <div class="nav-tabs-container mb-4">
     <ul class="main-menu-pills" id="mainMenuTabs">
       <li class="main-menu-item">
         <button class="main-menu-btn active" id="menu-report-tab" onclick="switchMainMenu('new-report')" type="button"><i class="bi bi-file-earmark-plus"></i> Tạo Báo Cáo Mới</button>
-      </li>
-      <li class="main-menu-item">
-        <button class="main-menu-btn" id="menu-resolution-tab" onclick="switchMainMenu('resolution')" type="button"><i class="bi bi-wrench"></i> Khắc Phục Lỗi</button>
       </li>
       <li class="main-menu-item">
         <button class="main-menu-btn" id="menu-cc-tab" onclick="switchMainMenu('command-center')" type="button"><i class="bi bi-clipboard2-pulse"></i> Command Center</button>
@@ -1664,32 +1686,6 @@
   </form>
   </div>
 
-  <!-- VIEW 2: KHẮC PHỤC LỖI -->
-  <div id="main-view-resolution" class="main-view-section d-none">
-    <div class="card">
-      <div class="card-header-custom"><i class="bi bi-wrench"></i> Khắc phục lỗi tồn đọng tại Cửa hàng</div>
-      <div class="card-body">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <label class="form-label fw-bold">Chọn cửa hàng cần khắc phục:</label>
-            <select class="form-select" id="resolutionStoreSelect" onchange="loadResolutionIssues()">
-              <option value="">-- Chọn cửa hàng --</option>
-            </select>
-          </div>
-        </div>
-        
-        <div id="resolutionLoading" class="text-center py-4 d-none">
-          <div class="spinner-border text-primary" role="status"></div>
-          <p class="mt-2 text-muted">Đang tải danh sách lỗi...</p>
-        </div>
-        
-        <div id="resolutionContainer">
-          <div class="alert alert-secondary text-center py-4">Vui lòng chọn cửa hàng để xem danh sách lỗi cần khắc phục.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- VIEW 3: LỊCH SỬ KIỂM TRA -->
   <div id="main-view-history" class="main-view-section d-none">
     <div class="card">
@@ -2118,10 +2114,8 @@
     };
     
     ScriptRunMock.prototype.getStoreData = function() { this._call("getStoreData", arguments); };
-    ScriptRunMock.prototype.getPendingIssues = function() { this._call("getPendingIssues", arguments); };
     ScriptRunMock.prototype.getHistoricalSubmissions = function() { this._call("getHistoricalSubmissions", arguments); };
     ScriptRunMock.prototype.processForm = function() { this._call("processForm", arguments); };
-    ScriptRunMock.prototype.updateIssueResolution = function() { this._call("updateIssueResolution", arguments); };
     ScriptRunMock.prototype.uploadSubmissionImage = function() { this._call("uploadSubmissionImage", arguments); };
     ScriptRunMock.prototype.getUploadedSlots = function() { this._call("getUploadedSlots", arguments); };
     ScriptRunMock.prototype.getStoreOpenIssues = function() { this._call("getStoreOpenIssues", arguments); };
@@ -2918,7 +2912,6 @@
       // 5. Đăng ký addEventListener cho menu buttons (FALLBACK CHẮC CHẮN ngoài onclick)
       var menuMap = {
         'menu-report-tab': 'new-report',
-        'menu-resolution-tab': 'resolution',
         'menu-history-tab': 'history',
         'menu-htmlpreview-tab': 'html-preview'
       };
@@ -6673,10 +6666,6 @@
     if (view === 'new-report') {
       document.getElementById('main-view-new-report').classList.remove('d-none');
       document.getElementById('menu-report-tab').classList.add('active');
-    } else if (view === 'resolution') {
-      document.getElementById('main-view-resolution').classList.remove('d-none');
-      document.getElementById('menu-resolution-tab').classList.add('active');
-      populateResolutionStoreDropdown();
     } else if (view === 'command-center') {
       document.getElementById('main-view-command-center').classList.remove('d-none');
       document.getElementById('menu-cc-tab').classList.add('active');
@@ -6805,7 +6794,7 @@
 
         var actions = '';
         if (i.status === 'Open' || i.status === 'In-Progress') {
-          actions = '<button class="btn btn-sm btn-outline-success" onclick="promptResolveIssue(\'' + i.issue_id + '\')">Đã khắc phục</button>';
+          actions = '<button class="btn btn-sm btn-outline-success" onclick="promptResolveIssue(\'' + i.issue_id + '\', \'' + (i.item_id || '') + '\', \'' + (i.source_submission_id || '') + '\')">Đã khắc phục</button>';
         } else if (i.status === 'Resolved') {
           actions = '<button class="btn btn-sm btn-success me-1" onclick="promptVerifyIssue(\'' + i.issue_id + '\', true)">Đạt</button>' +
                      '<button class="btn btn-sm btn-outline-danger" onclick="promptVerifyIssue(\'' + i.issue_id + '\', false)">Chưa đạt</button>';
@@ -6825,21 +6814,107 @@
     document.getElementById('ccOpenIssuesBody').innerHTML = issueRows;
   }
 
-  function promptResolveIssue(issueId) {
-    var note = prompt("Ghi chú khắc phục (mô tả những gì đã sửa):", "");
-    if (note === null) return;
-    var payload = {
-      issue_id: issueId,
-      resolved_by: (currentUser && (currentUser.fullName || currentUser.username)) || 'CHT',
-      note: note
-    };
-    google.script.run
-      .withSuccessHandler(function(res) {
-        if (res && res.success) { loadIssuesDashboard(); }
-        else { alert('Lỗi: ' + (res ? res.error : 'Không xác định')); }
-      })
-      .withFailureHandler(function(err) { alert('Lỗi kết nối: ' + err.message); })
-      .resolveIssueCAPA(payload);
+  var resolveIssueItemId = null;
+  var resolveIssueSourceSubmissionId = null;
+
+  function promptResolveIssue(issueId, itemId, sourceSubmissionId) {
+    resolveIssueItemId = itemId || '';
+    resolveIssueSourceSubmissionId = sourceSubmissionId || '';
+    document.getElementById('resolveIssueId').value = issueId;
+    document.getElementById('resolveIssueNote').value = '';
+    document.getElementById('resolveIssuePhoto').value = '';
+    document.getElementById('resolveIssueError').classList.add('d-none');
+    var btn = document.getElementById('resolveIssueSubmitBtn');
+    btn.disabled = false;
+    btn.textContent = 'Xác nhận hoàn thành';
+    var modal = new bootstrap.Modal(document.getElementById('resolveIssueModal'));
+    modal.show();
+  }
+
+  function submitResolveIssueForm() {
+    var issueId = document.getElementById('resolveIssueId').value;
+    var note = document.getElementById('resolveIssueNote').value;
+    var fileInput = document.getElementById('resolveIssuePhoto');
+    var errBox = document.getElementById('resolveIssueError');
+    var btn = document.getElementById('resolveIssueSubmitBtn');
+    errBox.classList.add('d-none');
+
+    function finishResolve(photoAfter) {
+      var payload = {
+        issue_id: issueId,
+        resolved_by: (currentUser && (currentUser.fullName || currentUser.username)) || 'CHT',
+        note: note,
+        photo_after: photoAfter || ''
+      };
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.textContent = 'Xác nhận hoàn thành';
+          if (res && res.success) {
+            var modal = bootstrap.Modal.getInstance(document.getElementById('resolveIssueModal'));
+            if (modal) modal.hide();
+            loadIssuesDashboard();
+          } else {
+            errBox.textContent = 'Lỗi: ' + (res ? res.error : 'Không xác định');
+            errBox.classList.remove('d-none');
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Xác nhận hoàn thành';
+          errBox.textContent = 'Lỗi kết nối: ' + err.message;
+          errBox.classList.remove('d-none');
+        })
+        .resolveIssueCAPA(payload);
+    }
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+      finishResolve('');
+      return;
+    }
+
+    if (!resolveIssueItemId || !resolveIssueSourceSubmissionId) {
+      errBox.textContent = 'Không xác định được báo cáo gốc của vấn đề này — chỉ có thể lưu ghi chú, không đính kèm được ảnh.';
+      errBox.classList.remove('d-none');
+      finishResolve('');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang nén ảnh...';
+    compressImage(fileInput.files[0], function(base64Data) {
+      if (!base64Data) {
+        btn.disabled = false;
+        btn.textContent = 'Xác nhận hoàn thành';
+        errBox.textContent = 'Lỗi: Không thể nén hoặc đọc hình ảnh.';
+        errBox.classList.remove('d-none');
+        return;
+      }
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang tải ảnh...';
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success) {
+            finishResolve(res.fileId);
+          } else {
+            btn.disabled = false;
+            btn.textContent = 'Xác nhận hoàn thành';
+            errBox.textContent = 'Lỗi tải ảnh: ' + (res ? res.error : 'Không xác định');
+            errBox.classList.remove('d-none');
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Xác nhận hoàn thành';
+          errBox.textContent = 'Lỗi tải ảnh: ' + err.message;
+          errBox.classList.remove('d-none');
+        })
+        .uploadSubmissionImage({
+          submission_id: resolveIssueSourceSubmissionId,
+          slot: resolveIssueItemId + '_after_' + Date.now(),
+          base64: base64Data,
+          name: resolveIssueItemId + '_khacphuc_' + Date.now() + '.jpg'
+        });
+    });
   }
 
   function promptVerifyIssue(issueId, pass) {
@@ -7435,214 +7510,6 @@
     </head><body>${content.innerHTML}</body></html>`);
     printWindow.document.close();
     printWindow.onload = function() { printWindow.print(); };
-  }
-
-  function populateResolutionStoreDropdown() {
-    const select = document.getElementById('resolutionStoreSelect');
-    if (select.options.length > 1) return;
-    
-    const mainSelect = document.getElementById('storeCode');
-    if (mainSelect) {
-      for (let i = 1; i < mainSelect.options.length; i++) {
-        const opt = mainSelect.options[i];
-        const newOpt = document.createElement('option');
-        newOpt.value = opt.value;
-        newOpt.text = opt.text;
-        select.appendChild(newOpt);
-      }
-    }
-  }
-
-  let activeResolutionRowIdx = null;
-  let activeResolutionSubmissionId = null;
-  let currentResolutionItem = null;
-
-  function loadResolutionIssues() {
-    const storeCode = document.getElementById('resolutionStoreSelect').value;
-    const container = document.getElementById('resolutionContainer');
-    const loader = document.getElementById('resolutionLoading');
-    
-    if (!storeCode) {
-      container.innerHTML = '<div class="alert alert-secondary text-center py-4">Vui lòng chọn cửa hàng để xem danh sách lỗi cần khắc phục.</div>';
-      return;
-    }
-    
-    container.innerHTML = '';
-    loader.classList.remove('d-none');
-    
-    if (typeof google === 'undefined' || !google.script || !google.script.run) {
-      console.warn("loadResolutionIssues: google.script.run không khả dụng (chạy offline/local).");
-      loader.classList.add('d-none');
-      container.innerHTML = '<div class="alert alert-warning text-center">Ứng dụng đang chạy offline / local. Không thể tải danh sách lỗi.</div>';
-      return;
-    }
-
-    google.script.run
-      .withSuccessHandler(function(res) {
-        loader.classList.add('d-none');
-        if (!res.success) {
-          container.innerHTML = `<div class="alert alert-danger">Lỗi: ${res.error}</div>`;
-          return;
-        }
-        
-        if (!res.issues || res.issues.length === 0) {
-          container.innerHTML = '<div class="alert alert-success text-center py-4"><i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i><p class="mt-2 fw-bold">Tuyệt vời! Cửa hàng này không có lỗi tồn đọng chưa khắc phục.</p></div>';
-          return;
-        }
-        
-        activeResolutionRowIdx = res.rowIdx;
-        activeResolutionSubmissionId = res.submissionId;
-        
-        let html = '<div class="row g-3">';
-        res.issues.forEach(issue => {
-          html += `
-            <div class="col-12">
-              <div class="card border shadow-sm">
-                <div class="card-body p-3">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <span class="badge bg-secondary mb-2">${issue.sectionLabel}</span>
-                      <span class="badge ${issue.severity === 'Nghiêm trọng' ? 'bg-danger' : issue.severity === 'Trung bình' ? 'bg-warning text-dark' : 'bg-info text-dark'} mb-2">${issue.severity}</span>
-                      <h5 class="fw-bold mb-1">${issue.label}</h5>
-                      <p class="text-danger mb-2">Lỗi: ${issue.note}</p>
-                      <small class="text-muted d-block">Người giao: ${issue.assignee} | Hạn xử lý: ${issue.deadline}</small>
-                    </div>
-                    <button class="btn btn-primary btn-sm" onclick="showResolutionModal('${issue.sectionKey}', '${issue.id}', '${issue.label.replace(/'/g, "\\\\'")}')">Khắc phục</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-        html += '</div>';
-        container.innerHTML = html;
-      })
-      .withFailureHandler(function(err) {
-        loader.classList.add('d-none');
-        container.innerHTML = `<div class="alert alert-danger">Lỗi kết nối: ${err.message}</div>`;
-      })
-      .getPendingIssues(storeCode);
-  }
-
-  function showResolutionModal(sectionKey, itemId, itemLabel) {
-    currentResolutionItem = { sectionKey, itemId, itemLabel };
-    const container = document.getElementById('resolutionContainer');
-    const listHtml = container.innerHTML;
-    
-    container.innerHTML = `
-      <div class="card border-primary mb-4">
-        <div class="card-header bg-primary text-white py-2 fw-bold">Khắc phục tiêu chí: ${itemLabel}</div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label class="form-label fw-bold">Tải lên hình ảnh sau khắc phục (nhiều ảnh):</label>
-            <input type="file" class="form-control" id="resolutionPhotoInput" multiple accept="image/*">
-            <small class="text-muted">Chọn 1 hoặc nhiều ảnh chụp hiện trạng đã sửa lỗi.</small>
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-bold">Ghi chú khắc phục:</label>
-            <textarea class="form-control" id="resolutionNotesInput" rows="3" placeholder="Nhập chi tiết hoạt động sửa chữa..."></textarea>
-          </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-success" id="btnSubmitResolution" onclick="submitResolution()">Xác nhận hoàn thành</button>
-            <button class="btn btn-outline-secondary" onclick="cancelResolution()">Hủy bỏ</button>
-          </div>
-        </div>
-      </div>
-      <div style="opacity: 0.5; pointer-events: none;">
-        ${listHtml}
-      </div>
-    `;
-  }
-
-  function cancelResolution() {
-    loadResolutionIssues();
-  }
-
-  function submitResolution() {
-    const fileInput = document.getElementById('resolutionPhotoInput');
-    const notesInput = document.getElementById('resolutionNotesInput');
-    const btn = document.getElementById('btnSubmitResolution');
-    
-    if (fileInput.files.length === 0) {
-      alert("Vui lòng chụp/tải lên ít nhất 1 hình ảnh sau khắc phục!");
-      return;
-    }
-    
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Đang nén ảnh...';
-    
-    var files = [];
-    for (var fi = 0; fi < fileInput.files.length; fi++) { files.push(fileInput.files[fi]); }
-    const fileIds = [];
-    
-    function uploadNextFile(index) {
-      if (index >= files.length) {
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Đang cập nhật báo cáo...';
-        
-        const payload = {
-          rowIdx: activeResolutionRowIdx,
-          sectionKey: currentResolutionItem.sectionKey,
-          itemId: currentResolutionItem.itemId,
-          photoAfter: fileIds.join(","),
-          notes: notesInput.value
-        };
-        
-        google.script.run
-          .withSuccessHandler(function(res) {
-            btn.disabled = false;
-            btn.innerHTML = 'Xác nhận hoàn thành';
-            if (res.success) {
-              alert("Đã cập nhật khắc phục lỗi thành công! Báo cáo đang được xử lý chạy lại.");
-              loadResolutionIssues();
-            } else {
-              alert("Lỗi cập nhật: " + res.error);
-            }
-          })
-          .withFailureHandler(function(err) {
-            btn.disabled = false;
-            btn.innerHTML = 'Xác nhận hoàn thành';
-            alert("Lỗi kết nối: " + err.message);
-          })
-          .updateIssueResolution(payload);
-        return;
-      }
-      
-      const file = files[index];
-      btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Đang tải ảnh ${index+1}/${files.length}...`;
-      
-      compressImage(file, function(base64Data) {
-        if (!base64Data) {
-          btn.disabled = false;
-          btn.innerHTML = 'Xác nhận hoàn thành';
-          alert("Lỗi: Không thể nén hoặc đọc hình ảnh.");
-          return;
-        }
-        google.script.run
-          .withSuccessHandler(function(res) {
-            if (res && res.success) {
-              fileIds.push(res.fileId);
-              uploadNextFile(index + 1);
-            } else {
-              btn.disabled = false;
-              btn.innerHTML = 'Xác nhận hoàn thành';
-              alert("Lỗi tải ảnh: " + (res ? res.error : "Không xác định"));
-            }
-          })
-          .withFailureHandler(function(err) {
-            btn.disabled = false;
-            btn.innerHTML = 'Xác nhận hoàn thành';
-            alert("Lỗi tải ảnh: " + err.message);
-          })
-          .uploadSubmissionImage({
-            submission_id: activeResolutionSubmissionId,
-            slot: `${currentResolutionItem.itemId}_after_${index}`,
-            base64: base64Data,
-            name: `${document.getElementById('resolutionStoreSelect').value.split(" - ")[0]}_${currentResolutionItem.itemId}_after_${index}.jpg`
-          });
-      });
-    }
-    
-    uploadNextFile(0);
   }
 
   let allHistoricalSubmissions = [];

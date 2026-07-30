@@ -1795,8 +1795,6 @@ function doPost(e) {
       result = sendReportEmail(postData);
     } else if (action === "getStoreData") {
       result = getStoreData();
-    } else if (action === "getPendingIssues") {
-      result = getPendingIssues(payload);
     } else if (action === "loginUser") {
       if (Array.isArray(payload)) {
         result = loginUser(payload[0], payload[1]);
@@ -1850,8 +1848,6 @@ function doPost(e) {
       }
     } else if (action === "processForm") {
       result = processForm(payload);
-    } else if (action === "updateIssueResolution") {
-      result = updateIssueResolution(payload);
     } else if (action === "uploadSubmissionImage") {
       var postPayload = Array.isArray(payload) ? payload[0] : payload;
       result = uploadSubmissionImage(postPayload);
@@ -1900,175 +1896,6 @@ function doPost(e) {
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// -------------------------------------------------------------
-// ISSUE FOLLOW-UP & RESOLUTION (PHASE 2)
-// -------------------------------------------------------------
-function getPendingIssues(storeCode) {
-  try {
-    var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    var data = sheet.getDataRange().getValues();
-    var headers = data[0].map(function(h) { return String(h).trim(); });
-    
-    var storeCodeCol = headers.indexOf("StoreCode");
-    if (storeCodeCol === -1) storeCodeCol = headers.indexOf("Mã cửa hàng");
-    var checklistJsonCol = headers.indexOf("checklist_json");
-    var responseIdCol = headers.indexOf("submission_id");
-    if (responseIdCol === -1) responseIdCol = headers.indexOf("submissionid");
-    if (responseIdCol === -1) responseIdCol = headers.indexOf("ResponseId");
-    if (responseIdCol === -1) responseIdCol = headers.indexOf("Timestamp");
-    
-    if (storeCodeCol === -1 || checklistJsonCol === -1) {
-      return { success: false, error: "Không tìm thấy cấu trúc cột dữ liệu phù hợp." };
-    }
-    
-    var latestRowIdx = -1;
-    for (var i = data.length - 1; i >= 1; i--) {
-      if (String(data[i][storeCodeCol]).trim() === storeCode) {
-        latestRowIdx = i;
-        break;
-      }
-    }
-    
-    if (latestRowIdx === -1) {
-      return { success: true, issues: [], message: "Cửa hàng này chưa có báo cáo nào." };
-    }
-    
-    var rowData = data[latestRowIdx];
-    var jsonStr = rowData[checklistJsonCol];
-    var responseId = String(rowData[responseIdCol]);
-    
-    if (!jsonStr) {
-      return { success: true, issues: [], message: "Báo cáo gần nhất không chứa dữ liệu checklist." };
-    }
-    
-    var checklist = JSON.parse(jsonStr);
-    var sections = checklist.sections || {};
-    var pendingIssues = [];
-    
-    var secLabels = {
-      "frontage": "Mặt tiền",
-      "inner": "Không gian trong",
-      "merch_ap": "Trưng bày AP",
-      "merch_pie": "Trưng bày PIE",
-      "merch_ab": "Trưng bày AB",
-      "merch_anamai": "Trưng bày Anamai",
-      "merch_bonjour": "Trưng bày Bonjour",
-      "merch_pk": "Phụ kiện",
-      "warehouse": "Kho/Phòng thử",
-      "stockroom": "Kho hàng",
-      "fitting_room": "Phòng thử đồ",
-      "toilet": "Nhà vệ sinh",
-      "fire_safety": "PCCC & Thoát hiểm",
-      "cashier": "Thu ngân",
-      "packaging_security": "Bao bì & An ninh",
-      "staff": "Nhân sự"
-    };
-    
-    for (var secKey in sections) {
-      var sec = sections[secKey];
-      if (sec && sec.items) {
-        sec.items.forEach(function(item) {
-          if (item.eval === "Không đạt" && item.resolved !== "Có") {
-            pendingIssues.push({
-              submissionId: responseId,
-              rowIdx: latestRowIdx + 1,
-              sectionKey: secKey,
-              sectionLabel: secLabels[secKey] || secKey,
-              id: item.id,
-              label: item.label || "",
-              note: item.note || "",
-              severity: item.severity || "Trung bình",
-              assignee: item.assignee || "CHT",
-              deadline: item.deadline || "-",
-              photoBefore: item.photo_before || ""
-            });
-          }
-        });
-      }
-    }
-    
-    return { success: true, issues: pendingIssues, submissionId: responseId, rowIdx: latestRowIdx + 1 };
-  } catch (e) {
-    return { success: false, error: e.toString() };
-  }
-}
-
-function updateIssueResolution(payload) {
-  var lock = LockService.getScriptLock();
-  try {
-    lock.waitLock(10000);
-  } catch(e) {
-    return { success: false, error: "Hệ thống đang bận, vui lòng thử lại sau." };
-  }
-  
-  try {
-    var rowIdx = Number(payload.rowIdx);
-    var sectionKey = payload.sectionKey;
-    var itemId = payload.itemId;
-    var photoAfter = payload.photoAfter;
-    var notes = payload.notes || "";
-    
-    var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    var data = sheet.getDataRange().getValues();
-    var headers = data[0].map(function(h) { return String(h).trim(); });
-    
-    var checklistJsonCol = headers.indexOf("checklist_json");
-    var statusCol = headers.indexOf("Status");
-    if (statusCol === -1) {
-      statusCol = headers.length;
-      sheet.getRange(1, statusCol + 1).setValue("Status");
-    }
-    
-    if (checklistJsonCol === -1) {
-      return { success: false, error: "Không tìm thấy cột checklist_json." };
-    }
-    
-    var jsonStr = sheet.getRange(rowIdx, checklistJsonCol + 1).getValue();
-    if (!jsonStr) {
-      return { success: false, error: "Không có dữ liệu checklist tại dòng " + rowIdx };
-    }
-    
-    var checklist = JSON.parse(jsonStr);
-    var sections = checklist.sections || {};
-    var sec = sections[sectionKey];
-    if (!sec || !sec.items) {
-      return { success: false, error: "Không tìm thấy phần hoặc tiêu chí phù hợp." };
-    }
-    
-    var itemFound = false;
-    sec.items.forEach(function(item) {
-      if (item.id === itemId) {
-        item.resolved = "Có";
-        item.photo_after = photoAfter;
-        item.resolved_notes = notes;
-        item.resolved_at = new Date().toISOString();
-        itemFound = true;
-      }
-    });
-    
-    if (!itemFound) {
-      return { success: false, error: "Không tìm thấy tiêu chí " + itemId };
-    }
-    
-    sheet.getRange(rowIdx, checklistJsonCol + 1).setValue(JSON.stringify(checklist));
-    sheet.getRange(rowIdx, statusCol + 1).setValue("pending");
-    
-    // Clear history cache
-    try {
-      var cache = CacheService.getScriptCache();
-      cache.remove("historical_submissions_json");
-    } catch(e) {
-      console.warn("Failed to clear history cache: " + e.toString());
-    }
-
-    return { success: true, message: "Đã cập nhật trạng thái khắc phục thành công." };
-  } catch (e) {
-    return { success: false, error: e.toString() };
-  } finally {
-    lock.releaseLock();
   }
 }
 
@@ -2338,6 +2165,7 @@ function getIssuesDashboard(username, role, storesAllowedStr) {
           rows.push({
             issue_id: row[col.issue_id], store_code: sc, store_name: row[col.store_name],
             section_label: row[col.section_label], item_label: row[col.item_label],
+            item_id: row[col.item_id], source_submission_id: row[col.source_submission_id],
             severity: row[col.severity], assignee: row[col.assignee], status: status,
             aging_days: _daysBetween_(created, now), overdue: overdue, due_date: row[col.due_date]
           });
