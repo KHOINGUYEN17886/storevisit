@@ -437,7 +437,7 @@ function isValidUploadSlot(slot) {
   // Strip index suffix if present (e.g. frontage_main_0 -> frontage_main, A1_before_1 -> A1_before)
   var cleanSlot = slot.replace(/_\d+$/, "");
   
-  var generalWhitelist = ["frontage_main", "frontage_left", "frontage_right", "inner_entrance", "inner_left", "inner_right", "stockroom", "fitting_room", "cashier"];
+  var generalWhitelist = ["frontage_main", "frontage_left", "frontage_right", "inner_entrance", "inner_left", "inner_right", "stockroom", "fitting_room", "cashier", "opening_before", "opening_after"];
   if (generalWhitelist.includes(cleanSlot)) return true;
   
   var competitorWhitelist = ["photoComp1", "photoComp2", "photoComp3", "photoCSVC1"];
@@ -751,7 +751,7 @@ function processForm(formObject) {
     var isDraftFlag = (formObject.isDraft === "true" || formObject.isDraft === true);
     
     if (isDraftFlag) {
-      if (!formObject.modeSelect || !["own", "cross"].includes(formObject.modeSelect)) {
+      if (!formObject.modeSelect || !["own", "cross", "opening"].includes(formObject.modeSelect)) {
         formObject.modeSelect = "own";
       }
       if (!formObject.asmName) {
@@ -779,8 +779,22 @@ function processForm(formObject) {
     
     // Validate Mode Select
     if (!isDraftFlag) {
-      if (!formObject.modeSelect || !["own", "cross"].includes(formObject.modeSelect)) {
-        throw new Error("Hình thức kiểm tra không hợp lệ (chỉ chấp nhận 'own' hoặc 'cross').");
+      if (!formObject.modeSelect || !["own", "cross", "opening"].includes(formObject.modeSelect)) {
+        throw new Error("Hình thức kiểm tra không hợp lệ (chỉ chấp nhận 'own', 'cross' hoặc 'opening').");
+      }
+      if (formObject.modeSelect === "opening") {
+        if (!formObject.openingType || !["new", "reopen"].includes(formObject.openingType)) {
+          throw new Error("Loại khai trương không hợp lệ.");
+        }
+        if (!formObject.openingPhase || !["before", "day", "after"].includes(formObject.openingPhase)) {
+          throw new Error("Giai đoạn khai trương không hợp lệ.");
+        }
+        if (!formObject.openingDate || !/^\d{4}-\d{2}-\d{2}$/.test(formObject.openingDate)) {
+          throw new Error("Ngày khai trương không hợp lệ.");
+        }
+        if (!formObject.openingReadiness || !["ready", "minor_fix", "not_ready"].includes(formObject.openingReadiness)) {
+          throw new Error("Mức độ sẵn sàng khai trương không hợp lệ.");
+        }
       }
     }
     
@@ -795,9 +809,9 @@ function processForm(formObject) {
     }
     
     // Validate Region Select
-    if (!isDraftFlag && formObject.modeSelect === "cross") {
+    if (!isDraftFlag && (formObject.modeSelect === "cross" || formObject.modeSelect === "opening")) {
       if (!formObject.regionSelect || !dynamicStoreData.regions.includes(formObject.regionSelect)) {
-        throw new Error("Khu vực (Region) bắt buộc và phải hợp lệ khi chọn kiểm tra chéo.");
+        throw new Error("Khu vực (Region) bắt buộc và phải hợp lệ.");
       }
     }
     
@@ -811,7 +825,7 @@ function processForm(formObject) {
         if (!storesForAsm.includes(formObject.storeCode)) {
           throw new Error("Cửa hàng " + formObject.storeCode + " không thuộc quyền quản lý của ASM " + formObject.asmName);
         }
-      } else if (formObject.modeSelect === "cross") {
+      } else if (formObject.modeSelect === "cross" || formObject.modeSelect === "opening") {
         var storesForRegion = dynamicStoreData.mapping_by_region[formObject.regionSelect] || [];
         if (!storesForRegion.includes(formObject.storeCode)) {
           throw new Error("Cửa hàng " + formObject.storeCode + " không thuộc khu vực " + formObject.regionSelect);
@@ -1382,7 +1396,11 @@ function processForm(formObject) {
       { key: "competitor_json", defaultName: "competitor_json", aliases: ["competitorjson", "competitor_json"] },
       { key: "inspection_mode", defaultName: "inspection_mode", aliases: ["inspection_mode", "hình thức kiểm tra", "loại kiểm tra", "hinh thuc kiem tra", "loai kiem tra"] },
       { key: "inspection_region", defaultName: "inspection_region", aliases: ["inspection_region", "khu vực kiểm tra", "region kiểm tra", "khu vuc kiem tra", "region kiem tra"] },
-      
+      { key: "opening_type", defaultName: "opening_type", aliases: ["opening_type", "loai khai truong"] },
+      { key: "opening_phase", defaultName: "opening_phase", aliases: ["opening_phase", "giai doan khai truong"] },
+      { key: "opening_date", defaultName: "opening_date", aliases: ["opening_date", "ngay khai truong"] },
+      { key: "opening_readiness", defaultName: "opening_readiness", aliases: ["opening_readiness", "muc do san sang"] },
+
       { key: "status", defaultName: "Status", aliases: ["status"] },
       { key: "created_at", defaultName: "created_at", aliases: ["createdat", "created_at"] },
       { key: "updated_at", defaultName: "updated_at", aliases: ["updatedat", "updated_at"] }
@@ -1560,6 +1578,10 @@ function processForm(formObject) {
       competitor_json: JSON.stringify(competitorObj),
       inspection_mode: formObject.modeSelect,
       inspection_region: formObject.regionSelect || "",
+      opening_type: formObject.openingType || "",
+      opening_phase: formObject.openingPhase || "",
+      opening_date: formObject.openingDate || "",
+      opening_readiness: formObject.openingReadiness || "",
       status: isDraftFlag ? "draft" : "pending",
       created_at: new Date(),
       updated_at: new Date()
@@ -2348,16 +2370,19 @@ function getManagementReport(username, role, storesAllowedStr, year, month) {
     var data = sheet.getDataRange().getValues();
     var headers = data[0].map(function(h) { return String(h).trim(); });
     var col = {};
-    ["Mã cửa hàng", "Ngày kiểm tra", "QLKD/ASM", "Status",
+    ["Mã cửa hàng", "Ngày kiểm tra", "QLKD/ASM", "Status", "inspection_mode",
+     "opening_type", "opening_phase", "opening_date", "opening_readiness",
      "rating_frontage", "rating_inner", "rating_merch", "rating_staff", "rating_csvc"].forEach(function(h) {
       col[h] = headers.indexOf(h);
     });
 
-    var visitedByAsm = {};        // asm.username -> { storeCode: true }
-    var visitedByStore = {};      // storeCode -> số lượt ghé trong kỳ
+    var visitedByAsm = {};        // asm.username -> { storeCode: true } — CHỈ tính lượt inspection_mode="own"
+    var visitedByStore = {};      // storeCode -> số lượt ghé trong kỳ (mọi hình thức)
     var visitorOfStore = {};      // storeCode -> tên người ghé gần nhất (hiển thị, không dùng tính %)
-    var unattributedStores = {};  // storeCode -> true — đã ghé nhưng KHÔNG thuộc stores của bất kỳ ASM nào trong roster hiện tại (dữ liệu ASM_Users lệch/thiếu sync)
+    var unattributedStores = {};  // storeCode -> true — lượt "own" đã ghé nhưng KHÔNG thuộc stores của bất kỳ ASM nào trong roster hiện tại (dữ liệu ASM_Users lệch/thiếu sync)
     var ratingDist = { frontage: {}, inner: {}, merch: {}, staff: {}, csvc: {} };
+    var crossChecksByVisitor = {};  // tên ghi trong form (QLKD/ASM) -> số lượt kiểm tra chéo đã hỗ trợ
+    var openingsThisPeriod = [];
     var totalVisits = 0;
 
     for (var r = 1; r < data.length; r++) {
@@ -2372,23 +2397,45 @@ function getManagementReport(username, role, storesAllowedStr, year, month) {
       if (!storeCode) continue;
       if (allowedSet && !allowedSet[storeCode]) continue;
 
+      var visitMode = String(row[col["inspection_mode"]] || "own").trim().toLowerCase();
+      var visitorName = String(row[col["QLKD/ASM"]] || "").trim();
+
       totalVisits++;
       visitedByStore[storeCode] = (visitedByStore[storeCode] || 0) + 1;
-      visitorOfStore[storeCode] = String(row[col["QLKD/ASM"]] || "").trim();
+      visitorOfStore[storeCode] = visitorName;
 
-      var owner = storeOwner[storeCode];
-      if (owner) {
-        if (!visitedByAsm[owner]) visitedByAsm[owner] = {};
-        visitedByAsm[owner][storeCode] = true;
-      } else {
-        unattributedStores[storeCode] = true;
+      // Coverage % chỉ tính lượt "own" — kiểm tra chéo/khai trương KHÔNG tính là ASM chủ
+      // quản đã tự đi kiểm tra cửa hàng của mình (2 chỉ số độc lập, theo yêu cầu 30-07).
+      if (visitMode === "own") {
+        var owner = storeOwner[storeCode];
+        if (owner) {
+          if (!visitedByAsm[owner]) visitedByAsm[owner] = {};
+          visitedByAsm[owner][storeCode] = true;
+        } else {
+          unattributedStores[storeCode] = true;
+        }
+      } else if (visitMode === "cross" && visitorName) {
+        crossChecksByVisitor[visitorName] = (crossChecksByVisitor[visitorName] || 0) + 1;
       }
 
-      ["frontage", "inner", "merch", "staff", "csvc"].forEach(function(cat) {
-        var val = String(row[col["rating_" + cat]] || "").trim();
-        if (!val) return;
-        ratingDist[cat][val] = (ratingDist[cat][val] || 0) + 1;
-      });
+      if (visitMode === "opening") {
+        openingsThisPeriod.push({
+          store_code: storeCode,
+          store_name: storeCodeRaw.indexOf(" - ") >= 0 ? storeCodeRaw.split(" - ").slice(1).join(" - ").trim() : "",
+          opening_type: String(row[col["opening_type"]] || ""),
+          opening_phase: String(row[col["opening_phase"]] || ""),
+          opening_date: row[col["opening_date"]] || "",
+          opening_readiness: String(row[col["opening_readiness"]] || "")
+        });
+      } else {
+        // Xu hướng đánh giá 5 hạng mục định kỳ — loại khai trương ra khỏi biểu đồ này
+        // vì bản chất khác nhau (đánh giá độ sẵn sàng mở cửa, không phải sức khỏe vận hành).
+        ["frontage", "inner", "merch", "staff", "csvc"].forEach(function(cat) {
+          var val = String(row[col["rating_" + cat]] || "").trim();
+          if (!val) return;
+          ratingDist[cat][val] = (ratingDist[cat][val] || 0) + 1;
+        });
+      }
     }
 
     // ---- 3. % hoàn thành chỉ tiêu theo ASM (Master thấy tất cả; ASM chỉ thấy dòng của mình) ----
@@ -2464,7 +2511,11 @@ function getManagementReport(username, role, storesAllowedStr, year, month) {
       by_category: byCategoryList,
       by_severity: bySeverity,
       issues_detail: issuesDetail,
-      visitor_of_store: visitorOfStore
+      visitor_of_store: visitorOfStore,
+      cross_checks: Object.keys(crossChecksByVisitor).map(function(name) {
+        return { visitor_name: name, count: crossChecksByVisitor[name] };
+      }).sort(function(a, b) { return b.count - a.count; }),
+      openings_this_period: openingsThisPeriod
     };
   } catch (e) {
     return { success: false, error: e.toString() };
@@ -2495,7 +2546,8 @@ function getHistoricalSubmissions(username, role, storesAllowedStr) {
     if (responseIdCol === -1) responseIdCol = headers.indexOf("Timestamp");
     var statusCol = headers.indexOf("Status");
     var checklistJsonCol = headers.indexOf("checklist_json");
-    
+    var modeCol = headers.indexOf("inspection_mode");
+
     var isMaster = (role === "master");
     var allowedStores = [];
     if (!isMaster && storesAllowedStr && storesAllowedStr !== "ALL") {
@@ -2532,7 +2584,8 @@ function getHistoricalSubmissions(username, role, storesAllowedStr) {
         reportDate: dateStr,
         asmName: asmNameStr,
         status: statusCol !== -1 ? String(row[statusCol]) : "pending",
-        hasChecklist: checklistJsonCol !== -1 && String(row[checklistJsonCol]).trim().length > 0
+        hasChecklist: checklistJsonCol !== -1 && String(row[checklistJsonCol]).trim().length > 0,
+        inspectionMode: modeCol !== -1 ? String(row[modeCol] || "own") : "own"
       });
     }
     

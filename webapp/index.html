@@ -544,6 +544,7 @@
                 <option value="">-- Chọn hình thức --</option>
                 <option value="own" selected>Kiểm tra cửa hàng đang quản lý</option>
                 <option value="cross">Kiểm tra chéo (Được PKD phân công)</option>
+                <option value="opening">Khai trương (Mở mới / Tái khai trương)</option>
               </select>
             </div>
             
@@ -569,6 +570,53 @@
             </div>
 
             <div id="carryOverIssuesBanner" class="d-none"></div>
+          </div>
+        </div>
+
+        <div class="card d-none" id="openingInfoCard">
+          <div class="card-header-custom">🎉 Thông Tin Khai Trương</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Loại khai trương</label>
+              <select class="form-select" id="openingType" onchange="handleOpeningTypeChange()">
+                <option value="new">Mở mới</option>
+                <option value="reopen">Tái khai trương (sau sửa chữa/nâng cấp)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Giai đoạn kiểm tra</label>
+              <select class="form-select" id="openingPhase">
+                <option value="before">Trước khai trương</option>
+                <option value="day">Ngày khai trương</option>
+                <option value="after">Sau khai trương</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Ngày khai trương chính thức</label>
+              <input type="date" class="form-control" id="openingDate">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Mức độ sẵn sàng khai trương</label>
+              <select class="form-select" id="openingReadiness">
+                <option value="ready">Sẵn sàng</option>
+                <option value="minor_fix">Cần khắc phục nhỏ</option>
+                <option value="not_ready">Chưa sẵn sàng</option>
+              </select>
+            </div>
+            <div class="row d-none" id="openingReopenPhotosGroup">
+              <div class="col-md-6 mb-3">
+                <label class="form-label small">Ảnh trước sửa chữa</label>
+                <input type="file" class="form-control form-control-sm" multiple accept="image/*" id="gphoto_opening_before" onchange="processGeneralPhoto('opening_before', this)">
+                <div class="mt-1 small text-muted" id="preview_gphoto_opening_before">Chưa tải ảnh</div>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="clearGeneralPhoto('opening_before')">Xóa tất cả</button>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label small">Ảnh sau khi hoàn thiện</label>
+                <input type="file" class="form-control form-control-sm" multiple accept="image/*" id="gphoto_opening_after" onchange="processGeneralPhoto('opening_after', this)">
+                <div class="mt-1 small text-muted" id="preview_gphoto_opening_after">Chưa tải ảnh</div>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="clearGeneralPhoto('opening_after')">Xóa tất cả</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1745,7 +1793,19 @@
             <button class="btn btn-outline-secondary btn-sm w-100" onclick="clearHistoryFilters()"><i class="bi bi-eraser"></i></button>
           </div>
         </div>
-        
+
+        <div class="row g-2 mb-4">
+          <div class="col-md-3">
+            <label class="form-label small text-muted">Loại kiểm tra:</label>
+            <select class="form-select form-select-sm" id="historyModeFilter" onchange="filterHistory()">
+              <option value="">Tất cả loại</option>
+              <option value="own">🏪 Nội bộ</option>
+              <option value="cross">🔀 Chéo</option>
+              <option value="opening">🎉 Khai trương</option>
+            </select>
+          </div>
+        </div>
+
         <div id="historyLoading" class="text-center py-4">
           <div class="spinner-border text-primary" role="status"></div>
           <p class="mt-2 text-muted">Đang tải lịch sử...</p>
@@ -1758,6 +1818,7 @@
                 <th>Ngày</th>
                 <th>Cửa hàng</th>
                 <th>ASM</th>
+                <th>Loại</th>
                 <th>Trạng thái</th>
                 <th class="text-center">Hành động</th>
               </tr>
@@ -1858,6 +1919,7 @@
           </div>
 
           <h6 class="fw-bold mb-2"><i class="bi bi-person-check"></i> % Hoàn thành chỉ tiêu ghé thăm theo ASM</h6>
+          <p class="small text-muted">Chỉ tính lượt <strong>kiểm tra nội bộ (own)</strong> — kiểm tra chéo và khai trương không tính vào % này, xem 2 bảng riêng bên dưới.</p>
           <div class="table-responsive mb-4">
             <table class="table table-sm table-hover align-middle">
               <thead class="table-light">
@@ -1870,6 +1932,27 @@
               </thead>
               <tbody id="mrAsmBody"></tbody>
             </table>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <h6 class="fw-bold mb-2"><i class="bi bi-shuffle"></i> Hỗ trợ kiểm tra chéo trong kỳ</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                  <thead class="table-light"><tr><th>Người thực hiện</th><th class="text-center">Số lượt</th></tr></thead>
+                  <tbody id="mrCrossChecksBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold mb-2"><i class="bi bi-balloon"></i> Khai trương trong kỳ</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                  <thead class="table-light"><tr><th>Cửa hàng</th><th>Loại</th><th>Giai đoạn</th><th>Sẵn sàng</th></tr></thead>
+                  <tbody id="mrOpeningsBody"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           <div class="row g-3 mb-4">
@@ -2967,8 +3050,8 @@
     const mode = document.getElementById('modeSelect').value;
     const regionGroup = document.getElementById('regionGroup');
     const regionSelect = document.getElementById('regionSelect');
-    
-    if (mode === 'cross') {
+
+    if (mode === 'cross' || mode === 'opening') {
       regionGroup.style.display = 'block';
       regionSelect.required = true;
       regionSelect.disabled = false;
@@ -2978,7 +3061,20 @@
       regionSelect.disabled = true;
       regionSelect.value = "";
     }
+
+    const openingCard = document.getElementById('openingInfoCard');
+    if (openingCard) {
+      openingCard.classList.toggle('d-none', mode !== 'opening');
+      if (mode === 'opening') handleOpeningTypeChange();
+    }
     updateStoreList();
+  }
+
+  function handleOpeningTypeChange() {
+    const typeEl = document.getElementById('openingType');
+    const photosGroup = document.getElementById('openingReopenPhotosGroup');
+    if (!typeEl || !photosGroup) return;
+    photosGroup.classList.toggle('d-none', typeEl.value !== 'reopen');
   }
 
   function handleAsmChange() {
@@ -5086,6 +5182,7 @@
       
       const simpleFields = [
         "modeSelect", "asmName", "regionSelect", "storeCode", "reportDate", "chtName", "timeStart", "timeEnd", "nvCount",
+        "openingType", "openingPhase", "openingDate", "openingReadiness",
         "ratingFrontage", "commentFrontage", "ratingInner", "commentInner",
         "ratingMerch", "commentMerch", "ratingCSVC", "commentCSVC",
         "ratingStaff", "commentStaff", "compTraffic", "compComparison",
@@ -5110,7 +5207,7 @@
         },
         generalPhotos: (function() {
           const gp = { ...generalPhotos };
-          const slots = ["frontage_main", "frontage_left", "frontage_right", "inner_entrance", "inner_left", "inner_right", "stockroom", "fitting_room", "cashier"];
+          const slots = ["frontage_main", "frontage_left", "frontage_right", "inner_entrance", "inner_left", "inner_right", "stockroom", "fitting_room", "cashier", "opening_before", "opening_after"];
           slots.forEach(s => {
             if (gp[s]) {
               if (gp[s] === "DB_REF" || gp[s].startsWith("data:")) {
@@ -5389,7 +5486,10 @@
           if (el) el.value = simple[fid];
         }
       });
-      
+      // openingType được khôi phục ở nhánh trên (sau modeSelect) — cập nhật lại hiển thị
+      // ảnh trước/sau sửa chữa theo đúng giá trị vừa khôi phục.
+      if (typeof handleOpeningTypeChange === 'function') handleOpeningTypeChange();
+
       // Restore storeCode LAST (after store options are populated)
       if (simple.storeCode) {
         const storeEl = document.getElementById('storeCode');
@@ -5656,7 +5756,7 @@
       return;
     }
     const regionSelect = document.getElementById("regionSelect");
-    if (modeSelect.value === 'cross' && !regionSelect.value) {
+    if ((modeSelect.value === 'cross' || modeSelect.value === 'opening') && !regionSelect.value) {
       alert("Vui lòng chọn Khu vực (Region).");
       navigateToSectionAndFocus("info", "", "regionSelect");
       return;
@@ -5666,6 +5766,26 @@
       alert("Vui lòng chọn cửa hàng.");
       navigateToSectionAndFocus("info", "", "storeCode");
       return;
+    }
+    if (modeSelect.value === 'opening') {
+      const openingDateEl = document.getElementById("openingDate");
+      if (!openingDateEl.value) {
+        alert("Vui lòng nhập Ngày khai trương chính thức.");
+        navigateToSectionAndFocus("info", "", "openingDate");
+        return;
+      }
+      if (document.getElementById("openingType").value === 'reopen') {
+        if (!generalPhotos.opening_before) {
+          alert("Vui lòng tải ảnh Trước sửa chữa (bắt buộc cho tái khai trương).");
+          navigateToSectionAndFocus("info", "", "gphoto_opening_before");
+          return;
+        }
+        if (!generalPhotos.opening_after) {
+          alert("Vui lòng tải ảnh Sau khi hoàn thiện (bắt buộc cho tái khai trương).");
+          navigateToSectionAndFocus("info", "", "gphoto_opening_after");
+          return;
+        }
+      }
     }
     const reportDate = document.getElementById("reportDate");
     if (!reportDate.value) {
@@ -6211,7 +6331,11 @@
         timeStart: document.querySelector('input[name="timeStart"]').value,
         timeEnd: document.querySelector('input[name="timeEnd"]').value,
         nvCount: document.querySelector('input[name="nvCount"]').value,
-        
+        openingType: document.getElementById('modeSelect').value === 'opening' ? document.getElementById('openingType').value : '',
+        openingPhase: document.getElementById('modeSelect').value === 'opening' ? document.getElementById('openingPhase').value : '',
+        openingDate: document.getElementById('modeSelect').value === 'opening' ? document.getElementById('openingDate').value : '',
+        openingReadiness: document.getElementById('modeSelect').value === 'opening' ? document.getElementById('openingReadiness').value : '',
+
         ratingFrontage: document.getElementById('ratingFrontage').value,
         commentFrontage: document.getElementById('commentFrontage').value,
         ratingInner: document.getElementById('ratingInner').value,
@@ -6346,8 +6470,8 @@
     }
     const modeSelect = document.getElementById("modeSelect");
     const regionSelect = document.getElementById("regionSelect");
-    if (modeSelect.value === 'cross' && !regionSelect.value) {
-      alert("Vui lòng chọn Khu vực (Region) khi kiểm tra chéo trước khi lưu bản nháp.");
+    if ((modeSelect.value === 'cross' || modeSelect.value === 'opening') && !regionSelect.value) {
+      alert("Vui lòng chọn Khu vực (Region) trước khi lưu bản nháp.");
       navigateToSectionAndFocus("info", "", "regionSelect");
       return;
     }
@@ -6595,7 +6719,11 @@
         timeStart: document.querySelector('input[name="timeStart"]').value || "",
         timeEnd: document.querySelector('input[name="timeEnd"]').value || "",
         nvCount: document.querySelector('input[name="nvCount"]').value || "0",
-        
+        openingType: document.getElementById('modeSelect').value === 'opening' ? document.getElementById('openingType').value : '',
+        openingPhase: document.getElementById('modeSelect').value === 'opening' ? document.getElementById('openingPhase').value : '',
+        openingDate: document.getElementById('modeSelect').value === 'opening' ? document.getElementById('openingDate').value : '',
+        openingReadiness: document.getElementById('modeSelect').value === 'opening' ? document.getElementById('openingReadiness').value : '',
+
         ratingFrontage: document.getElementById('ratingFrontage').value || "Chưa đánh giá",
         commentFrontage: document.getElementById('commentFrontage').value || "",
         ratingInner: document.getElementById('ratingInner').value || "Chưa đánh giá",
@@ -7085,6 +7213,36 @@
       });
     }
     document.getElementById('mrAsmBody').innerHTML = asmRows;
+
+    // Bảng hỗ trợ kiểm tra chéo
+    var crossChecks = res.cross_checks || [];
+    var crossRows = crossChecks.length === 0
+      ? '<tr><td colspan="2" class="text-center text-muted py-2">Không có lượt kiểm tra chéo nào trong kỳ.</td></tr>'
+      : crossChecks.map(function(c) {
+          return '<tr><td>' + (c.visitor_name || '(không rõ)') + '</td><td class="text-center">' + c.count + '</td></tr>';
+        }).join('');
+    document.getElementById('mrCrossChecksBody').innerHTML = crossRows;
+
+    // Bảng khai trương trong kỳ
+    var openings = res.openings_this_period || [];
+    var OPENING_TYPE_LABELS = { new: 'Mở mới', reopen: 'Tái khai trương' };
+    var OPENING_PHASE_LABELS = { before: 'Trước khai trương', day: 'Ngày khai trương', after: 'Sau khai trương' };
+    var OPENING_READINESS_BADGE = {
+      ready: '<span class="badge bg-success">Sẵn sàng</span>',
+      minor_fix: '<span class="badge bg-warning text-dark">Cần khắc phục nhỏ</span>',
+      not_ready: '<span class="badge bg-danger">Chưa sẵn sàng</span>'
+    };
+    var openingRows = openings.length === 0
+      ? '<tr><td colspan="4" class="text-center text-muted py-2">Không có khai trương nào trong kỳ.</td></tr>'
+      : openings.map(function(o) {
+          return '<tr>' +
+            '<td>' + o.store_code + (o.store_name ? '<br><small class="text-muted">' + o.store_name + '</small>' : '') + '</td>' +
+            '<td>' + (OPENING_TYPE_LABELS[o.opening_type] || o.opening_type) + '</td>' +
+            '<td>' + (OPENING_PHASE_LABELS[o.opening_phase] || o.opening_phase) + '</td>' +
+            '<td>' + (OPENING_READINESS_BADGE[o.opening_readiness] || o.opening_readiness) + '</td>' +
+            '</tr>';
+        }).join('');
+    document.getElementById('mrOpeningsBody').innerHTML = openingRows;
 
     // Biểu đồ 1: đánh giá 5 hạng mục tổng (stacked bar)
     var catKeys = Object.keys(MR_CATEGORY_LABELS);
@@ -7598,11 +7756,11 @@
     const tableContainer = document.getElementById('historyTableContainer');
     
     if (submissions.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Không tìm thấy báo cáo nào phù hợp.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Không tìm thấy báo cáo nào phù hợp.</td></tr>';
       tableContainer.classList.remove('d-none');
       return;
     }
-    
+
     let html = '';
     submissions.forEach(sub => {
       let statusBadge = '';
@@ -7615,12 +7773,22 @@
       } else {
         statusBadge = `<span class="badge bg-danger">${sub.status}</span>`;
       }
-      
+
+      let modeBadge = '';
+      if (sub.inspectionMode === 'cross') {
+        modeBadge = '<span class="badge bg-info text-dark">🔀 Chéo</span>';
+      } else if (sub.inspectionMode === 'opening') {
+        modeBadge = '<span class="badge bg-warning text-dark">🎉 Khai trương</span>';
+      } else {
+        modeBadge = '<span class="badge bg-light text-dark border">🏪 Nội bộ</span>';
+      }
+
       html += `
         <tr>
           <td>${sub.reportDate}</td>
           <td><strong>${sub.storeCode}</strong><br><small class="text-muted">${sub.storeName}</small></td>
           <td>${sub.asmName}</td>
+          <td>${modeBadge}</td>
           <td>${statusBadge}</td>
           <td class="text-center">
             <button type="button" class="btn btn-outline-info btn-sm me-1" onclick="viewSubmissionAsHtml(${sub.rowIdx})"><i class="bi bi-eye"></i> Xem HTML</button>
@@ -7640,9 +7808,13 @@
     const yearVal = document.getElementById('historyYearFilter').value;
     const quarterVal = document.getElementById('historyQuarterFilter').value;
     const monthVal = document.getElementById('historyMonthFilter').value;
-    
+    const modeVal = document.getElementById('historyModeFilter').value;
+
     let filtered = allHistoricalSubmissions;
-    
+
+    if (modeVal) {
+      filtered = filtered.filter(sub => (sub.inspectionMode || 'own') === modeVal);
+    }
     if (asm) {
       filtered = filtered.filter(sub => sub.asmName === asm);
     }
@@ -7684,6 +7856,7 @@
     document.getElementById('historyYearFilter').value = '';
     document.getElementById('historyQuarterFilter').value = '';
     document.getElementById('historyMonthFilter').value = '';
+    document.getElementById('historyModeFilter').value = '';
     renderHistoryTable(allHistoricalSubmissions);
   }
 
@@ -7754,7 +7927,11 @@
       "action_deadline": "actionDeadline",
       "store_recommendation": "storeRecommendation",
       "inspection_mode": "modeSelect",
-      "inspection_region": "regionSelect"
+      "inspection_region": "regionSelect",
+      "opening_type": "openingType",
+      "opening_phase": "openingPhase",
+      "opening_date": "openingDate",
+      "opening_readiness": "openingReadiness"
     };
     
     var mappingKeys = Object.keys(fieldMapping);
@@ -7943,7 +8120,7 @@
   }
 
   function renderAllGeneralPhotosPreviews() {
-    const slots = ["frontage_main", "frontage_left", "frontage_right", "inner_entrance", "inner_left", "inner_right", "stockroom", "fitting_room", "cashier"];
+    const slots = ["frontage_main", "frontage_left", "frontage_right", "inner_entrance", "inner_left", "inner_right", "stockroom", "fitting_room", "cashier", "opening_before", "opening_after"];
     slots.forEach(slot => {
       renderGeneralPhotoPreviews(slot);
     });
