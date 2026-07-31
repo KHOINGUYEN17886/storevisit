@@ -17,7 +17,7 @@ from data.data_validator import DataValidator
 from data.source_snapshot import JobDataSnapshot
 from data.revenue_repository import RevenueRepository
 from data.inventory_repository import InventoryRepository
-from data.models import StoreReportData, StoreMetadata, StaffRoster, StaffItem, OperationalIssue
+from data.models import StoreReportData, StoreMetadata, StaffRoster, StaffItem, OperationalIssue, SECTION_LABELS
 from reports.template_preflight import TemplatePreflight
 from reports.chart_renderer import ChartRenderer
 from reports.image_processor import ImageProcessor
@@ -420,25 +420,11 @@ def main():
                     c_data = json.loads(form_response.checklist_json)
                     sections = c_data.get("sections", {})
                     
-                    # Mapping of json section keys to clean labels
-                    sec_labels = {
-                        "frontage": "Mặt tiền",
-                        "inner": "Không gian trong",
-                        "merch_ap": "Trưng bày AP",
-                        "merch_pie": "Trưng bày PIE",
-                        "merch_ab": "Trưng bày AB",
-                        "merch_anamai": "Trưng bày Anamai",
-                        "merch_bonjour": "Trưng bày Bonjour",
-                        "merch_pk": "Phụ kiện",
-                        "warehouse": "Kho/Phòng thử",
-                        "stockroom": "Kho hàng",
-                        "fitting_room": "Phòng thử đồ",
-                        "toilet": "Nhà vệ sinh",
-                        "fire_safety": "PCCC & Thoát hiểm",
-                        "cashier": "Thu ngân",
-                        "packaging_security": "Bao bì & An ninh"
-                    }
-                    
+                    # Mapping of json section keys to clean labels — nguồn duy nhất ở
+                    # data.models.SECTION_LABELS (đồng bộ 30-07: nay có thêm "staff" và
+                    # "security_guard", trước đây 2 mục này bị bỏ sót khỏi trích lỗi).
+                    sec_labels = SECTION_LABELS
+
                     for sec_key, label in sec_labels.items():
                         sec_val = sections.get(sec_key, {})
                         for item in sec_val.get("items", []):

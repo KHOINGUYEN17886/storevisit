@@ -77,6 +77,12 @@ class PPTXGenerator:
         missing_revenue = temp_image_paths.get("missing_revenue", False)
         missing_stock = temp_image_paths.get("missing_stock", False)
 
+        # Đồng bộ 30-07: phân loại lượt kiểm tra (own/cross/opening) — dùng chung cho
+        # nhãn trên slide thông tin chung VÀ để quyết định ẩn slide doanh thu/tồn kho
+        # khi là báo cáo khai trương (xem bên dưới, gần STORE_REVENUE).
+        inspection_mode = ((data.form_response.inspection_mode if data.form_response else None) or "own").strip().lower()
+        is_opening_report = (inspection_mode == "opening")
+
         # 1. STORE_COVER
         cover_slide = slide_map.get("STORE_COVER")
         if cover_slide:
@@ -128,20 +134,28 @@ class PPTXGenerator:
                 else:
                     self._fill_text(info_slide, shape_name, "(Trống)")
 
-            # Overall comment: "Nhận định chung của QLKD" — humanized qua narrator, grounded theo dữ liệu.
-            _general_fallback = "Không ghi nhận nhận xét tổng quan bổ sung tại thời điểm kiểm tra."
-            general_text = _general_fallback
-            try:
-                facts = self._build_exec_facts(data, c_data)
-                if facts and self.narrator is not None:
-                    general_text = self.narrator.executive_summary(
-                        facts=facts,
-                        store_name=data.metadata.store_name,
-                        fallback=_general_fallback,
-                    )
-            except Exception as _e:
-                print(f"[narrator] exec summary lỗi, dùng fallback: {_e}")
-            self._fill_text(info_slide, "TXT_GENERAL_COMMENT", general_text)
+            if is_opening_report:
+                # Báo cáo khai trương: thay hẳn "nhận định chung" (vốn dựa trên doanh thu/tồn
+                # kho — không có ý nghĩa với cửa hàng mới mở/đang sửa chữa) bằng thông tin
+                # khai trương + badge mức độ sẵn sàng màu theo CLR_OK/CLR_WARN/CLR_ERR.
+                self._fill_opening_info(info_slide, data.form_response)
+            else:
+                # Overall comment: "Nhận định chung của QLKD" — humanized qua narrator, grounded theo dữ liệu.
+                _general_fallback = "Không ghi nhận nhận xét tổng quan bổ sung tại thời điểm kiểm tra."
+                general_text = _general_fallback
+                try:
+                    facts = self._build_exec_facts(data, c_data)
+                    if facts and self.narrator is not None:
+                        general_text = self.narrator.executive_summary(
+                            facts=facts,
+                            store_name=data.metadata.store_name,
+                            fallback=_general_fallback,
+                        )
+                except Exception as _e:
+                    print(f"[narrator] exec summary lỗi, dùng fallback: {_e}")
+                if inspection_mode == "cross":
+                    general_text = f"🔀 KIỂM TRA CHÉO — thực hiện bởi {asm_name} (thay ASM phụ trách cửa hàng này).\n\n{general_text}"
+                self._fill_text(info_slide, "TXT_GENERAL_COMMENT", general_text)
 
         # 3. STORE_FRONTAGE_PHOTOS & STORE_INNER_PHOTOS (Merging if both have no photos)
         frontage_slide = slide_map.get("STORE_FRONTAGE_PHOTOS")
@@ -201,7 +215,10 @@ class PPTXGenerator:
         has_front_photo = any(p.local_path and os.path.exists(p.local_path) and os.path.getsize(p.local_path) > 0 for p in front_photos)
         has_inner_photo = any(p.local_path and os.path.exists(p.local_path) and os.path.getsize(p.local_path) > 0 for p in inner_photos)
 
-        if frontage_slide and inner_slide and not has_front_photo and not has_inner_photo:
+        # Đồng bộ 30-07: báo cáo Tái khai trương cần GIỮ inner_slide sống để ghi đè bằng
+        # so sánh ảnh Trước/Sau bên dưới — không cho merge-xoá dù frontage/inner rỗng ảnh.
+        is_reopen_report = is_opening_report and data.form_response and data.form_response.opening_type == "reopen"
+        if frontage_slide and inner_slide and not has_front_photo and not has_inner_photo and not is_reopen_report:
             # Merge! Delete existing body shapes on frontage slide
             shapes_to_delete = []
             for s in frontage_slide.shapes:
@@ -301,6 +318,12 @@ class PPTXGenerator:
                     self._fill_image_slots_adaptive(inner_slide, slot_configs, padded_photo_paths)
                 else:
                     self._fill_image_slots_grid(inner_slide, slot_configs, photo_paths)
+
+        # Đồng bộ 30-07: báo cáo Tái khai trương — ghi đè slide STORE_INNER_PHOTOS (vừa
+        # điền ở trên) bằng so sánh ảnh Trước/Sau sửa chữa. Tái dùng slide có sẵn trong
+        # template thay vì cần slide mới (python-pptx không dễ chèn slide layout mới lúc chạy).
+        if is_reopen_report and inner_slide:
+            self._build_opening_before_after(inner_slide, data.form_response)
 
         # 5. STORE_VM_ERROR_1 to 4
         vm_mapping = {
@@ -427,7 +450,7 @@ class PPTXGenerator:
         has_csvc_photo = bool(csvc_path and os.path.exists(csvc_path) and os.path.getsize(csvc_path) > 0)
         
         warehouse_comment = "Lỗi khu vực kho phát hiện & Hướng xử lý: Không ghi nhận lỗi."
-        cashier_comment = "Lỗi quầy thu ngân phát hiện & Hướng xử lý: Không ghi nhận lỗi."
+        cashier_comment = "Lỗi quầy thu ngân & bảo vệ phát hiện & Hướng xử lý: Không ghi nhận lỗi."
         
         if c_data:
             try:
@@ -440,14 +463,17 @@ class PPTXGenerator:
                 if w_parts:
                     warehouse_comment = "Lỗi khu vực kho phát hiện & Hướng xử lý:\n" + "\n\n".join(w_parts)
                     
-                c_info = self._collect_resolved_comments(c_data, ["cashier", "packaging_security"])
+                # Đồng bộ 30-07: "security_guard" gộp chung nhóm này — không có card riêng
+                # trong layout 3-card cố định bên dưới, nhóm cùng cashier/packaging_security
+                # (đều là hạng mục vận hành mặt tiền/khách hàng) để không bị rơi khỏi báo cáo.
+                c_info = self._collect_resolved_comments(c_data, ["cashier", "packaging_security", "security_guard"])
                 c_parts = []
                 if c_info["failures"]:
                     c_parts.append("Lỗi chưa khắc phục:\n" + "\n".join(c_info["failures"]))
                 if c_info["resolved"]:
                     c_parts.append("Lỗi đã khắc phục tại chỗ:\n" + "\n".join(c_info["resolved"]))
                 if c_parts:
-                    cashier_comment = "Lỗi quầy thu ngân phát hiện & Hướng xử lý:\n" + "\n\n".join(c_parts)
+                    cashier_comment = "Lỗi quầy thu ngân & bảo vệ phát hiện & Hướng xử lý:\n" + "\n\n".join(c_parts)
             except Exception as e:
                 print(f"Error parsing warehouse/cashier comments early: {e}")
                 
@@ -672,9 +698,12 @@ class PPTXGenerator:
             self._fill_text(comp_slide, "TXT_COMP_SERVICE_APPEARANCE", comp_service)
             self._fill_text(comp_slide, "TXT_COMP_ANALYSIS_SOLUTION", comp_comment)
 
-        # 8. STORE_REVENUE
+        # 8. STORE_REVENUE — ẩn với báo cáo khai trương (cửa hàng mới/đang sửa chữa
+        # thường chưa có dữ liệu doanh thu ý nghĩa để so sánh, theo quyết định 30-07).
         rev_slide = slide_map.get("STORE_REVENUE")
-        if rev_slide:
+        if rev_slide and is_opening_report:
+            slides_to_delete.append(rev_slide)
+        elif rev_slide:
             if missing_revenue:
                 self._fill_text(rev_slide, "KPI_REVENUE_ACTUAL", "-", font_size=18, bold=True, align="center")
                 self._fill_text(rev_slide, "KPI_REVENUE_TARGET", "-", font_size=18, bold=True, align="center")
@@ -699,9 +728,11 @@ class PPTXGenerator:
             if chart_img and os.path.exists(chart_img):
                 self._replace_with_picture(rev_slide, "Chart 4", chart_img)
 
-        # 9. STORE_STOCK_INVENTORY
+        # 9. STORE_STOCK_INVENTORY — ẩn với báo cáo khai trương (đồng lý do với STORE_REVENUE).
         stock_slide = slide_map.get("STORE_STOCK_INVENTORY")
-        if stock_slide:
+        if stock_slide and is_opening_report:
+            slides_to_delete.append(stock_slide)
+        elif stock_slide:
             if missing_stock:
                 self._fill_text(stock_slide, "KPI_STOCK_TOTAL", "-", font_size=18, bold=True, align="center")
                 self._fill_text(stock_slide, "KPI_STOCK_NGUYEN_GIA", "-", font_size=18, bold=True, align="center")
@@ -741,14 +772,18 @@ class PPTXGenerator:
                         int(5.5 * 914400)
                     )
 
-        # 10. STORE_BEST_SELLERS
+        # 10. STORE_BEST_SELLERS — ẩn với báo cáo khai trương (chưa có lịch sử bán hàng ý nghĩa).
         best_slide = slide_map.get("STORE_BEST_SELLERS")
-        if best_slide:
+        if best_slide and is_opening_report:
+            slides_to_delete.append(best_slide)
+        elif best_slide:
             self._draw_product_grid(best_slide, "TBL_BEST_SELLERS", data.best_sellers, is_best_seller=True)
 
-        # 11. STORE_SLOW_SELLERS
+        # 11. STORE_SLOW_SELLERS — ẩn với báo cáo khai trương (đồng lý do).
         slow_slide = slide_map.get("STORE_SLOW_SELLERS")
-        if slow_slide:
+        if slow_slide and is_opening_report:
+            slides_to_delete.append(slow_slide)
+        elif slow_slide:
             self._draw_product_grid(slow_slide, "TBL_SLOW_SELLERS", data.slow_sellers, is_best_seller=False)
 
         # 12. STORE_STAFF_LIST (Slide 14) - In-place population
@@ -970,7 +1005,7 @@ class PPTXGenerator:
                 top_y = Inches(6.8)
                 
                 lefts = [Inches(0.75), Inches(3.75), Inches(6.75)]
-                titles = ["1. LỖI KHO & PHÒNG THỬ", "2. LỖI QUẦY THU NGÂN", "3. VẤN ĐỀ CƠ SỞ VẬT CHẤT"]
+                titles = ["1. LỖI KHO & PHÒNG THỬ", "2. LỖI QUẦY THU NGÂN & BẢO VỆ", "3. VẤN ĐỀ CƠ SỞ VẬT CHẤT"]
                 contents = [warehouse_comment, cashier_comment, csvc_comment]
                 
                 for idx in range(3):
@@ -1131,11 +1166,11 @@ class PPTXGenerator:
             dev_rec = None
             ai_client = None
             try:
-                # Đảm bảo import được modules.ai_client bằng cách thêm đường dẫn cha vào sys.path
-                parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-                if parent_dir not in sys.path:
-                    sys.path.append(parent_dir)
-                from modules.ai_client import AIClient
+                # Fix 30-07: "modules.ai_client" không tồn tại trong repo này (thư mục modules/
+                # không có) — ImportError bị nuốt lặng lẽ ở except bên dưới, khiến slide này
+                # LUÔN dùng fallback rule-based dù cascade AI thật đã có sẵn ở reports/ai_client.py
+                # (cùng chữ ký generate(prompt, fallback=...) + .last_source, drop-in tương thích).
+                from reports.ai_client import AIClient
                 ai_client = AIClient()
             except Exception as e:
                 print(f"[AI Recommendation] Warning: Cannot initialize AIClient: {e}")
@@ -1462,6 +1497,114 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
                     p.font.color.rgb = text_color
                 return
         print(f"Warning: Text shape '{shape_name}' not found on slide.")
+
+    def _fill_opening_info(self, slide, form_response):
+        """Đồng bộ 30-07: thay TXT_GENERAL_COMMENT bằng thông tin khai trương (loại/giai
+        đoạn/ngày) + badge mức độ sẵn sàng màu theo CLR_OK/CLR_WARN/CLR_ERR, dùng cho báo
+        cáo inspection_mode == "opening". Ghi trực tiếp run/paragraph (không qua _fill_text)
+        để tô màu riêng cho dòng mức độ sẵn sàng."""
+        OPENING_TYPE_LABELS = {"new": "Mở mới", "reopen": "Tái khai trương"}
+        OPENING_PHASE_LABELS = {"before": "Trước khai trương", "day": "Ngày khai trương", "after": "Sau khai trương"}
+        READINESS_LABELS = {"ready": "SẴN SÀNG", "minor_fix": "CẦN KHẮC PHỤC NHỎ", "not_ready": "CHƯA SẴN SÀNG"}
+        READINESS_COLORS = {"ready": CLR_OK, "minor_fix": CLR_WARN, "not_ready": CLR_ERR}
+
+        opening_type = getattr(form_response, "opening_type", None) if form_response else None
+        opening_phase = getattr(form_response, "opening_phase", None) if form_response else None
+        opening_date = getattr(form_response, "opening_date", None) if form_response else None
+        opening_readiness = getattr(form_response, "opening_readiness", None) if form_response else None
+
+        type_label = OPENING_TYPE_LABELS.get(opening_type, opening_type or "-")
+        phase_label = OPENING_PHASE_LABELS.get(opening_phase, opening_phase or "-")
+        readiness_label = READINESS_LABELS.get(opening_readiness, opening_readiness or "Chưa xác định")
+        readiness_color = READINESS_COLORS.get(opening_readiness, CLR_MUTED)
+
+        for shape in slide.shapes:
+            if shape.name == "TXT_GENERAL_COMMENT" and shape.has_text_frame:
+                tf = shape.text_frame
+                tf.word_wrap = True
+                tf.margin_left = Inches(0.05)
+                tf.margin_right = Inches(0.05)
+                tf.margin_top = Inches(0.05)
+                tf.margin_bottom = Inches(0.05)
+                tf.clear()
+
+                p0 = tf.paragraphs[0]
+                p0.text = f"🎉 BÁO CÁO KHAI TRƯƠNG — {type_label}"
+                p0.font.name = FONT_PRIMARY
+                p0.font.size = Pt(14)
+                p0.font.bold = True
+                p0.font.color.rgb = CLR_NAVY
+                p0.space_after = Pt(6)
+
+                p1 = tf.add_paragraph()
+                p1.text = f"Giai đoạn: {phase_label}   |   Ngày khai trương chính thức: {opening_date or '-'}"
+                p1.font.name = FONT_PRIMARY
+                p1.font.size = Pt(11)
+                p1.font.color.rgb = CLR_MUTED
+                p1.space_after = Pt(10)
+
+                p2 = tf.add_paragraph()
+                p2.text = f"MỨC ĐỘ SẴN SÀNG KHAI TRƯƠNG: {readiness_label}"
+                p2.font.name = FONT_PRIMARY
+                p2.font.size = Pt(14)
+                p2.font.bold = True
+                p2.font.color.rgb = readiness_color
+                return
+        print("Warning: Text shape 'TXT_GENERAL_COMMENT' not found on slide (opening info).")
+
+    def _build_opening_before_after(self, slide, form_response):
+        """Đồng bộ 30-07: ghi đè 1 slide có sẵn (STORE_INNER_PHOTOS) bằng layout 2 cột
+        Trước/Sau sửa chữa cho báo cáo Tái khai trương — tái dùng đúng kỹ thuật "xoá shape
+        thân slide rồi vẽ textbox mới" đã chứng minh ở khối merge frontage/inner phía trên."""
+        shapes_to_delete = []
+        for s in slide.shapes:
+            if s.name not in ["META_SLIDE_ID", "META_TEMPLATE_VERSION"] and s.top and s.top > Inches(1.85):
+                shapes_to_delete.append(s)
+        for s in shapes_to_delete:
+            try: slide.shapes._spTree.remove(s._element)
+            except Exception: pass
+
+        before_paths = [p.local_path for p in (form_response.photos or [])
+                         if p.section == "opening_before" and p.local_path and os.path.exists(p.local_path) and os.path.getsize(p.local_path) > 0]
+        after_paths = [p.local_path for p in (form_response.photos or [])
+                        if p.section == "opening_after" and p.local_path and os.path.exists(p.local_path) and os.path.getsize(p.local_path) > 0]
+
+        columns = [("TRƯỚC SỬA CHỮA", before_paths, Inches(1.0)), ("SAU KHI HOÀN THIỆN", after_paths, Inches(10.0))]
+        col_w = Inches(8.5)
+        for title, paths, left in columns:
+            tb = slide.shapes.add_textbox(left, Inches(2.2), col_w, Inches(0.6))
+            tf = tb.text_frame
+            tf.word_wrap = True
+            p = tf.paragraphs[0]
+            p.text = title
+            p.font.name = FONT_PRIMARY
+            p.font.size = Pt(14)
+            p.font.bold = True
+            p.font.color.rgb = CLR_NAVY
+
+            if paths:
+                try:
+                    slide.shapes.add_picture(paths[0], left, Inches(3.0), col_w, Inches(6.5))
+                except Exception as _e:
+                    print(f"[opening before/after] Lỗi chèn ảnh {title}: {_e}")
+            else:
+                ph = slide.shapes.add_textbox(left, Inches(3.0), col_w, Inches(6.5))
+                ph_tf = ph.text_frame
+                ph_tf.word_wrap = True
+                ph_p = ph_tf.paragraphs[0]
+                ph_p.text = "(Chưa có ảnh)"
+                ph_p.font.name = FONT_PRIMARY
+                ph_p.font.size = Pt(12)
+                ph_p.font.color.rgb = CLR_MUTED
+                ph_p.alignment = PP_ALIGN.CENTER
+
+        # Đổi tiêu đề slide (nếu tìm được shape tiêu đề gốc)
+        for s in slide.shapes:
+            if s.has_text_frame and ("KHÔNG GIAN" in s.text_frame.text or "BÊN TRONG" in s.text_frame.text):
+                s.text_frame.text = "2. SO SÁNH TRƯỚC / SAU SỬA CHỮA"
+                if s.text_frame.paragraphs and s.text_frame.paragraphs[0].runs:
+                    s.text_frame.paragraphs[0].runs[0].font.name = FONT_PRIMARY
+                    s.text_frame.paragraphs[0].runs[0].font.bold = True
 
     def _fill_text_by_prefix_or_name(self, slide, name_or_prefix: str, new_text: str, font_size: int = 11, bold: bool = False):
         for shape in slide.shapes:

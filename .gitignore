@@ -8,7 +8,6 @@ __pycache__/
 temp/
 scratch/
 output/
-reports/
 logs/
 *.log
 *.cancel

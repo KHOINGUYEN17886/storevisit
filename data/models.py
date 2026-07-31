@@ -139,6 +139,30 @@ class StoreFormResponse(BaseModel):
     photos: List[FormPhoto] = []
     status: str = "pending"  # "pending" | "done"
     checklist_json: Optional[str] = None
+    # Phân loại lượt kiểm tra (đồng bộ webapp 30-07): "own" | "cross" | "opening"
+    inspection_mode: str = "own"
+    # Chỉ có giá trị khi inspection_mode == "opening"
+    opening_type: Optional[str] = None        # "new" | "reopen"
+    opening_phase: Optional[str] = None       # "before" | "day" | "after"
+    opening_date: Optional[str] = None
+    opening_readiness: Optional[str] = None   # "ready" | "minor_fix" | "not_ready"
+
+
+# Nguồn duy nhất cho "section key -> nhãn tiếng Việt" — trước đây có 4 bản sao rải rác
+# trong app_worker.py / reports/docx_generator.py / reports/excel_generator.py, không có
+# security_guard nên mục "Không đạt" ở đó bị rơi khỏi bảng lỗi tồn đọng. Thêm section mới
+# cho webapp thì chỉ cần sửa Ở ĐÂY.
+SECTION_LABELS = {
+    "frontage": "Mặt tiền", "inner": "Không gian trong",
+    "merch_ap": "Trưng bày AP", "merch_pie": "Trưng bày PIE",
+    "merch_ab": "Trưng bày AB", "merch_anamai": "Trưng bày Anamai",
+    "merch_bonjour": "Trưng bày Bonjour", "merch_pk": "Phụ kiện",
+    "warehouse": "Kho/Phòng thử", "stockroom": "Kho hàng",
+    "fitting_room": "Phòng thử đồ", "toilet": "Nhà vệ sinh",
+    "fire_safety": "PCCC & Thoát hiểm", "cashier": "Thu ngân",
+    "packaging_security": "Bao bì & An ninh", "staff": "Nhân sự",
+    "security_guard": "Bảo vệ",
+}
 
 
 

@@ -117,7 +117,13 @@ class GoogleSheetsReader:
         action_deadline = str(find_val(["Thời hạn xử lý", "Thoi han xu ly", "Deadline"])).strip()
         store_recommendation = str(find_val(["Đề xuất phát triển", "store_recommendation", "storeRecommendation"], "")).strip()
 
-        
+        # Đồng bộ webapp 30-07: phân loại lượt kiểm tra + field riêng cho khai trương
+        inspection_mode = str(find_val(["inspection_mode"], "own")).strip().lower() or "own"
+        opening_type = str(find_val(["opening_type"], "")).strip() or None
+        opening_phase = str(find_val(["opening_phase"], "")).strip() or None
+        opening_date = str(find_val(["opening_date"], "")).strip() or None
+        opening_readiness = str(find_val(["opening_readiness"], "")).strip() or None
+
         # Parse checklist_json if present in the row
         checklist_json_val = find_val(["checklist_json", "checklist"], "")
         checklist_json_str = str(checklist_json_val).strip() if checklist_json_val else ""
@@ -245,6 +251,9 @@ class GoogleSheetsReader:
                 ("stockroom",      "stockroom",    1),
                 ("fitting_room",   "fitting_room", 1),
                 ("cashier",        "cashier",      1),
+                # Đồng bộ 30-07: ảnh trước/sau sửa chữa cho báo cáo khai trương (tái khai trương)
+                ("opening_before", "opening_before", 1),
+                ("opening_after",  "opening_after",  1),
             ]
             seen_urls: set = set()
             for g_key, sec, idx in g_mapping:
@@ -379,7 +388,12 @@ class GoogleSheetsReader:
             store_recommendation=store_recommendation,
             photos=photos,
             status=str(row.get("Status", "pending")).strip(),
-            checklist_json=checklist_json_str
+            checklist_json=checklist_json_str,
+            inspection_mode=inspection_mode,
+            opening_type=opening_type,
+            opening_phase=opening_phase,
+            opening_date=opening_date,
+            opening_readiness=opening_readiness,
         )
 
     def get_pending_survey_responses(self, sheet_name: str = "MarketSurvey_Responses") -> List[MarketSurveyResponse]:
