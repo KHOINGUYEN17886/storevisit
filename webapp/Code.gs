@@ -1881,6 +1881,12 @@ function doPost(e) {
     } else if (action === "uploadSubmissionImage") {
       var postPayload = Array.isArray(payload) ? payload[0] : payload;
       result = uploadSubmissionImage(postPayload);
+    } else if (action === "sendReportEmail" || action === "send_email") {
+      var postPayload = Array.isArray(payload) ? payload[0] : payload;
+      result = sendReportEmail(postPayload);
+    } else if (action === "getAsmEmail") {
+      var asmNameVal = Array.isArray(payload) ? payload[0] : payload;
+      result = getAsmEmail(asmNameVal);
     } else if (action === "getUploadedSlots") {
       result = getUploadedSlots(Array.isArray(payload) ? payload[0] : payload);
     } else if (action === "getStoreOpenIssues") {
