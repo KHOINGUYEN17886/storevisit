@@ -2705,17 +2705,21 @@ function getAsmEmail(asmName) {
       if (asmSheet) {
         var aData = asmSheet.getDataRange().getValues();
         var aHeaders = aData[0].map(function(h) { return String(h).trim(); });
-        var uCol = aHeaders.indexOf("username");
-        var nCol = aHeaders.indexOf("full_name");
-        var eCol = aHeaders.indexOf("email");
+        var uCol = -1, nCol = -1, eCol = -1;
+        aHeaders.forEach(function(h, idx) {
+          var hLower = String(h).trim().toLowerCase();
+          if (hLower === "username" || hLower === "user") uCol = idx;
+          if (hLower === "full_name" || hLower === "fullname" || hLower === "name") nCol = idx;
+          if (hLower === "email" || hLower === "asmemail") eCol = idx;
+        });
         var targetAsm = String(asmName || "").trim().toLowerCase();
         
         if (eCol !== -1 && targetAsm) {
           for (var r = 1; r < aData.length; r++) {
-            var uname = String(aData[r][uCol] || "").trim().toLowerCase();
-            var fname = String(aData[r][nCol] || "").trim().toLowerCase();
+            var uname = uCol !== -1 ? String(aData[r][uCol] || "").trim().toLowerCase() : "";
+            var fname = nCol !== -1 ? String(aData[r][nCol] || "").trim().toLowerCase() : "";
             var em = String(aData[r][eCol] || "").trim();
-            if (em && (uname === targetAsm || fname.indexOf(targetAsm) !== -1 || targetAsm.indexOf(uname) !== -1)) {
+            if (em && (uname === targetAsm || (fname && fname.indexOf(targetAsm) !== -1) || (uname && targetAsm.indexOf(uname) !== -1))) {
               return { success: true, email: em };
             }
           }
