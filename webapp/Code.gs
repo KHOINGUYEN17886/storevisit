@@ -2698,6 +2698,32 @@ function getSubmissionDetail(rowIdx) {
 function getAsmEmail(asmName) {
   try {
     var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // 1. Try ASM_Users sheet first
+    try {
+      var asmSheet = ss.getSheetByName("ASM_Users");
+      if (asmSheet) {
+        var aData = asmSheet.getDataRange().getValues();
+        var aHeaders = aData[0].map(function(h) { return String(h).trim(); });
+        var uCol = aHeaders.indexOf("username");
+        var nCol = aHeaders.indexOf("full_name");
+        var eCol = aHeaders.indexOf("email");
+        var targetAsm = String(asmName || "").trim().toLowerCase();
+        
+        if (eCol !== -1 && targetAsm) {
+          for (var r = 1; r < aData.length; r++) {
+            var uname = String(aData[r][uCol] || "").trim().toLowerCase();
+            var fname = String(aData[r][nCol] || "").trim().toLowerCase();
+            var em = String(aData[r][eCol] || "").trim();
+            if (em && (uname === targetAsm || fname.indexOf(targetAsm) !== -1 || targetAsm.indexOf(uname) !== -1)) {
+              return { success: true, email: em };
+            }
+          }
+        }
+      }
+    } catch(e1) {}
+
+    // 2. Try StoreMapping sheet
     var sheet = ss.getSheetByName(STORE_MAPPING_SHEET);
     if (sheet) {
       var data = sheet.getDataRange().getValues();
@@ -2716,7 +2742,7 @@ function getAsmEmail(asmName) {
       }
     }
   } catch(e) {
-    console.warn("Error getting ASM email from sheet: " + e.toString());
+    console.warn("Error getting ASM email: " + e.toString());
   }
   return { success: false, email: "" };
 }
@@ -3159,7 +3185,12 @@ function getAllUsers(requesterUsername) {
     var regIdx = headers.indexOf("region");
     var sIdx = headers.indexOf("stores");
     var stIdx = headers.indexOf("status");
+    var eIdx = headers.indexOf("email");
     if (stIdx === -1) stIdx = headers.length;
+    if (eIdx === -1) {
+      eIdx = headers.length;
+      sheet.getRange(1, eIdx + 1).setValue("email").setFontWeight("bold");
+    }
     
     var users = [];
     for (var i = 1; i < data.length; i++) {
@@ -3171,7 +3202,8 @@ function getAllUsers(requesterUsername) {
         role: String(row[rIdx] || "asm").trim().toLowerCase(),
         region: String(row[regIdx] || "").trim(),
         stores: String(row[sIdx] || "ALL").trim(),
-        status: String(row[stIdx] || "Active").trim()
+        status: String(row[stIdx] || "Active").trim(),
+        email: eIdx !== -1 && row[eIdx] ? String(row[eIdx]).trim() : ""
       });
     }
     return { success: true, users: users };
@@ -3201,9 +3233,14 @@ function saveUserAccount(requesterUsername, userData) {
     var regIdx = headers.indexOf("region");
     var sIdx = headers.indexOf("stores");
     var stIdx = headers.indexOf("status");
+    var eIdx = headers.indexOf("email");
     if (stIdx === -1) {
       stIdx = headers.length;
       sheet.getRange(1, stIdx + 1).setValue("status").setFontWeight("bold");
+    }
+    if (eIdx === -1) {
+      eIdx = headers.length;
+      sheet.getRange(1, eIdx + 1).setValue("email").setFontWeight("bold");
     }
     
     var targetUser = String(userData.username).trim().toLowerCase();
@@ -3221,6 +3258,7 @@ function saveUserAccount(requesterUsername, userData) {
     var storesVal = String(userData.stores || "ALL").trim();
     var fullNameVal = String(userData.fullName || userData.username).trim();
     var statusVal = String(userData.status || "Active").trim();
+    var emailVal = String(userData.email || "").trim();
     
     if (foundIndex > 0) {
       // Update existing user
@@ -3229,6 +3267,7 @@ function saveUserAccount(requesterUsername, userData) {
       sheet.getRange(foundIndex, regIdx + 1).setValue(regionVal);
       sheet.getRange(foundIndex, sIdx + 1).setValue(storesVal);
       sheet.getRange(foundIndex, stIdx + 1).setValue(statusVal);
+      sheet.getRange(foundIndex, eIdx + 1).setValue(emailVal);
       if (userData.password && String(userData.password).trim()) {
         sheet.getRange(foundIndex, pIdx + 1).setValue(String(userData.password).trim());
       }
@@ -3244,6 +3283,7 @@ function saveUserAccount(requesterUsername, userData) {
       newRow[regIdx] = regionVal;
       newRow[sIdx] = storesVal;
       newRow[stIdx] = statusVal;
+      newRow[eIdx] = emailVal;
       sheet.appendRow(newRow);
       return { success: true, message: "Đã tạo mới tài khoản " + userData.username + " thành công." };
     }

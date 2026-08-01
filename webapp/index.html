@@ -2067,6 +2067,7 @@
               <tr>
                 <th scope="col">Tên đăng nhập</th>
                 <th scope="col">Họ và tên</th>
+                <th scope="col">Email chính thức</th>
                 <th scope="col">Vai trò</th>
                 <th scope="col">Khu vực</th>
                 <th scope="col">Cửa hàng phụ trách</th>
@@ -2102,6 +2103,10 @@
             <div class="mb-3">
               <label class="form-label fw-bold small">Họ và tên ASM</label>
               <input type="text" class="form-control" id="userFormFullName" required placeholder="Ví dụ: Nguyễn Văn Nam">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Địa chỉ Email chính thức</label>
+              <input type="email" class="form-control" id="userFormEmail" placeholder="Ví dụ: nam.nguyen@company.com">
             </div>
             <div class="row">
               <div class="col-md-6 mb-3">
@@ -9191,6 +9196,7 @@
       html += '<tr>' +
         '<td class="fw-bold">' + escapeHtml(u.username) + '</td>' +
         '<td>' + escapeHtml(u.fullName) + '</td>' +
+        '<td><small class="text-primary fw-bold">' + escapeHtml(u.email || '---') + '</small></td>' +
         '<td>' + roleBadge + '</td>' +
         '<td>' + escapeHtml(u.region || '---') + '</td>' +
         '<td style="max-width:200px;word-break:break-all;"><small>' + escapeHtml(u.stores || 'ALL') + '</small></td>' +
@@ -9214,6 +9220,7 @@
     document.getElementById("userFormFullName").value = "";
     document.getElementById("userFormRole").value = "asm";
     document.getElementById("userFormStatus").value = "Active";
+    if (document.getElementById("userFormEmail")) document.getElementById("userFormEmail").value = "";
     document.getElementById("userFormRegion").value = "";
     document.getElementById("userFormStores").value = "ALL";
     document.getElementById("userFormPassword").value = "123456";
@@ -9231,6 +9238,7 @@
     document.getElementById("userFormUsername").value = user.username;
     document.getElementById("userFormUsername").disabled = true;
     document.getElementById("userFormFullName").value = user.fullName || user.username;
+    if (document.getElementById("userFormEmail")) document.getElementById("userFormEmail").value = user.email || "";
     document.getElementById("userFormRole").value = user.role || "asm";
     document.getElementById("userFormStatus").value = user.status || "Active";
     document.getElementById("userFormRegion").value = user.region || "";
@@ -9253,6 +9261,7 @@
     const userData = {
       username: document.getElementById("userFormUsername").value.trim(),
       fullName: document.getElementById("userFormFullName").value.trim(),
+      email: document.getElementById("userFormEmail") ? document.getElementById("userFormEmail").value.trim() : "",
       role: document.getElementById("userFormRole").value,
       status: document.getElementById("userFormStatus").value,
       region: document.getElementById("userFormRegion").value.trim(),
