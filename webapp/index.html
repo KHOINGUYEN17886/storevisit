@@ -2171,6 +2171,87 @@
         </div>
       </div>
     </div>
+  <!-- MODAL: ALBUM HÌNH ẢNH BÁO CÁO (XEM TRỰC TIẾP TRÊN MOBILE & DESKTOP) -->
+  <div class="modal fade" id="submissionPhotoGalleryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content shadow-lg border-0 rounded-4">
+        <div class="modal-header text-white rounded-top-4 p-3" style="background-color: #1B2A4A;">
+          <div>
+            <h5 class="modal-title fw-bold fs-6 mb-0" id="photoGalleryModalTitle"><i class="bi bi-images me-2"></i> Album Hình Ảnh Báo Cáo</h5>
+            <div class="small opacity-75 mt-1" id="photoGalleryModalSubTitle">Đang tải dữ liệu...</div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3 bg-light">
+          <!-- Loading state -->
+          <div id="photoGalleryLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted fw-bold">Đang tải toàn bộ album ảnh từ Google Drive...</p>
+          </div>
+
+          <!-- Content state -->
+          <div id="photoGalleryContent" class="d-none">
+            <!-- Filter Tabs -->
+            <ul class="nav nav-pills nav-fill mb-3 bg-white p-1 rounded-3 shadow-sm" id="photoGalleryTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold small py-2" id="pg-tab-general" data-bs-toggle="pill" data-bs-target="#pg-view-general" type="button" role="tab">
+                  🏪 Tổng Quan Cửa Hàng <span class="badge bg-primary ms-1" id="pgBadgeGeneral">0</span>
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold small py-2" id="pg-tab-checklist" data-bs-toggle="pill" data-bs-target="#pg-view-checklist" type="button" role="tab">
+                  ⚠️ Lỗi & Khắc Phục (Checklist) <span class="badge bg-warning text-dark ms-1" id="pgBadgeChecklist">0</span>
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold small py-2" id="pg-tab-competitor" data-bs-toggle="pill" data-bs-target="#pg-view-competitor" type="button" role="tab">
+                  🥊 Đối Thủ Cạnh Tranh <span class="badge bg-secondary ms-1" id="pgBadgeCompetitor">0</span>
+                </button>
+              </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="photoGalleryTabContent">
+              <!-- General Photos Tab -->
+              <div class="tab-pane fade show active" id="pg-view-general" role="tabpanel">
+                <div id="pgGeneralGrid" class="row g-2"></div>
+              </div>
+              <!-- Checklist Photos Tab -->
+              <div class="tab-pane fade" id="pg-view-checklist" role="tabpanel">
+                <div id="pgChecklistGrid" class="row g-3"></div>
+              </div>
+              <!-- Competitor Photos Tab -->
+              <div class="tab-pane fade" id="pg-view-competitor" role="tabpanel">
+                <div id="pgCompetitorGrid" class="row g-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-white rounded-bottom-4 p-2 justify-content-between">
+          <div class="small text-muted"><i class="bi bi-info-circle me-1"></i> Bấm vào ảnh để phóng to toàn màn hình hoặc tải về máy.</div>
+          <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX FULLSCREEN ZOOM MODAL -->
+  <div class="modal fade" id="imageLightboxModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark text-white border-0 shadow-lg rounded-4">
+        <div class="modal-header border-0 pb-0">
+          <h6 class="modal-title fw-bold text-truncate" id="lightboxCaption">Chi tiết hình ảnh</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center p-2 position-relative">
+          <img id="lightboxImage" src="" class="img-fluid rounded shadow-sm" style="max-height: 75vh; object-fit: contain;">
+        </div>
+        <div class="modal-footer border-0 pt-0 justify-content-between">
+          <a id="lightboxDownloadBtn" href="#" target="_blank" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-up-right me-1"></i> Mở trên Google Drive</a>
+          <button type="button" class="btn btn-sm btn-light text-dark fw-bold px-3" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -7947,6 +8028,7 @@
           <td>${modeBadge}</td>
           <td>${statusBadge}</td>
           <td class="text-center">
+            <button type="button" class="btn btn-outline-success btn-sm me-1 fw-bold" onclick="openSubmissionPhotoGallery(${sub.rowIdx})" title="Xem album ảnh báo cáo trực tiếp"><i class="bi bi-images me-1"></i> Album Ảnh</button>
             <button type="button" class="btn btn-outline-info btn-sm me-1" onclick="viewSubmissionAsHtml(${sub.rowIdx})"><i class="bi bi-eye"></i> Xem HTML</button>
             <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="editHistoricalSubmission(${sub.rowIdx})"><i class="bi bi-pencil"></i> Sửa</button>
           </td>
@@ -8004,6 +8086,310 @@
     }
     
     renderHistoryTable(filtered);
+  }
+
+  function extractDriveFileId(str) {
+    if (!str) return null;
+    let s = String(str).trim();
+    if (!s) return null;
+    if (s.includes('id=')) {
+      return s.split('id=')[1].split('&')[0];
+    }
+    if (s.includes('/d/')) {
+      return s.split('/d/')[1].split('/')[0];
+    }
+    if (/^[a-zA-Z0-9_-]{25,60}$/.test(s)) {
+      return s;
+    }
+    return null;
+  }
+
+  let currentGallerySubmission = null;
+
+  function openSubmissionPhotoGallery(rowIdxOrSubmissionId) {
+    const modalEl = document.getElementById("submissionPhotoGalleryModal");
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    const loadingEl = document.getElementById("photoGalleryLoading");
+    const contentEl = document.getElementById("photoGalleryContent");
+    loadingEl.classList.remove("d-none");
+    contentEl.classList.add("d-none");
+
+    document.getElementById("photoGalleryModalTitle").innerHTML = `<i class="bi bi-images me-2"></i> Album Hình Ảnh Báo Cáo`;
+    document.getElementById("photoGalleryModalSubTitle").textContent = "Đang tải dữ liệu...";
+
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      loadingEl.classList.add("d-none");
+      alert("Ứng dụng đang chạy offline / local. Không thể tải dữ liệu ảnh từ Server.");
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        loadingEl.classList.add("d-none");
+        if (!res || !res.success || !res.data) {
+          alert("Lỗi tải chi tiết báo cáo: " + (res ? res.error : "Không có dữ liệu"));
+          return;
+        }
+        contentEl.classList.remove("d-none");
+        renderPhotoGallery(res.data);
+      })
+      .withFailureHandler(function(err) {
+        loadingEl.classList.add("d-none");
+        alert("Lỗi kết nối Server: " + err.message);
+      })
+      .getSubmissionDetail(rowIdxOrSubmissionId);
+  }
+
+  function renderPhotoGallery(data) {
+    currentGallerySubmission = data;
+    const storeCode = data.StoreCode || data["Mã cửa hàng"] || "";
+    const storeName = data.StoreName || data["Tên cửa hàng"] || "";
+    const reportDate = data.ReportDate || data["Ngày báo cáo"] || data["Ngày kiểm tra"] || "";
+    const asmName = data.ASM || data["QLKD/ASM"] || "";
+
+    document.getElementById("photoGalleryModalTitle").innerHTML = `<i class="bi bi-images me-2"></i> Album Ảnh: ${storeCode} - ${storeName}`;
+    document.getElementById("photoGalleryModalSubTitle").textContent = `Ngày kiểm tra: ${reportDate} | ASM: ${asmName}`;
+
+    // 1. General Photos
+    const GP_LABELS = {
+      frontage_main: "Mặt tiền chính diện",
+      frontage_left: "Mặt tiền bên trái",
+      frontage_right: "Mặt tiền bên phải",
+      inner_entrance: "Nhìn từ cửa chính vào",
+      inner_left: "Không gian bên trái",
+      inner_right: "Không gian bên phải",
+      stockroom: "Kho hàng",
+      fitting_room: "Phòng thử đồ",
+      cashier: "Quầy thu ngân"
+    };
+
+    let generalList = [];
+    if (data.general_photos_json) {
+      try {
+        const gpObj = typeof data.general_photos_json === 'string' ? JSON.parse(data.general_photos_json) : data.general_photos_json;
+        for (const slot in gpObj) {
+          if (slot.endsWith("_na") || slot.endsWith("_na_reason")) continue;
+          const val = gpObj[slot];
+          if (!val) continue;
+          const fids = String(val).split(",").map(s => s.trim()).filter(Boolean);
+          fids.forEach((fid, idx) => {
+            if (fid && !fid.startsWith("DB_REF")) {
+              const cleanFid = extractDriveFileId(fid) || fid;
+              generalList.push({
+                slot: slot,
+                label: GP_LABELS[slot] || slot,
+                index: idx + 1,
+                fileId: cleanFid
+              });
+            }
+          });
+        }
+      } catch(e) {}
+    }
+
+    if (generalList.length === 0) {
+      ["photo_frontage", "photo_inner", "photo_merch", "photo_staff", "photo_csvc"].forEach(col => {
+        if (data[col]) {
+          const urls = String(data[col]).split("\n").map(s => s.trim()).filter(Boolean);
+          urls.forEach((u, i) => {
+            const fid = extractDriveFileId(u);
+            if (fid) {
+              generalList.push({
+                slot: col,
+                label: col.replace("photo_", "").toUpperCase(),
+                index: i + 1,
+                fileId: fid
+              });
+            }
+          });
+        }
+      });
+    }
+
+    document.getElementById("pgBadgeGeneral").textContent = generalList.length;
+    const genGridEl = document.getElementById("pgGeneralGrid");
+    if (generalList.length === 0) {
+      genGridEl.innerHTML = `<div class="col-12 text-center py-4 text-muted">Không có ảnh tổng quan nào cho báo cáo này.</div>`;
+    } else {
+      let html = "";
+      generalList.forEach(item => {
+        const thumbUrl = `https://lh3.googleusercontent.com/d/${item.fileId}=s600`;
+        const driveUrl = `https://drive.google.com/open?id=${item.fileId}`;
+        html += `
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden text-center bg-white">
+              <div class="position-relative">
+                <img src="${thumbUrl}" class="card-img-top" style="height: 160px; object-fit: cover;" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Kh%C3%B4ng+th%E1%BB%83+t%E1%BA%A3i+%E1%BA%A3nh';" loading="lazy">
+              </div>
+              <div class="card-body p-2">
+                <span class="badge bg-primary text-wrap mb-2">${item.label} #${item.index}</span>
+                <div>
+                  <button type="button" class="btn btn-sm btn-outline-dark me-1 py-0 px-2 fw-bold" onclick="openLightboxImage('${thumbUrl}', '${item.label} #${item.index}', '${driveUrl}')"><i class="bi bi-zoom-in"></i> Phóng to</button>
+                  <a href="${driveUrl}" target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="bi bi-box-arrow-up-right"></i> Drive</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      genGridEl.innerHTML = html;
+    }
+
+    // 2. Checklist Photos
+    let checklistList = [];
+    if (data.checklist_json) {
+      try {
+        const chkObj = typeof data.checklist_json === 'string' ? JSON.parse(data.checklist_json) : data.checklist_json;
+        const targetObj = chkObj.sections || chkObj;
+        for (const secKey in targetObj) {
+          const sec = targetObj[secKey];
+          let items = [];
+          if (Array.isArray(sec)) items = sec;
+          else if (sec && Array.isArray(sec.items)) items = sec.items;
+          else if (sec && typeof sec === 'object') {
+            for (const k in sec) {
+              if (sec[k] && typeof sec[k] === 'object' && sec[k].id) items.push(sec[k]);
+            }
+          }
+
+          items.forEach(item => {
+            const pb = item.photo_before || item.photo;
+            const pa = item.photo_after;
+            if (pb || pa) {
+              checklistList.push({
+                section: secKey,
+                id: item.id || "",
+                label: item.label || item.id || "Tiêu chí",
+                eval: item.eval || "",
+                note: item.note || "",
+                photoBefore: extractDriveFileId(pb) || pb,
+                photoAfter: extractDriveFileId(pa) || pa
+              });
+            }
+          });
+        }
+      } catch(e) {}
+    }
+
+    document.getElementById("pgBadgeChecklist").textContent = checklistList.length;
+    const chkGridEl = document.getElementById("pgChecklistGrid");
+    if (checklistList.length === 0) {
+      chkGridEl.innerHTML = `<div class="col-12 text-center py-4 text-muted">Không có ảnh chụp vi phạm / checklist nào cho báo cáo này.</div>`;
+    } else {
+      let html = "";
+      checklistList.forEach(item => {
+        let evalBadge = item.eval === "Chưa đạt" ? '<span class="badge bg-danger">Chưa đạt</span>' : '<span class="badge bg-success">Đạt</span>';
+        
+        let beforeHtml = "";
+        if (item.photoBefore) {
+          const pbFid = extractDriveFileId(item.photoBefore);
+          const pbThumb = pbFid ? `https://lh3.googleusercontent.com/d/${pbFid}=s600` : item.photoBefore;
+          const pbDrive = pbFid ? `https://drive.google.com/open?id=${pbFid}` : item.photoBefore;
+          beforeHtml = `
+            <div class="col-6">
+              <div class="border rounded p-2 text-center bg-light">
+                <small class="fw-bold text-danger d-block mb-1">📸 Ảnh vi phạm (Trước)</small>
+                <img src="${pbThumb}" class="img-fluid rounded border mb-1" style="height: 140px; object-fit: cover; width: 100%; cursor: pointer;" onclick="openLightboxImage('${pbThumb}', '${item.label} (Trước)', '${pbDrive}')" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Ảnh+trước';" loading="lazy">
+                <button type="button" class="btn btn-xs btn-outline-danger w-100 py-0" style="font-size:0.75rem;" onclick="openLightboxImage('${pbThumb}', '${item.label} (Trước)', '${pbDrive}')"><i class="bi bi-zoom-in"></i> Phóng to</button>
+              </div>
+            </div>
+          `;
+        }
+
+        let afterHtml = "";
+        if (item.photoAfter) {
+          const paFid = extractDriveFileId(item.photoAfter);
+          const paThumb = paFid ? `https://lh3.googleusercontent.com/d/${paFid}=s600` : item.photoAfter;
+          const paDrive = paFid ? `https://drive.google.com/open?id=${paFid}` : item.photoAfter;
+          afterHtml = `
+            <div class="col-6">
+              <div class="border rounded p-2 text-center bg-light">
+                <small class="fw-bold text-success d-block mb-1">✅ Ảnh khắc phục (Sau)</small>
+                <img src="${paThumb}" class="img-fluid rounded border mb-1" style="height: 140px; object-fit: cover; width: 100%; cursor: pointer;" onclick="openLightboxImage('${paThumb}', '${item.label} (Sau)', '${paDrive}')" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Ảnh+sau';" loading="lazy">
+                <button type="button" class="btn btn-xs btn-outline-success w-100 py-0" style="font-size:0.75rem;" onclick="openLightboxImage('${paThumb}', '${item.label} (Sau)', '${paDrive}')"><i class="bi bi-zoom-in"></i> Phóng to</button>
+              </div>
+            </div>
+          `;
+        }
+
+        html += `
+          <div class="col-12 col-md-6">
+            <div class="card h-100 border shadow-sm rounded-3">
+              <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center border-bottom">
+                <span class="fw-bold small text-primary">[${item.id}] ${item.label}</span>
+                ${evalBadge}
+              </div>
+              <div class="card-body p-2">
+                ${item.note ? `<div class="alert alert-warning py-1 px-2 small mb-2"><strong>Ghi chú:</strong> ${item.note}</div>` : ''}
+                <div class="row g-2">
+                  ${beforeHtml}
+                  ${afterHtml}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      chkGridEl.innerHTML = html;
+    }
+
+    // 3. Competitor Photos
+    let competitorList = [];
+    if (data.competitor_json) {
+      try {
+        const compObj = typeof data.competitor_json === 'string' ? JSON.parse(data.competitor_json) : data.competitor_json;
+        ["photoComp1", "photoComp2", "photoComp3", "photoCSVC1"].forEach((key, i) => {
+          if (compObj[key]) {
+            const fid = extractDriveFileId(compObj[key]);
+            if (fid) {
+              competitorList.push({
+                slot: key,
+                label: `Ảnh đối thủ #${i + 1}`,
+                fileId: fid
+              });
+            }
+          }
+        });
+      } catch(e) {}
+    }
+
+    document.getElementById("pgBadgeCompetitor").textContent = competitorList.length;
+    const compGridEl = document.getElementById("pgCompetitorGrid");
+    if (competitorList.length === 0) {
+      compGridEl.innerHTML = `<div class="col-12 text-center py-4 text-muted">Không có ảnh đối thủ cạnh tranh cho báo cáo này.</div>`;
+    } else {
+      let html = "";
+      competitorList.forEach(item => {
+        const thumbUrl = `https://lh3.googleusercontent.com/d/${item.fileId}=s600`;
+        const driveUrl = `https://drive.google.com/open?id=${item.fileId}`;
+        html += `
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden text-center bg-white">
+              <img src="${thumbUrl}" class="card-img-top" style="height: 160px; object-fit: cover;" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Ảnh+đối+thủ';" loading="lazy">
+              <div class="card-body p-2">
+                <span class="badge bg-secondary mb-2">${item.label}</span>
+                <div>
+                  <button type="button" class="btn btn-sm btn-outline-dark me-1 py-0 px-2 fw-bold" onclick="openLightboxImage('${thumbUrl}', '${item.label}', '${driveUrl}')"><i class="bi bi-zoom-in"></i> Phóng to</button>
+                  <a href="${driveUrl}" target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="bi bi-box-arrow-up-right"></i> Drive</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      compGridEl.innerHTML = html;
+    }
+  }
+
+  function openLightboxImage(imgUrl, caption, driveUrl) {
+    document.getElementById("lightboxImage").src = imgUrl;
+    document.getElementById("lightboxCaption").textContent = caption || "Chi tiết hình ảnh";
+    document.getElementById("lightboxDownloadBtn").href = driveUrl || imgUrl;
+    
+    const lightboxModal = new bootstrap.Modal(document.getElementById("imageLightboxModal"));
+    lightboxModal.show();
   }
 
   function clearHistoryFilters() {
