@@ -121,6 +121,7 @@ def main():
     parser.add_argument("--no-merge", action="store_true", help="Do not merge into a cluster summary. Save separate files per store.")
     parser.add_argument("--schema", default="store_visit", choices=["store_visit", "market_survey", "executive_combo"], help="The schema type to process")
     parser.add_argument("--period-type", default="weekly", choices=["weekly", "monthly", "quarterly"], help="The report period type")
+    parser.add_argument("--reference-date", default="auto", help="Date anchor mode: auto, prev, today, or YYYY-MM-DD")
     
     args = parser.parse_args()
     job_id = args.job_id
@@ -130,6 +131,7 @@ def main():
     form_response_ids = [r.strip() for r in args.form_response_ids.split(",") if r.strip()]
     no_merge = args.no_merge
     schema = args.schema
+    ref_date = args.reference_date
 
     # Initialize lock and sender
     lock = JobLock()
@@ -255,7 +257,12 @@ def main():
             from reports.executive_pptx_generator import ExecutivePPTXGenerator
 
             aggregator = WeeklyMonthlyAggregator(loader)
-            agg_data = aggregator.aggregate_data(period_type=args.period_type, asm_filter=asm_name)
+            agg_data = aggregator.aggregate_data(
+                period_type=args.period_type,
+                asm_filter=asm_name,
+                store_filter=selected_stores,
+                reference_date=ref_date
+            )
 
             sender.send_progress(60, "Đang tạo Bảng tính Excel Analytics Dashboard (5 Tabs)...")
             output_dir = loader.get_path("output_dir")

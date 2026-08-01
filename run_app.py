@@ -148,6 +148,21 @@ class StoreVisitApp:
         
         self.store_vars = {} # Maps store abbreviation to IntVar
         
+        # --- PERIOD / DATE ANCHOR SELECTOR ---
+        period_anchor_frame = ttk.LabelFrame(tab_core, text=" MỐC THỜI GIAN BÁO CÁO EXECUTIVE ", padding=10)
+        period_anchor_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        self.exec_date_mode_var = tk.StringVar(value="auto")
+        
+        rb_auto = ttk.Radiobutton(period_anchor_frame, text="🟢 Tự động (Lấy dữ liệu mới nhất)", variable=self.exec_date_mode_var, value="auto")
+        rb_auto.pack(side=tk.LEFT, padx=(0, 15))
+        
+        rb_prev = ttk.Radiobutton(period_anchor_frame, text="⏪ Kỳ trước (Tuần/Tháng trước)", variable=self.exec_date_mode_var, value="prev")
+        rb_prev.pack(side=tk.LEFT, padx=(0, 15))
+
+        rb_today = ttk.Radiobutton(period_anchor_frame, text="📅 Hôm nay (Thời gian thực)", variable=self.exec_date_mode_var, value="today")
+        rb_today.pack(side=tk.LEFT)
+
         btn_frame_core = ttk.Frame(tab_core)
         btn_frame_core.pack(fill=tk.X, pady=(10, 0))
         self.btn_run = ttk.Button(btn_frame_core, text="TẠO BÁO CÁO CỤM (CLUSTER)", style="Accent.TButton", command=self._start_report_job)
@@ -396,9 +411,10 @@ class StoreVisitApp:
         stores = [k for k, v in self.store_vars.items() if v.get() == 1]
         if not stores:
             stores = ["ALL"]
-        self._start_job_thread(asm, stores, form_response_ids=None, no_merge=False, schema="executive_combo", period_type=period_type)
+        ref_date = self.exec_date_mode_var.get() if hasattr(self, "exec_date_mode_var") else "auto"
+        self._start_job_thread(asm, stores, form_response_ids=None, no_merge=False, schema="executive_combo", period_type=period_type, reference_date=ref_date)
 
-    def _start_job_thread(self, asm: str, stores: list, form_response_ids: list = None, no_merge: bool = False, schema: str = "store_visit", period_type: str = "weekly"):
+    def _start_job_thread(self, asm: str, stores: list, form_response_ids: list = None, no_merge: bool = False, schema: str = "store_visit", period_type: str = "weekly", reference_date: str = "auto"):
         # Initialize job state
         self.current_job_id = str(uuid.uuid4())[:8]
         self.cancel_file_path = os.path.join(self.root_dir, f"temp/cancel_{self.current_job_id}.sig")
@@ -411,7 +427,7 @@ class StoreVisitApp:
         
         mode_str = "Tách biệt" if no_merge else "Gộp cụm"
         if schema == "executive_combo":
-            self._write_log(f"Bắt đầu tạo Báo cáo Executive Combo ({period_type.upper()}) | ASM: {asm}")
+            self._write_log(f"Bắt đầu tạo Báo cáo Executive Combo ({period_type.upper()}) | Mốc: {reference_date.upper()} | ASM: {asm}")
         elif form_response_ids:
             self._write_log(f"Bắt đầu tạo báo cáo từ Google Forms ({mode_str}) | Cửa hàng: {', '.join(stores)}")
         else:
@@ -421,7 +437,7 @@ class StoreVisitApp:
         self.is_running = True
         self.last_event_time = time.time()
         
-        worker_thread = threading.Thread(target=self._run_subprocess, args=(asm, stores, form_response_ids, no_merge, schema, period_type))
+        worker_thread = threading.Thread(target=self._run_subprocess, args=(asm, stores, form_response_ids, no_merge, schema, period_type, reference_date))
         worker_thread.daemon = True
         worker_thread.start()
         
@@ -456,7 +472,7 @@ class StoreVisitApp:
         except AttributeError:
             pass
 
-    def _run_subprocess(self, asm: str, stores: list, form_response_ids: list = None, no_merge: bool = False, schema: str = "store_visit", period_type: str = "weekly"):
+    def _run_subprocess(self, asm: str, stores: list, form_response_ids: list = None, no_merge: bool = False, schema: str = "store_visit", period_type: str = "weekly", reference_date: str = "auto"):
         """Execute the worker subprocess with parameters."""
         worker_script = os.path.join(self.root_dir, "app_worker.py")
         venv_python = os.path.join(self.root_dir, ".venv/Scripts/python.exe")
@@ -468,7 +484,8 @@ class StoreVisitApp:
             "--stores", ",".join(stores),
             "--cancel-file", self.cancel_file_path,
             "--schema", schema,
-            "--period-type", period_type
+            "--period-type", period_type,
+            "--reference-date", reference_date
         ]
         if form_response_ids:
             cmd.extend(["--form-response-ids", ",".join(form_response_ids)])

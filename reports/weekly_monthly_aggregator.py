@@ -3,16 +3,17 @@ import json
 import re
 from datetime import datetime, timedelta
 import pandas as pd
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Union
 
 class WeeklyMonthlyAggregator:
     """
     Top 0.1% Data Aggregation Engine for Weekly & Monthly Executive Reports.
     Features:
-      - Accent-insensitive & Fuzzy ASM Name Normalization
-      - Robust Multi-format Date Parsing
-      - Global Retail Risk-Based Scoring System with Keyword & Category Weighting
-      - Multi-period calculation (Weekly, Monthly, Quarterly)
+      - Smart Auto Date Anchor (_get_latest_data_date)
+      - Support for AUTO, PREV, TODAY, and custom reference dates
+      - Store Code & ASM Filtering
+      - Accent-insensitive & Fuzzy Name Normalization
+      - Global Retail Risk-Based Scoring System
     """
     def __init__(self, loader):
         self.loader = loader
@@ -40,38 +41,88 @@ class WeeklyMonthlyAggregator:
         s = re.sub(r'[^a-zA-Z0-9]', '', s)
         return s.lower()
 
-    @staticmethod
-    def get_period_date_range(period_type: str, reference_date: datetime = None) -> Tuple[datetime, datetime]:
-        if reference_date is None:
-            reference_date = datetime.now()
-            
+    def get_latest_data_date(self) -> datetime:
+        """Scan form_cache.json for the maximum report_date available."""
+        form_cache_path = os.path.join(self.loader.root_dir, "data", "form_cache.json")
+        latest_dt = None
+        if os.path.exists(form_cache_path):
+            try:
+                with open(form_cache_path, "r", encoding="utf-8") as f:
+                    cache_data = json.load(f)
+                    for _, sub in cache_data.items():
+                        rdate_str = sub.get("report_date", "")
+                        dt = self._parse_date(rdate_str)
+                        if dt:
+                            if latest_dt is None or dt > latest_dt:
+                                latest_dt = dt
+            except Exception as e:
+                print(f"[Aggregator] Error finding latest date: {e}")
+        
+        return latest_dt or datetime.now()
+
+    def get_period_date_range(self, period_type: str, reference_date: Union[str, datetime] = None) -> Tuple[datetime, datetime]:
+        ref_dt = None
+        mode = "AUTO"
+
+        if isinstance(reference_date, datetime):
+            ref_dt = reference_date
+        elif isinstance(reference_date, str) and reference_date.strip():
+            mode_upper = reference_date.strip().upper()
+            if mode_upper in ["AUTO", "LATEST"]:
+                ref_dt = self.get_latest_data_date()
+                mode = "AUTO"
+            elif mode_upper == "PREV":
+                latest = self.get_latest_data_date()
+                if period_type == "weekly":
+                    ref_dt = latest - timedelta(days=7)
+                else: # monthly / quarterly
+                    # Go back to previous month
+                    first_curr = latest.replace(day=1)
+                    ref_dt = first_curr - timedelta(days=15)
+                mode = "PREV"
+            elif mode_upper == "TODAY":
+                ref_dt = datetime.now()
+                mode = "TODAY"
+            else:
+                ref_dt = self._parse_date(reference_date)
+                if not ref_dt:
+                    ref_dt = self.get_latest_data_date()
+
+        if ref_dt is None:
+            ref_dt = self.get_latest_data_date()
+
         if period_type == "weekly":
-            # Find closest previous/current Saturday (Saturday -> Friday)
-            # Python weekday: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6
-            offset = (reference_date.weekday() + 2) % 7
-            start_date = (reference_date - timedelta(days=offset)).replace(hour=0, minute=0, second=0, microsecond=0)
+            # Closest Saturday -> Friday range
+            offset = (ref_dt.weekday() + 2) % 7
+            start_date = (ref_dt - timedelta(days=offset)).replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = (start_date + timedelta(days=6)).replace(hour=23, minute=59, second=59, microsecond=999999)
         elif period_type == "monthly":
-            start_date = reference_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            start_date = ref_dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             if start_date.month == 12:
                 next_month = start_date.replace(year=start_date.year + 1, month=1, day=1)
             else:
                 next_month = start_date.replace(month=start_date.month + 1, day=1)
             end_date = (next_month - timedelta(seconds=1))
         else: # quarterly
-            curr_quarter = (reference_date.month - 1) // 3 + 1
+            curr_quarter = (ref_dt.month - 1) // 3 + 1
             first_month_of_q = (curr_quarter - 1) * 3 + 1
-            start_date = reference_date.replace(month=first_month_of_q, day=1, hour=0, minute=0, second=0, microsecond=0)
+            start_date = ref_dt.replace(month=first_month_of_q, day=1, hour=0, minute=0, second=0, microsecond=0)
             last_month_of_q = first_month_of_q + 2
             if last_month_of_q == 12:
                 next_q = start_date.replace(year=start_date.year + 1, month=1, day=1)
             else:
                 next_q = start_date.replace(month=last_month_of_q + 1, day=1)
             end_date = (next_q - timedelta(seconds=1))
-            
+
         return start_date, end_date
 
-    def aggregate_data(self, period_type: str = "weekly", asm_filter: str = "ALL", reference_date: datetime = None) -> Dict[str, Any]:
+    def aggregate_data(
+        self,
+        period_type: str = "weekly",
+        asm_filter: str = "ALL",
+        store_filter: List[str] = None,
+        reference_date: Union[str, datetime] = None
+    ) -> Dict[str, Any]:
         start_date, end_date = self.get_period_date_range(period_type, reference_date)
         start_str = start_date.strftime("%d/%m/%Y")
         end_str = end_date.strftime("%d/%m/%Y")
@@ -85,6 +136,7 @@ class WeeklyMonthlyAggregator:
             period_name = f"Quý {q_num}/{start_date.year}"
 
         asm_filter_norm = self.remove_accents(asm_filter)
+        clean_store_filter = [s.strip().upper() for s in store_filter] if store_filter else ["ALL"]
 
         # 1. Load StoreVisit Submissions from cache
         form_cache_path = os.path.join(self.loader.root_dir, "data", "form_cache.json")
@@ -97,9 +149,16 @@ class WeeklyMonthlyAggregator:
                         rdate_str = sub.get("report_date", "")
                         dt = self._parse_date(rdate_str)
                         if dt and start_date <= dt <= end_date:
+                            store_code = sub.get("store_code", "").upper()
                             asm_name = sub.get("asm_name", "")
                             asm_norm = self.remove_accents(asm_name)
-                            if asm_filter == "ALL" or asm_filter_norm in asm_norm or asm_norm in asm_filter_norm:
+                            
+                            # Match ASM filter
+                            asm_match = (asm_filter == "ALL" or asm_filter_norm in asm_norm or asm_norm in asm_filter_norm)
+                            # Match Store filter
+                            store_match = ("ALL" in clean_store_filter or store_code in clean_store_filter)
+
+                            if asm_match and store_match:
                                 submissions.append(sub)
             except Exception as e:
                 print(f"[Aggregator] Error loading form cache: {e}")
@@ -115,7 +174,9 @@ class WeeklyMonthlyAggregator:
                         sdate_str = s.get("timestamp", "")
                         dt = self._parse_date(sdate_str)
                         if dt and start_date <= dt <= end_date:
-                            surveys.append(s)
+                            store_code = s.get("store_code", "").upper()
+                            if "ALL" in clean_store_filter or store_code in clean_store_filter:
+                                surveys.append(s)
             except Exception as e:
                 print(f"[Aggregator] Error loading survey cache: {e}")
 
@@ -217,9 +278,11 @@ class WeeklyMonthlyAggregator:
         if not self.dim_store.empty:
             for _, r in self.dim_store.iterrows():
                 raw_asm = str(r.get("ASM", "")).strip()
-                if raw_asm:
-                    norm = self.remove_accents(raw_asm)
-                    asm_store_counts[norm] = asm_store_counts.get(norm, 0) + 1
+                scode = str(r.get("StoreCode", "")).strip().upper()
+                if "ALL" in clean_store_filter or scode in clean_store_filter:
+                    if raw_asm:
+                        norm = self.remove_accents(raw_asm)
+                        asm_store_counts[norm] = asm_store_counts.get(norm, 0) + 1
 
         asm_leaderboard = {}
         for row in store_matrix:
@@ -276,6 +339,7 @@ class WeeklyMonthlyAggregator:
             "start_date": start_str,
             "end_date": end_str,
             "asm_filter": asm_filter,
+            "store_filter": clean_store_filter,
             "kpis": {
                 "total_visited": total_visited,
                 "avg_network_score": avg_network_score,
