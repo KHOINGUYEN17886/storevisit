@@ -2641,15 +2641,38 @@ function getHistoricalSubmissions(username, role, storesAllowedStr) {
 function getSubmissionDetail(rowIdx) {
   try {
     var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) { return String(h).trim(); });
-    var rowValues = sheet.getRange(rowIdx, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return String(h).trim(); });
     
+    var parsedRow = parseInt(rowIdx, 10);
+    var targetRowIdx = -1;
+    if (!isNaN(parsedRow) && parsedRow >= 2 && parsedRow <= data.length) {
+      targetRowIdx = parsedRow;
+    } else if (rowIdx) {
+      var idStr = String(rowIdx).trim();
+      var responseIdCol = headers.indexOf("submission_id");
+      if (responseIdCol === -1) responseIdCol = headers.indexOf("submissionid");
+      if (responseIdCol !== -1) {
+        for (var r = 1; r < data.length; r++) {
+          if (String(data[r][responseIdCol]).trim() === idStr) {
+            targetRowIdx = r + 1;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (targetRowIdx === -1) {
+      return { success: false, error: "Không tìm thấy dòng báo cáo phù hợp." };
+    }
+
+    var rowValues = data[targetRowIdx - 1];
     var rowData = {};
     headers.forEach(function(h, idx) {
       rowData[h] = rowValues[idx];
     });
     
-    return { success: true, data: rowData };
+    return { success: true, data: rowData, rowIdx: targetRowIdx };
   } catch (e) {
     return { success: false, error: e.toString() };
   }
