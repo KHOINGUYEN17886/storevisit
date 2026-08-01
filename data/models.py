@@ -35,6 +35,7 @@ class BestSellerItem(BaseModel):
     brand: str
     sales_4w: int
     stock_qty: int
+    image_path: Optional[str] = None
 
 class SlowSellerItem(BaseModel):
     rank: int
@@ -43,6 +44,7 @@ class SlowSellerItem(BaseModel):
     brand: str
     stock_qty: int
     age_days: int
+    image_path: Optional[str] = None
 
 class StaffItem(BaseModel):
     name: str

@@ -2286,26 +2286,43 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
             cell_left = left + c_idx * (cell_width + gap_x)
             cell_top = top + r_idx * (cell_height + gap_y)
             
-            # 1. Draw Image Placeholder Shape
+            # 1. Draw Image / Image Placeholder Shape
             img_left = cell_left + img_left_offset
             img_top = cell_top
             
-            img_shape = slide.shapes.add_shape(
-                MSO_SHAPE.RECTANGLE, img_left, img_top, img_size, img_size
-            )
-            img_shape.fill.solid()
-            img_shape.fill.fore_color.rgb = RGBColor(245, 245, 245)
-            img_shape.line.color.rgb = RGBColor(200, 200, 200)
-            img_shape.line.width = Pt(1)
+            img_path = getattr(item, "image_path", None)
+            inserted_pic = False
+            if img_path and os.path.exists(img_path) and os.path.getsize(img_path) > 0:
+                try:
+                    import tempfile
+                    temp_dir = os.path.join(tempfile.gettempdir(), "fitted_products")
+                    os.makedirs(temp_dir, exist_ok=True)
+                    fitted_path = os.path.join(temp_dir, f"fitted_prod_{item.sku}.png")
+                    t_w = int(img_size / Inches(1) * 96)
+                    t_h = int(img_size / Inches(1) * 96)
+                    ImageProcessor.process_and_fit_image(img_path, fitted_path, target_width=t_w, target_height=t_h)
+                    slide.shapes.add_picture(fitted_path, img_left, img_top, img_size, img_size)
+                    inserted_pic = True
+                except Exception as ex_img:
+                    print(f"Warning: Failed to render product image for {item.sku}: {ex_img}")
             
-            # Text inside image placeholder
-            img_shape.text = "Ảnh sản phẩm\n(Tỷ lệ 1:1)"
-            p_img = img_shape.text_frame.paragraphs[0]
-            p_img.alignment = PP_ALIGN.CENTER
-            p_img.font.name = FONT_PRIMARY
-            p_img.font.size = Pt(9)
-            p_img.font.color.rgb = RGBColor(0, 0, 0)
-            img_shape.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+            if not inserted_pic:
+                img_shape = slide.shapes.add_shape(
+                    MSO_SHAPE.RECTANGLE, img_left, img_top, img_size, img_size
+                )
+                img_shape.fill.solid()
+                img_shape.fill.fore_color.rgb = RGBColor(245, 245, 245)
+                img_shape.line.color.rgb = RGBColor(200, 200, 200)
+                img_shape.line.width = Pt(1)
+                
+                # Text inside image placeholder
+                img_shape.text = f"{item.sku}\n(Chưa có ảnh)"
+                p_img = img_shape.text_frame.paragraphs[0]
+                p_img.alignment = PP_ALIGN.CENTER
+                p_img.font.name = FONT_PRIMARY
+                p_img.font.size = Pt(8.5)
+                p_img.font.color.rgb = RGBColor(120, 120, 120)
+                img_shape.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
             
             # 2. Draw Text Box Below Image
             text_left = cell_left

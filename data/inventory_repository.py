@@ -110,19 +110,30 @@ class InventoryRepository:
         # Filter out gift vouchers
         df_hm_store = df_hm_store[~df_hm_store["ProductName"].str.contains("Phiếu quà tặng|Voucher", case=False, na=False)]
         
+        # Filter for Hàng Nguyên Giá phân phối từ năm 2025 đến hiện tại
+        if "Prod_Year_KHPP" in df_hm_store.columns:
+            df_hm_store["Prod_Year_Clean"] = pd.to_numeric(df_hm_store["Prod_Year_KHPP"], errors="coerce").fillna(0)
+            df_hm_store = df_hm_store[df_hm_store["Prod_Year_Clean"] >= 2025]
+
         for col in ["Sales_4W", "Stock_Qty"]:
             df_hm_store[col] = pd.to_numeric(df_hm_store[col], errors="coerce").fillna(0)
             
         best_df = df_hm_store.sort_values(by="Sales_4W", ascending=False).head(limit)
+        
+        from reports.product_image_indexer import ProductImageIndexer
+        img_indexer = ProductImageIndexer()
+
         items = []
         for i, (_, row) in enumerate(best_df.iterrows()):
+            sku_code = str(row.get("SKU", ""))
             items.append(BestSellerItem(
                 rank=i + 1,
-                sku=str(row.get("SKU", "")),
+                sku=sku_code,
                 product_name=str(row.get("ProductName", "")),
                 brand=str(row.get("Brand", "")),
                 sales_4w=int(row.get("Sales_4W", 0)),
-                stock_qty=int(row.get("Stock_Qty", 0))
+                stock_qty=int(row.get("Stock_Qty", 0)),
+                image_path=img_indexer.get_image_path(sku_code)
             ))
         return items
 
@@ -134,19 +145,30 @@ class InventoryRepository:
         # Filter out gift vouchers
         df_hm_store = df_hm_store[~df_hm_store["ProductName"].str.contains("Phiếu quà tặng|Voucher", case=False, na=False)]
         
+        # Filter for Hàng Nguyên Giá phân phối từ năm 2025 đến hiện tại
+        if "Prod_Year_KHPP" in df_hm_store.columns:
+            df_hm_store["Prod_Year_Clean"] = pd.to_numeric(df_hm_store["Prod_Year_KHPP"], errors="coerce").fillna(0)
+            df_hm_store = df_hm_store[df_hm_store["Prod_Year_Clean"] >= 2025]
+
         for col in ["Sales_4W", "Stock_Qty", "Stock_Age_Days"]:
             df_hm_store[col] = pd.to_numeric(df_hm_store[col], errors="coerce").fillna(0)
             
         # Slow sellers: Sales_4W == 0, sorted by Stock_Qty descending
         slow_df = df_hm_store[df_hm_store["Sales_4W"] == 0].sort_values(by="Stock_Qty", ascending=False).head(limit)
+        
+        from reports.product_image_indexer import ProductImageIndexer
+        img_indexer = ProductImageIndexer()
+
         items = []
         for i, (_, row) in enumerate(slow_df.iterrows()):
+            sku_code = str(row.get("SKU", ""))
             items.append(SlowSellerItem(
                 rank=i + 1,
-                sku=str(row.get("SKU", "")),
+                sku=sku_code,
                 product_name=str(row.get("ProductName", "")),
                 brand=str(row.get("Brand", "")),
                 stock_qty=int(row.get("Stock_Qty", 0)),
-                age_days=int(row.get("Stock_Age_Days", 0))
+                age_days=int(row.get("Stock_Age_Days", 0)),
+                image_path=img_indexer.get_image_path(sku_code)
             ))
         return items
