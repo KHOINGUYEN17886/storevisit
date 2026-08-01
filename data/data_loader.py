@@ -93,5 +93,50 @@ class DataLoader:
                 self._cache["weekly_json"] = {}
         return self._cache["weekly_json"]
 
+    def get_asm_email(self, asm_name: str) -> str:
+        """Lookup email for given ASM name from dim_store or config fallback."""
+        if not asm_name:
+            return ""
+            
+        import re
+        def remove_accents(str_val: str) -> str:
+            if not str_val: return ""
+            s = str(str_val).strip()
+            s = re.sub(r'[àáạảãâầấậẩẫăằắặẳẵ]', 'a', s)
+            s = re.sub(r'[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]', 'A', s)
+            s = re.sub(r'[èéẹẻẽêềếệểễ]', 'e', s)
+            s = re.sub(r'[ÈÉẸẺẼÊỀẾỆỂỄ]', 'E', s)
+            s = re.sub(r'[ìíịỉĩ]', 'i', s)
+            s = re.sub(r'[ÌÍỊỈĨ]', 'I', s)
+            s = re.sub(r'[òóọỏõôồốộổỗơờớợởỡ]', 'o', s)
+            s = re.sub(r'[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]', 'O', s)
+            s = re.sub(r'[ùúụủũưừứựửữ]', 'u', s)
+            s = re.sub(r'[ÙÚỤỦŨƯỪỨỰỬỮ]', 'U', s)
+            s = re.sub(r'[ỳýỵỷỹ]', 'y', s)
+            s = re.sub(r'[ỲÝỴỶỸ]', 'Y', s)
+            s = re.sub(r'[đ]', 'd', s)
+            s = re.sub(r'[Đ]', 'D', s)
+            s = re.sub(r'[^a-zA-Z0-9]', '', s)
+            return s.lower()
+
+        norm_input = remove_accents(asm_name)
+        df_store = self.load_dim_store()
+        
+        if not df_store.empty:
+            for _, r in df_store.iterrows():
+                raw_asm = str(r.get("ASM", "")).strip()
+                email = str(r.get("Email", r.get("ASM_Email", ""))).strip()
+                if raw_asm and email and "@" in email:
+                    if remove_accents(raw_asm) == norm_input:
+                        return email
+
+        # Config fallback mapping if available
+        asm_emails_config = self.config.get("asm_emails", {})
+        for k, v in asm_emails_config.items():
+            if remove_accents(k) == norm_input:
+                return v
+
+        return f"{norm_input}@anphuoc.com.vn"
+
     def clear_cache(self):
         self._cache.clear()

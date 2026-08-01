@@ -568,13 +568,28 @@ class StoreVisitApp:
             self._write_log(f"   PPTX: {payload.get('pptx')}")
             self._write_log(f"   PDF: {payload.get('pdf')}")
             
+            pptx_path = payload.get("pptx", "")
+            pdf_path = payload.get("pdf", "")
+            docx_path = payload.get("docx", "")
+            xlsx_path = payload.get("xlsx", "")
+            store_code = payload.get("store_code", payload.get("store", "CH"))
+            store_name = payload.get("store_name", store_code)
+            asm_name = payload.get("asm", payload.get("asm_name", "ASM"))
+            report_date = payload.get("report_date", datetime.now().strftime("%d/%m/%Y"))
+
             # Open output folder
-            output_dir = os.path.dirname(payload.get("pptx"))
-            messagebox.showinfo("Thành Công", f"Đã xuất báo cáo cụm thành công tại:\n{output_dir}")
-            try:
-                os.startfile(output_dir)
-            except Exception:
-                pass
+            if pptx_path:
+                output_dir = os.path.dirname(pptx_path)
+                messagebox.showinfo("Thành Công", f"Đã xuất báo cáo thành công tại:\n{output_dir}")
+                try:
+                    os.startfile(output_dir)
+                except Exception:
+                    pass
+            
+            # Interactive Email Modal Prompt (Option 2: Confirm & Edit Email)
+            self.root.after(300, lambda: self._prompt_and_send_email(
+                store_code, store_name, asm_name, report_date, pptx_path, pdf_path, docx_path, xlsx_path
+            ))
             self._finalize_job()
             
         elif msg_type == "job_cancelled":
@@ -586,6 +601,91 @@ class StoreVisitApp:
             err = payload.get("error", "Lỗi chưa xác định")
             tb = payload.get("traceback", "")
             self._on_job_failed(err, tb)
+
+    def _prompt_and_send_email(self, store_code: str, store_name: str, asm_name: str, report_date: str, pptx_path: str, pdf_path: str = "", docx_path: str = "", xlsx_path: str = ""):
+        """Pop up an interactive email confirmation dialog allowing the user to view/edit recipient email before sending."""
+        default_email = ""
+        if hasattr(self, "loader") and self.loader:
+            try:
+                default_email = self.loader.get_asm_email(asm_name)
+            except Exception:
+                default_email = ""
+                
+        # Create Toplevel Modal Window
+        win = tk.Toplevel(self.root)
+        win.title("📧 XÁC NHẬN GỬI EMAIL BÁO CÁO CÔNG TÁC")
+        win.geometry("560x320")
+        win.resizable(False, False)
+        win.transient(self.root)
+        win.grab_set()
+
+        # Center on parent window
+        win.geometry("+%d+%d" % (self.root.winfo_x() + 50, self.root.winfo_y() + 50))
+
+        # Title Label
+        lbl_title = ttk.Label(win, text="📧 XÁC NHẬN GỬI EMAIL BÁO CÁO CÔNG TÁC", font=("Segoe UI", 12, "bold"), foreground="#0A2342")
+        lbl_title.pack(anchor="w", padx=20, pady=(20, 5))
+
+        lbl_info = ttk.Label(win, text=f"• Cửa hàng: {store_code} - {store_name}\n• ASM Phụ trách: {asm_name} | Ngày: {report_date}", font=("Segoe UI", 9.5))
+        lbl_info.pack(anchor="w", padx=20, pady=(0, 15))
+
+        # Input Frame
+        frame_input = ttk.LabelFrame(win, text=" ĐỊA CHỈ EMAIL NGƯỜI NHẬN ", padding=10)
+        frame_input.pack(fill=tk.X, padx=20, pady=(0, 15))
+
+        lbl_input_hint = ttk.Label(frame_input, text="Vui lòng kiểm tra địa chỉ Email bên dưới (Có thể gõ sửa trực tiếp):", font=("Segoe UI", 9, "italic"))
+        lbl_input_hint.pack(anchor="w", pady=(0, 5))
+
+        email_var = tk.StringVar(value=default_email)
+        entry_email = ttk.Entry(frame_input, textvariable=email_var, font=("Segoe UI", 10))
+        entry_email.pack(fill=tk.X, pady=(0, 5))
+        entry_email.focus_set()
+
+        lbl_status = ttk.Label(win, text="", font=("Segoe UI", 9, "italic"), foreground="#007ACC")
+        lbl_status.pack(anchor="w", padx=20, pady=(0, 10))
+
+        def do_send():
+            target_email = email_var.get().strip()
+            if not target_email or "@" not in target_email:
+                messagebox.showwarning("Email Chưa Hợp Lệ", "Vui lòng nhập địa chỉ Email hợp lệ (chứa ký tự '@').", parent=win)
+                return
+
+            btn_send["state"] = tk.DISABLED
+            btn_skip["state"] = tk.DISABLED
+            lbl_status["text"] = f"Đang gửi email báo cáo tới '{target_email}'..."
+
+            def send_bg():
+                try:
+                    from app_worker import send_email_for_store
+                    success = send_email_for_store(
+                        self.loader, store_code, store_name, asm_name, report_date,
+                        pdf_path, docx_path, pptx_path, xlsx_path, target_email=target_email
+                    )
+                    if success:
+                        self.root.after(0, lambda: self._write_log(f"✓ ĐÃ GỬI MAIL BÁO CÁO THÀNH CÔNG TỚI: {target_email}"))
+                        self.root.after(0, lambda: messagebox.showinfo("Thành Công", f"Đã gửi email báo cáo thành công tới:\n{target_email}", parent=self.root))
+                    else:
+                        self.root.after(0, lambda: self._write_log(f"❌ GỬI MAIL THẤT BẠI TỚI: {target_email}"))
+                        self.root.after(0, lambda: messagebox.showerror("Gửi Mail Thất Bại", f"Không thể gửi email tới {target_email}. Vui lòng kiểm tra lại cấu hình WebApp URL.", parent=self.root))
+                except Exception as ex:
+                    self.root.after(0, lambda: self._write_log(f"❌ LỖI GỬI MAIL: {ex}"))
+                    self.root.after(0, lambda: messagebox.showerror("Lỗi Gửi Mail", f"Lỗi phát sinh khi gửi mail: {ex}", parent=self.root))
+                finally:
+                    self.root.after(0, win.destroy)
+
+            t = threading.Thread(target=send_bg)
+            t.daemon = True
+            t.start()
+
+        # Button Frame
+        frame_btns = ttk.Frame(win)
+        frame_btns.pack(fill=tk.X, padx=20, pady=(0, 15))
+
+        btn_send = ttk.Button(frame_btns, text="📧 GỬI EMAIL NGAY", style="Accent.TButton", command=do_send)
+        btn_send.pack(side=tk.LEFT, padx=(0, 10))
+
+        btn_skip = ttk.Button(frame_btns, text="❌ BỎ QUA / KHÔNG GỬI", command=win.destroy)
+        btn_skip.pack(side=tk.LEFT)
 
     def _on_job_failed(self, error: str, tb: str):
         self.progress_lbl["text"] = "Trạng thái: Gặp lỗi trong quá trình tạo báo cáo."

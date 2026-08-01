@@ -38,7 +38,7 @@ def check_cancellation(cancel_file_path: str, sender: IPCMessageSender) -> bool:
         return True
     return False
 
-def send_email_for_store(loader, store_code, store_name, asm_name, report_date, pdf_path, docx_path, pptx_path, xlsx_path):
+def send_email_for_store(loader, store_code, store_name, asm_name, report_date, pdf_path, docx_path, pptx_path, xlsx_path, target_email: str = None):
     import base64
     import urllib.request
     import urllib.parse
@@ -48,7 +48,7 @@ def send_email_for_store(loader, store_code, store_name, asm_name, report_date, 
         print("[Email] webapp_url not configured in app_config.yaml. Skipping email.")
         return False
         
-    print(f"[Email] Sending report email for {store_code} via Apps Script webapp: {webapp_url}...")
+    print(f"[Email] Sending report email for {store_code} to '{target_email or 'default ASM'}' via Apps Script webapp: {webapp_url}...")
     
     def get_base64_data(file_path, mime_type):
         if file_path and os.path.exists(file_path):
@@ -68,6 +68,7 @@ def send_email_for_store(loader, store_code, store_name, asm_name, report_date, 
         
         payload = {
             "action": "send_email",
+            "targetEmail": target_email or "",
             "storeName": store_name,
             "reportDate": report_date,
             "asmName": asm_name,
