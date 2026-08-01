@@ -3182,31 +3182,40 @@ function getAllUsers(requesterUsername) {
     var data = sheet.getDataRange().getValues();
     if (data.length <= 1) return { success: true, users: [] };
     
-    var headers = data[0];
+    var rawHeaders = data[0];
+    var headers = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
     var uIdx = headers.indexOf("username");
     var nIdx = headers.indexOf("full_name");
+    if (nIdx === -1) nIdx = headers.indexOf("fullname");
     var rIdx = headers.indexOf("role");
     var regIdx = headers.indexOf("region");
     var sIdx = headers.indexOf("stores");
     var stIdx = headers.indexOf("status");
     var eIdx = headers.indexOf("email");
-    if (stIdx === -1) stIdx = headers.length;
+    if (eIdx === -1) eIdx = headers.indexOf("asmemail");
+    
+    if (stIdx === -1) {
+      stIdx = headers.length;
+      sheet.getRange(1, stIdx + 1).setValue("status").setFontWeight("bold");
+      headers.push("status");
+    }
     if (eIdx === -1) {
       eIdx = headers.length;
       sheet.getRange(1, eIdx + 1).setValue("email").setFontWeight("bold");
+      headers.push("email");
     }
     
     var users = [];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
-      if (!row[uIdx]) continue;
+      if (uIdx === -1 || !row[uIdx]) continue;
       users.push({
         username: String(row[uIdx]).trim(),
-        fullName: String(row[nIdx] || row[uIdx]).trim(),
-        role: String(row[rIdx] || "asm").trim().toLowerCase(),
-        region: String(row[regIdx] || "").trim(),
-        stores: String(row[sIdx] || "ALL").trim(),
-        status: String(row[stIdx] || "Active").trim(),
+        fullName: nIdx !== -1 && row[nIdx] ? String(row[nIdx]).trim() : String(row[uIdx]).trim(),
+        role: rIdx !== -1 && row[rIdx] ? String(row[rIdx]).trim().toLowerCase() : "asm",
+        region: regIdx !== -1 && row[regIdx] ? String(row[regIdx]).trim() : "",
+        stores: sIdx !== -1 && row[sIdx] ? String(row[sIdx]).trim() : "ALL",
+        status: stIdx !== -1 && row[stIdx] ? String(row[stIdx]).trim() : "Active",
         email: eIdx !== -1 && row[eIdx] ? String(row[eIdx]).trim() : ""
       });
     }
@@ -3229,22 +3238,28 @@ function saveUserAccount(requesterUsername, userData) {
     if (!sheet) return { success: false, error: "Không mở được bảng người dùng." };
     
     var data = sheet.getDataRange().getValues();
-    var headers = data[0];
+    var rawHeaders = data[0];
+    var headers = rawHeaders.map(function(h) { return String(h).trim().toLowerCase(); });
     var uIdx = headers.indexOf("username");
     var pIdx = headers.indexOf("password");
     var nIdx = headers.indexOf("full_name");
+    if (nIdx === -1) nIdx = headers.indexOf("fullname");
     var rIdx = headers.indexOf("role");
     var regIdx = headers.indexOf("region");
     var sIdx = headers.indexOf("stores");
     var stIdx = headers.indexOf("status");
     var eIdx = headers.indexOf("email");
+    if (eIdx === -1) eIdx = headers.indexOf("asmemail");
+    
     if (stIdx === -1) {
       stIdx = headers.length;
       sheet.getRange(1, stIdx + 1).setValue("status").setFontWeight("bold");
+      headers.push("status");
     }
     if (eIdx === -1) {
       eIdx = headers.length;
       sheet.getRange(1, eIdx + 1).setValue("email").setFontWeight("bold");
+      headers.push("email");
     }
     
     var targetUser = String(userData.username).trim().toLowerCase();
