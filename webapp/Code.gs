@@ -357,7 +357,11 @@ function getOrCreateStorePhotosFolder() {
   } else {
     folder = parentFolder.createFolder("StoreVisit_Photos");
   }
-  // Share viewer access to worker service account if configured (done once on creation/update)
+  try {
+    folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch(e) {
+    console.warn("Failed to set public view on StoreVisit_Photos folder: " + e.toString());
+  }
   grantViewerAccessToWorker(folder);
   
   try {
@@ -579,9 +583,11 @@ function uploadSubmissionImage(payload) {
     
     var decodedBlob = Utilities.newBlob(Utilities.base64Decode(base64Content), mimeType, cleanFileName);
     var file = folder.createFile(decodedBlob);
-    
-    // Cấp quyền viewer cho email service account (Redundant: permissions are inherited from folder)
-    // grantViewerAccessToWorker(file);
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch(shareErr) {
+      console.warn("Lỗi setSharing cho file " + cleanFileName + ": " + shareErr.toString());
+    }
     
     return {
       success: true,
@@ -1868,6 +1874,8 @@ function doPost(e) {
       } else {
         result = syncASMUsersFromStoresInfo(postData.requesterUsername, postData.storeDataList);
       }
+    } else if (action === "makeAllStorePhotosPublic") {
+      result = makeAllStorePhotosPublic();
     } else if (action === "processForm") {
       result = processForm(payload);
     } else if (action === "uploadSubmissionImage") {
@@ -3462,5 +3470,36 @@ function syncASMUsersFromStoresInfo(requesterUsername, storeDataList) {
     };
   } catch(e) {
     return { success: false, error: "Lỗi đồng bộ dữ liệu Excel: " + e.toString() };
+  }
+}
+
+function makeAllStorePhotosPublic() {
+  try {
+    var folder = getOrCreateStorePhotosFolder();
+    try {
+      folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch(e) {
+      console.warn("Lỗi setSharing cho folder: " + e.toString());
+    }
+    
+    var files = folder.getFiles();
+    var count = 0;
+    while (files.hasNext()) {
+      var f = files.next();
+      try {
+        f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        count++;
+      } catch(err) {
+        console.warn("Lỗi setSharing file " + f.getId() + ": " + err.toString());
+      }
+    }
+    return {
+      success: true,
+      folderId: folder.getId(),
+      updatedFileCount: count,
+      message: "Đã chuyển quyền xem công khai (Anyone with link) cho " + count + " file ảnh trên Google Drive thành công!"
+    };
+  } catch(e) {
+    return { success: false, error: e.toString() };
   }
 }
