@@ -3,7 +3,7 @@ import re
 from typing import Dict, Optional
 
 class ProductImageIndexer:
-    """
+    r"""
     Top 0.1% Singleton In-Memory Product Image Indexer
     Scans C:\All_Report\1_Mapping\ProductPicture recursively once.
     Provides O(1) instant lookup for product SKU image files.
