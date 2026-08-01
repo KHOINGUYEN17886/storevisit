@@ -1,21 +1,44 @@
 import os
 import json
+import re
 from datetime import datetime, timedelta
 import pandas as pd
 from typing import Dict, List, Any, Tuple
 
 class WeeklyMonthlyAggregator:
     """
-    Data Aggregation Engine for Weekly & Monthly Executive Reports.
-    Period Rules:
-      - Weekly: Saturday -> Friday
-      - Monthly: 1st of Month -> Last Day of Month
-    Scoring Rule:
-      - Global Retail Risk-Based Scoring System
+    Top 0.1% Data Aggregation Engine for Weekly & Monthly Executive Reports.
+    Features:
+      - Accent-insensitive & Fuzzy ASM Name Normalization
+      - Robust Multi-format Date Parsing
+      - Global Retail Risk-Based Scoring System with Keyword & Category Weighting
+      - Multi-period calculation (Weekly, Monthly, Quarterly)
     """
     def __init__(self, loader):
         self.loader = loader
         self.dim_store = loader.load_dim_store()
+
+    @staticmethod
+    def remove_accents(str_val: str) -> str:
+        if not str_val:
+            return ""
+        s = str(str_val).strip()
+        s = re.sub(r'[àáạảãâầấậẩẫăằắặẳẵ]', 'a', s)
+        s = re.sub(r'[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]', 'A', s)
+        s = re.sub(r'[èéẹẻẽêềếệểễ]', 'e', s)
+        s = re.sub(r'[ÈÉẸẺẼÊỀẾỆỂỄ]', 'E', s)
+        s = re.sub(r'[ìíịỉĩ]', 'i', s)
+        s = re.sub(r'[ÌÍỊỈĨ]', 'I', s)
+        s = re.sub(r'[òóọỏõôồốộổỗơờớợởỡ]', 'o', s)
+        s = re.sub(r'[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]', 'O', s)
+        s = re.sub(r'[ùúụủũưừứựửữ]', 'u', s)
+        s = re.sub(r'[ÙÚỤỦŨƯỪỨỰỬỮ]', 'U', s)
+        s = re.sub(r'[ỳýỵỷỹ]', 'y', s)
+        s = re.sub(r'[ỲÝỴỶỸ]', 'Y', s)
+        s = re.sub(r'[đ]', 'd', s)
+        s = re.sub(r'[Đ]', 'D', s)
+        s = re.sub(r'[^a-zA-Z0-9]', '', s)
+        return s.lower()
 
     @staticmethod
     def get_period_date_range(period_type: str, reference_date: datetime = None) -> Tuple[datetime, datetime]:
@@ -23,19 +46,28 @@ class WeeklyMonthlyAggregator:
             reference_date = datetime.now()
             
         if period_type == "weekly":
-            # Find closest previous/current Saturday
+            # Find closest previous/current Saturday (Saturday -> Friday)
             # Python weekday: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6
             offset = (reference_date.weekday() + 2) % 7
             start_date = (reference_date - timedelta(days=offset)).replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = (start_date + timedelta(days=6)).replace(hour=23, minute=59, second=59, microsecond=999999)
-        else: # monthly
+        elif period_type == "monthly":
             start_date = reference_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            # Find last day of month
             if start_date.month == 12:
                 next_month = start_date.replace(year=start_date.year + 1, month=1, day=1)
             else:
                 next_month = start_date.replace(month=start_date.month + 1, day=1)
             end_date = (next_month - timedelta(seconds=1))
+        else: # quarterly
+            curr_quarter = (reference_date.month - 1) // 3 + 1
+            first_month_of_q = (curr_quarter - 1) * 3 + 1
+            start_date = reference_date.replace(month=first_month_of_q, day=1, hour=0, minute=0, second=0, microsecond=0)
+            last_month_of_q = first_month_of_q + 2
+            if last_month_of_q == 12:
+                next_q = start_date.replace(year=start_date.year + 1, month=1, day=1)
+            else:
+                next_q = start_date.replace(month=last_month_of_q + 1, day=1)
+            end_date = (next_q - timedelta(seconds=1))
             
         return start_date, end_date
 
@@ -43,7 +75,16 @@ class WeeklyMonthlyAggregator:
         start_date, end_date = self.get_period_date_range(period_type, reference_date)
         start_str = start_date.strftime("%d/%m/%Y")
         end_str = end_date.strftime("%d/%m/%Y")
-        period_name = f"Tuần ({start_str} - {end_str})" if period_type == "weekly" else f"Tháng {start_date.strftime('%m/%Y')}"
+        
+        if period_type == "weekly":
+            period_name = f"Tuần ({start_str} - {end_str})"
+        elif period_type == "monthly":
+            period_name = f"Tháng {start_date.strftime('%m/%Y')}"
+        else:
+            q_num = (start_date.month - 1) // 3 + 1
+            period_name = f"Quý {q_num}/{start_date.year}"
+
+        asm_filter_norm = self.remove_accents(asm_filter)
 
         # 1. Load StoreVisit Submissions from cache
         form_cache_path = os.path.join(self.loader.root_dir, "data", "form_cache.json")
@@ -57,7 +98,8 @@ class WeeklyMonthlyAggregator:
                         dt = self._parse_date(rdate_str)
                         if dt and start_date <= dt <= end_date:
                             asm_name = sub.get("asm_name", "")
-                            if asm_filter == "ALL" or asm_name.strip().lower() == asm_filter.strip().lower():
+                            asm_norm = self.remove_accents(asm_name)
+                            if asm_filter == "ALL" or asm_filter_norm in asm_norm or asm_norm in asm_filter_norm:
                                 submissions.append(sub)
             except Exception as e:
                 print(f"[Aggregator] Error loading form cache: {e}")
@@ -104,9 +146,10 @@ class WeeklyMonthlyAggregator:
             for sec_key, sec in sections.items():
                 items = sec.get("items", [])
                 for item in items:
-                    eval_val = item.get("eval", "")
-                    severity = item.get("severity", "")
-                    label = item.get("label", item.get("id", ""))
+                    eval_val = str(item.get("eval", "")).strip()
+                    severity = str(item.get("severity", "")).strip()
+                    label = str(item.get("label", item.get("id", ""))).strip()
+                    sev_lower = severity.lower()
 
                     if eval_val == "Đạt":
                         passed_items += 1
@@ -114,7 +157,14 @@ class WeeklyMonthlyAggregator:
                     elif eval_val == "Không đạt":
                         failed_items += 1
                         total_items += 1
-                        if severity in ["Khẩn cấp", "Cao"]:
+                        
+                        # Robust Critical Detection (Case & Keyword Insensitive)
+                        is_critical = (
+                            sev_lower in ["khẩn cấp", "cao", "nghiêm trọng", "critical", "high"] or
+                            sec_key in ["security_guard", "cash", "fire_safety"] or
+                            "pccc" in label.lower() or "quầy thu ngân" in label.lower()
+                        )
+                        if is_critical:
                             critical_count += 1
                             total_critical_violations += 1
                         
@@ -124,7 +174,7 @@ class WeeklyMonthlyAggregator:
                             "store_name": store_name,
                             "asm_name": asm_name,
                             "issue_label": label,
-                            "severity": severity,
+                            "severity": severity or ("Khẩn cấp" if is_critical else "Bình thường"),
                             "assignee": item.get("assignee", "CHT"),
                             "deadline": item.get("deadline", "---"),
                             "note": item.get("note", "")
@@ -162,38 +212,43 @@ class WeeklyMonthlyAggregator:
         # Sort store matrix by health score descending
         store_matrix.sort(key=lambda x: x["health_score"], reverse=True)
 
-        # 4. Calculate ASM Leaderboard
-        asm_leaderboard = {}
+        # 4. Calculate ASM Leaderboard with Normalized Name Matching
+        asm_store_counts = {}
         if not self.dim_store.empty:
-            asm_store_counts = self.dim_store.groupby("ASM")["StoreCode"].count().to_dict()
-        else:
-            asm_store_counts = {}
+            for _, r in self.dim_store.iterrows():
+                raw_asm = str(r.get("ASM", "")).strip()
+                if raw_asm:
+                    norm = self.remove_accents(raw_asm)
+                    asm_store_counts[norm] = asm_store_counts.get(norm, 0) + 1
 
+        asm_leaderboard = {}
         for row in store_matrix:
-            asm = row["asm_name"]
-            if asm not in asm_leaderboard:
-                asm_leaderboard[asm] = {
-                    "asm_name": asm,
-                    "total_assigned_stores": asm_store_counts.get(asm, 0),
+            raw_asm = row["asm_name"]
+            norm_asm = self.remove_accents(raw_asm)
+            
+            if norm_asm not in asm_leaderboard:
+                asm_leaderboard[norm_asm] = {
+                    "display_name": raw_asm,
+                    "total_assigned_stores": asm_store_counts.get(norm_asm, 0),
                     "visited_count": 0,
                     "scores": [],
                     "critical_count": 0,
                     "passed_stores": 0
                 }
-            asm_leaderboard[asm]["visited_count"] += 1
-            asm_leaderboard[asm]["scores"].append(row["health_score"])
-            asm_leaderboard[asm]["critical_count"] += row["critical_violations"]
+            asm_leaderboard[norm_asm]["visited_count"] += 1
+            asm_leaderboard[norm_asm]["scores"].append(row["health_score"])
+            asm_leaderboard[norm_asm]["critical_count"] += row["critical_violations"]
             if row["status_label"] in ["Tốt", "Đạt"]:
-                asm_leaderboard[asm]["passed_stores"] += 1
+                asm_leaderboard[norm_asm]["passed_stores"] += 1
 
         leaderboard_list = []
-        for asm, data in asm_leaderboard.items():
+        for norm, data in asm_leaderboard.items():
             tot = data["total_assigned_stores"]
             vis = data["visited_count"]
             coverage_pct = round((vis / tot * 100.0), 1) if tot > 0 else 100.0
             avg_score = round(sum(data["scores"]) / len(data["scores"]), 1) if data["scores"] else 0.0
             leaderboard_list.append({
-                "asm_name": asm,
+                "asm_name": data["display_name"],
                 "assigned_stores": tot,
                 "visited_stores": vis,
                 "coverage_pct": coverage_pct,
