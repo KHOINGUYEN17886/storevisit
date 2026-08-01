@@ -150,8 +150,14 @@ class StoreVisitApp:
         
         btn_frame_core = ttk.Frame(tab_core)
         btn_frame_core.pack(fill=tk.X, pady=(10, 0))
-        self.btn_run = ttk.Button(btn_frame_core, text="TẠO BÁO CÁO CỤM (WEEKLY)", style="Accent.TButton", command=self._start_report_job)
-        self.btn_run.pack(side=tk.LEFT)
+        self.btn_run = ttk.Button(btn_frame_core, text="TẠO BÁO CÁO CỤM (CLUSTER)", style="Accent.TButton", command=self._start_report_job)
+        self.btn_run.pack(side=tk.LEFT, padx=(0, 10))
+        
+        self.btn_exec_weekly = ttk.Button(btn_frame_core, text="🚀 BÁO CÁO TUẦN EXECUTIVE (PPTX + EXCEL)", style="Accent.TButton", command=lambda: self._start_executive_job("weekly"))
+        self.btn_exec_weekly.pack(side=tk.LEFT, padx=(0, 10))
+        
+        self.btn_exec_monthly = ttk.Button(btn_frame_core, text="📊 BÁO CÁO THÁNG EXECUTIVE (PPTX + EXCEL)", style="Accent.TButton", command=lambda: self._start_executive_job("monthly"))
+        self.btn_exec_monthly.pack(side=tk.LEFT)
         
         # --- TAB 2: Google Sync ---
         # Sync control
@@ -384,7 +390,15 @@ class StoreVisitApp:
         no_merge = (self.google_mode_var.get() == "separate")
         self._start_job_thread(asm, stores, form_response_ids=rids, no_merge=no_merge)
 
-    def _start_job_thread(self, asm: str, stores: list, form_response_ids: list = None, no_merge: bool = False):
+    def _start_executive_job(self, period_type: str):
+        """Launch Executive Combo Weekly or Monthly report job."""
+        asm = self.asm_var.get() or "ALL"
+        stores = [k for k, v in self.store_vars.items() if v.get() == 1]
+        if not stores:
+            stores = ["ALL"]
+        self._start_job_thread(asm, stores, form_response_ids=None, no_merge=False, schema="executive_combo", period_type=period_type)
+
+    def _start_job_thread(self, asm: str, stores: list, form_response_ids: list = None, no_merge: bool = False, schema: str = "store_visit", period_type: str = "weekly"):
         # Initialize job state
         self.current_job_id = str(uuid.uuid4())[:8]
         self.cancel_file_path = os.path.join(self.root_dir, f"temp/cancel_{self.current_job_id}.sig")
@@ -396,7 +410,9 @@ class StoreVisitApp:
         self.log_text.delete("1.0", tk.END)
         
         mode_str = "Tách biệt" if no_merge else "Gộp cụm"
-        if form_response_ids:
+        if schema == "executive_combo":
+            self._write_log(f"Bắt đầu tạo Báo cáo Executive Combo ({period_type.upper()}) | ASM: {asm}")
+        elif form_response_ids:
             self._write_log(f"Bắt đầu tạo báo cáo từ Google Forms ({mode_str}) | Cửa hàng: {', '.join(stores)}")
         else:
             self._write_log(f"Bắt đầu tạo báo cáo cụm cho ASM: {asm} | Cửa hàng: {', '.join(stores)}")
@@ -405,7 +421,7 @@ class StoreVisitApp:
         self.is_running = True
         self.last_event_time = time.time()
         
-        worker_thread = threading.Thread(target=self._run_subprocess, args=(asm, stores, form_response_ids, no_merge))
+        worker_thread = threading.Thread(target=self._run_subprocess, args=(asm, stores, form_response_ids, no_merge, schema, period_type))
         worker_thread.daemon = True
         worker_thread.start()
         
@@ -420,6 +436,8 @@ class StoreVisitApp:
         
         self.asm_combo["state"] = combo_state
         self.btn_run["state"] = state
+        if hasattr(self, "btn_exec_weekly"): self.btn_exec_weekly["state"] = state
+        if hasattr(self, "btn_exec_monthly"): self.btn_exec_monthly["state"] = state
         self.btn_cancel["state"] = tk.NORMAL if blocked else tk.DISABLED
         
         # Block checkboxes
@@ -438,7 +456,7 @@ class StoreVisitApp:
         except AttributeError:
             pass
 
-    def _run_subprocess(self, asm: str, stores: list, form_response_ids: list = None, no_merge: bool = False):
+    def _run_subprocess(self, asm: str, stores: list, form_response_ids: list = None, no_merge: bool = False, schema: str = "store_visit", period_type: str = "weekly"):
         """Execute the worker subprocess with parameters."""
         worker_script = os.path.join(self.root_dir, "app_worker.py")
         venv_python = os.path.join(self.root_dir, ".venv/Scripts/python.exe")
@@ -448,7 +466,9 @@ class StoreVisitApp:
             "--job-id", self.current_job_id,
             "--asm", asm,
             "--stores", ",".join(stores),
-            "--cancel-file", self.cancel_file_path
+            "--cancel-file", self.cancel_file_path,
+            "--schema", schema,
+            "--period-type", period_type
         ]
         if form_response_ids:
             cmd.extend(["--form-response-ids", ",".join(form_response_ids)])

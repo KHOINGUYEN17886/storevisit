@@ -42,7 +42,6 @@ def send_email_for_store(loader, store_code, store_name, asm_name, report_date, 
     import base64
     import urllib.request
     import urllib.parse
-    import json
     
     webapp_url = loader.config.get("google", {}).get("webapp_url", "")
     if not webapp_url:
@@ -120,7 +119,8 @@ def main():
     parser.add_argument("--cancel-file", required=True, help="Path to the cancel signal file")
     parser.add_argument("--form-response-ids", default="", help="Comma-separated list of form response IDs to overlay")
     parser.add_argument("--no-merge", action="store_true", help="Do not merge into a cluster summary. Save separate files per store.")
-    parser.add_argument("--schema", default="store_visit", choices=["store_visit", "market_survey"], help="The schema type to process")
+    parser.add_argument("--schema", default="store_visit", choices=["store_visit", "market_survey", "executive_combo"], help="The schema type to process")
+    parser.add_argument("--period-type", default="weekly", choices=["weekly", "monthly", "quarterly"], help="The report period type")
     
     args = parser.parse_args()
     job_id = args.job_id
@@ -247,6 +247,51 @@ def main():
             sender.send_job_completed(final_excel, "", job_manifest_path)
             lock.release()
             sys.exit(0)
+
+        if schema == "executive_combo":
+            sender.send_progress(30, f"Đang tổng hợp dữ liệu Báo cáo Executive {args.period_type}...")
+            from reports.weekly_monthly_aggregator import WeeklyMonthlyAggregator
+            from reports.executive_excel_generator import ExecutiveExcelGenerator
+            from reports.executive_pptx_generator import ExecutivePPTXGenerator
+
+            aggregator = WeeklyMonthlyAggregator(loader)
+            agg_data = aggregator.aggregate_data(period_type=args.period_type, asm_filter=asm_name)
+
+            sender.send_progress(60, "Đang tạo Bảng tính Excel Analytics Dashboard (5 Tabs)...")
+            output_dir = loader.get_path("output_dir")
+            period_tag = "Tuan" if args.period_type == "weekly" else ("Thang" if args.period_type == "monthly" else "Quy")
+            final_job_dir = os.path.join(output_dir, f"BaoCao_Executive_{period_tag}_{asm_name}_{job_id[:8]}")
+            os.makedirs(final_job_dir, exist_ok=True)
+
+            excel_gen = ExecutiveExcelGenerator()
+            excel_path = os.path.join(final_job_dir, f"BaoCao_Executive_{period_tag}_{asm_name}.xlsx")
+            excel_gen.generate(agg_data, excel_path)
+
+            sender.send_progress(85, "Đang tạo Slides PowerPoint Trình Chiếu Executive (5 Slides)...")
+            pptx_gen = ExecutivePPTXGenerator()
+            pptx_path = os.path.join(final_job_dir, f"BaoCao_Executive_{period_tag}_{asm_name}.pptx")
+            pptx_gen.generate(agg_data, pptx_path)
+
+            sender.send_progress(100, f"Đã hoàn thành Báo cáo Combo Executive {args.period_type}!")
+            job_manifest_path = os.path.join(final_job_dir, "manifest.json")
+            manifest_data = {
+                "job_id": job_id,
+                "status": "COMMITTED",
+                "timestamp": datetime.now().isoformat(),
+                "period_type": args.period_type,
+                "asm": asm_name,
+                "files": {
+                    "excel": os.path.basename(excel_path),
+                    "pptx": os.path.basename(pptx_path)
+                }
+            }
+            with open(job_manifest_path, "w", encoding="utf-8") as f:
+                json.dump(manifest_data, f, indent=2, ensure_ascii=False)
+
+            sender.send_job_completed(excel_path, pptx_path, job_manifest_path)
+            lock.release()
+            sys.exit(0)
+
         validator = DataValidator(loader)
         
         # Load form responses if specified
@@ -416,7 +461,6 @@ def main():
             has_checklist_issues = False
             if form_response and form_response.checklist_json:
                 try:
-                    import json
                     c_data = json.loads(form_response.checklist_json)
                     sections = c_data.get("sections", {})
                     
