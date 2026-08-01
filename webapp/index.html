@@ -2254,6 +2254,53 @@
         </div>
       </div>
     </div>
+  <!-- MODAL: XÁC NHẬN GỬI EMAIL BÁO CÁO (PREVIEW & EDIT RECIPIENTS) -->
+  <div class="modal fade" id="confirmSendEmailModal" tabindex="-1" aria-hidden="true" style="z-index: 1055;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow-lg border-0 rounded-4">
+        <div class="modal-header text-white rounded-top-4 p-3" style="background-color: #1B2A4A;">
+          <div>
+            <h5 class="modal-title fw-bold fs-6 mb-0"><i class="bi bi-envelope-paper me-2"></i> Xác Nhận Gửi Email Báo Cáo</h5>
+            <div class="small opacity-75 mt-1">Kiểm tra kỹ thông tin người nhận trước khi phát hành email</div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+              <div class="row g-2 small">
+                <div class="col-md-6"><strong>Cửa hàng:</strong> <span id="confirmEmailStoreInfo" class="text-primary fw-bold">---</span></div>
+                <div class="col-md-6"><strong>Ngày kiểm tra:</strong> <span id="confirmEmailReportDate">---</span></div>
+                <div class="col-md-6"><strong>ASM Phụ trách:</strong> <span id="confirmEmailAsmName" class="fw-bold">---</span></div>
+                <div class="col-md-6"><strong>Tệp đính kèm:</strong> <span class="badge bg-secondary">Báo cáo PDF / Word / Excel</span></div>
+              </div>
+            </div>
+          </div>
+
+          <form id="confirmSendEmailForm" onsubmit="submitSendReportEmail(event)">
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-dark"><i class="bi bi-person-lines-fill me-1"></i> Email Người Nhận Trực Tiếp (ASM/QLCH) <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="confirmEmailRecipientInput" placeholder="Ví dụ: asm.dung@company.com" required>
+              <div class="form-text small">Kiểm tra và sửa địa chỉ email nếu chưa chính xác.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-dark"><i class="bi bi-people me-1"></i> Email Đồng Gửi (CC - Ban Giám Đốc / Admin)</label>
+              <input type="text" class="form-control" id="confirmEmailCcInput" placeholder="Ví dụ: giamdoc@company.com, admin@company.com">
+              <div class="form-text small">Nhiều email phân cách bằng dấu phẩy (,). Có thể để trống.</div>
+            </div>
+
+            <div class="alert alert-danger d-none py-2 small" id="confirmEmailErrorAlert"></div>
+            <div class="alert alert-success d-none py-2 small" id="confirmEmailSuccessAlert"></div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-2 border-top">
+              <button type="button" class="btn btn-outline-secondary btn-sm px-4" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Không Gửi Email (Chỉ Lưu Báo Cáo)</button>
+              <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold" id="confirmEmailSubmitBtn"><i class="bi bi-send-fill me-1"></i> Xác Nhận Gửi Email Ngay</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -8032,6 +8079,7 @@
           <td class="text-center">
             <button type="button" class="btn btn-outline-success btn-sm me-1 fw-bold" onclick="openSubmissionPhotoGallery(${sub.rowIdx})" title="Xem album ảnh báo cáo trực tiếp"><i class="bi bi-images me-1"></i> Album Ảnh</button>
             <button type="button" class="btn btn-outline-info btn-sm me-1" onclick="viewSubmissionAsHtml(${sub.rowIdx})"><i class="bi bi-eye"></i> Xem HTML</button>
+            <button type="button" class="btn btn-outline-warning btn-sm me-1 text-dark" onclick="openEmailConfirmationModal('${sub.storeCode}', '${sub.storeName}', '${sub.reportDate}', '${sub.asmName}')" title="Xác nhận và gửi Email báo cáo"><i class="bi bi-envelope-paper"></i> Gửi Mail</button>
             <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="editHistoricalSubmission(${sub.rowIdx})"><i class="bi bi-pencil"></i> Sửa</button>
           </td>
         </tr>
@@ -8392,6 +8440,115 @@
     
     const lightboxModal = new bootstrap.Modal(document.getElementById("imageLightboxModal"));
     lightboxModal.show();
+  }
+
+  let currentEmailTargetData = null;
+
+  function openEmailConfirmationModal(storeCode, storeName, reportDate, asmName, pdfFileId, docxFileId, pptxFileId, xlsxFileId) {
+    currentEmailTargetData = {
+      storeCode: storeCode || "",
+      storeName: storeName || "",
+      reportDate: reportDate || "",
+      asmName: asmName || "",
+      pdfFileId: pdfFileId || "",
+      docxFileId: docxFileId || "",
+      pptxFileId: pptxFileId || "",
+      xlsxFileId: xlsxFileId || ""
+    };
+
+    document.getElementById("confirmEmailStoreInfo").textContent = (storeCode ? "[" + storeCode + "] " : "") + (storeName || "");
+    document.getElementById("confirmEmailReportDate").textContent = reportDate || "";
+    document.getElementById("confirmEmailAsmName").textContent = asmName || "";
+    
+    const recipientInput = document.getElementById("confirmEmailRecipientInput");
+    const ccInput = document.getElementById("confirmEmailCcInput");
+    const errAlert = document.getElementById("confirmEmailErrorAlert");
+    const succAlert = document.getElementById("confirmEmailSuccessAlert");
+    
+    recipientInput.value = "";
+    ccInput.value = "";
+    errAlert.classList.add("d-none");
+    succAlert.classList.add("d-none");
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.email) {
+            recipientInput.value = res.email;
+          }
+        })
+        .getAsmEmail(asmName);
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById("confirmSendEmailModal"));
+    modal.show();
+  }
+
+  function submitSendReportEmail(e) {
+    if (e) e.preventDefault();
+    if (!currentEmailTargetData) return;
+
+    const recipient = document.getElementById("confirmEmailRecipientInput").value.trim();
+    const cc = document.getElementById("confirmEmailCcInput").value.trim();
+    const errAlert = document.getElementById("confirmEmailErrorAlert");
+    const succAlert = document.getElementById("confirmEmailSuccessAlert");
+    const submitBtn = document.getElementById("confirmEmailSubmitBtn");
+
+    if (!recipient || !recipient.includes("@")) {
+      errAlert.textContent = "Vui lòng nhập địa chỉ Email người nhận hợp lệ.";
+      errAlert.classList.remove("d-none");
+      return;
+    }
+
+    errAlert.classList.add("d-none");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Đang phát gửi email...`;
+
+    const payload = {
+      confirmSend: true,
+      recipientEmail: recipient,
+      ccEmail: cc,
+      storeCode: currentEmailTargetData.storeCode,
+      storeName: currentEmailTargetData.storeName,
+      reportDate: currentEmailTargetData.reportDate,
+      asmName: currentEmailTargetData.asmName,
+      pdfFileId: currentEmailTargetData.pdfFileId,
+      docxFileId: currentEmailTargetData.docxFileId,
+      pptxFileId: currentEmailTargetData.pptxFileId,
+      xlsxFileId: currentEmailTargetData.xlsxFileId
+    };
+
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i class="bi bi-send-fill me-1"></i> Xác Nhận Gửi Email Ngay`;
+      alert("Đang chạy môi trường offline. Không thể phát email.");
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="bi bi-send-fill me-1"></i> Xác Nhận Gửi Email Ngay`;
+        if (!res || !res.success) {
+          errAlert.textContent = "Lỗi gửi Email: " + (res ? res.error : "Không có phản hồi");
+          errAlert.classList.remove("d-none");
+          return;
+        }
+        succAlert.textContent = "✅ " + (res.message || ("Đã gửi Email báo cáo thành công tới " + recipient));
+        succAlert.classList.remove("d-none");
+        setTimeout(function() {
+          const modalEl = document.getElementById("confirmSendEmailModal");
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+        }, 1800);
+      })
+      .withFailureHandler(function(err) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="bi bi-send-fill me-1"></i> Xác Nhận Gửi Email Ngay`;
+        errAlert.textContent = "Lỗi kết nối Server: " + err.message;
+        errAlert.classList.remove("d-none");
+      })
+      .sendReportEmail(payload);
   }
 
   function clearHistoryFilters() {

@@ -749,33 +749,22 @@ def main():
                 if os.path.exists(xlsx_p):
                     shutil.copy2(xlsx_p, os.path.join(store_subfolder, "report.xlsx"))
                 
-                # Trigger email sending
-                store_name = store_code
-                asm_name_val = asm_name
-                report_date_val = datetime.now().strftime("%d/%m/%Y")
-                
-                if mapped_responses and store_key in mapped_responses:
-                    resp = mapped_responses[store_key]
-                    report_date_val = resp.report_date
-                    asm_name_val = resp.asm_name
-                    
-                # Find store_report in store_reports list to get accurate store name
-                for rep in store_reports:
-                    if rep.metadata.store_code.upper() == store_code.upper():
-                        store_name = rep.metadata.store_name
-                        break
-                        
-                send_email_for_store(
-                    loader=loader,
-                    store_code=store_code,
-                    store_name=store_name,
-                    asm_name=asm_name_val,
-                    report_date=report_date_val,
-                    pdf_path=pdf_p,
-                    docx_path=docx_p,
-                    pptx_path=pptx_p,
-                    xlsx_path=xlsx_p
-                )
+                # Trigger email sending (Disabled by default to prevent unwanted background emails)
+                ENABLE_AUTO_EMAIL = False
+                if ENABLE_AUTO_EMAIL:
+                    send_email_for_store(
+                        loader=loader,
+                        store_code=store_code,
+                        store_name=store_name,
+                        asm_name=asm_name_val,
+                        report_date=report_date_val,
+                        pdf_path=pdf_p,
+                        docx_path=docx_p,
+                        pptx_path=pptx_p,
+                        xlsx_path=xlsx_p
+                    )
+                else:
+                    print(f"[Email] Tự động gửi mail đang TẮT (ENABLE_AUTO_EMAIL=False). Bỏ qua gửi mail cho {store_code}.")
 
                 # Write individual manifest
                 manifest_data = {

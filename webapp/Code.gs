@@ -2690,7 +2690,6 @@ function getSubmissionDetail(rowIdx) {
 // AUTOMATED EMAIL NOTIFICATION (PHASE 4)
 // -------------------------------------------------------------
 function getAsmEmail(asmName) {
-  // 1. Try to find in StoreMapping sheet
   try {
     var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     var sheet = ss.getSheetByName(STORE_MAPPING_SHEET);
@@ -2703,9 +2702,9 @@ function getAsmEmail(asmName) {
       
       if (asmCol !== -1 && emailCol !== -1) {
         for (var i = 1; i < data.length; i++) {
-          if (String(data[i][asmCol]).trim() === asmName) {
+          if (String(data[i][asmCol]).trim().toLowerCase() === String(asmName).trim().toLowerCase()) {
             var email = String(data[i][emailCol]).trim();
-            if (email) return email;
+            if (email) return { success: true, email: email };
           }
         }
       }
@@ -2713,24 +2712,20 @@ function getAsmEmail(asmName) {
   } catch(e) {
     console.warn("Error getting ASM email from sheet: " + e.toString());
   }
-  
-  // 2. Fallback to hardcoded mapping
-  var fallbackMap = {
-    "Khôi": "khoind@anphuoc.com.vn",
-    "Tiên": "tienntk@anphuoc.com.vn",
-    "Tín": "tintv@anphuoc.com.vn",
-    "Dũng": "dungnv@anphuoc.com.vn",
-    "Linh": "linhnt@anphuoc.com.vn",
-    "Quân": "quannh@anphuoc.com.vn",
-    "Hương": "huonglt@anphuoc.com.vn",
-    "Nhi": "nhinh@anphuoc.com.vn",
-    "Lâm": "lamnt@anphuoc.com.vn"
-  };
-  return fallbackMap[asmName] || "khoind@anphuoc.com.vn";
+  return { success: false, email: "" };
 }
 
 function sendReportEmail(postData) {
   try {
+    if (!postData || postData.confirmSend !== true) {
+      return { success: false, error: "Gửi email cần có sự xác nhận trực tiếp của người dùng." };
+    }
+    
+    var recipient = String(postData.recipientEmail || "").trim();
+    if (!recipient || recipient.indexOf("@") === -1) {
+      return { success: false, error: "Vui lòng kiểm tra và nhập đúng địa chỉ Email người nhận hợp lệ." };
+    }
+
     var folder = getOrCreateReportsFolder();
     
     // Save base64 files if present and convert to fileIds
@@ -2830,8 +2825,8 @@ function sendReportEmail(postData) {
     
     var htmlBody = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">' +
       '<h2 style="color: #0a2342; border-bottom: 2px solid #0a2342; padding-bottom: 10px;">Báo cáo Kiểm tra Cửa hàng - StoreVisit Pro</h2>' +
-      '<p>Kính gửi Ban Giám đốc và Quản lý,</p>' +
-      '<p>Hệ thống xin thông báo kết quả kiểm tra cửa hàng định kỳ:</p>' +
+      '<p>Kính gửi Quản lý,</p>' +
+      '<p>Hệ thống xin gửi kết quả kiểm tra cửa hàng định kỳ:</p>' +
       '<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">' +
       '<tr style="background-color: #f4f7f9;">' +
       '<td style="padding: 10px; font-weight: bold; border: 1px solid #e0e0e0; width: 40%;">Cửa hàng:</td>' +
