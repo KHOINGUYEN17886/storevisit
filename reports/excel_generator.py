@@ -458,7 +458,9 @@ class ExcelGenerator:
         ws4.column_dimensions["E"].width = 35 # Kế hoạch
 
         # Save workbook
-        filename = f"BangSoLieu_KiemTra_{data.metadata.store_code}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        from utils.filename_formatter import format_store_output_filename
+        r_date = data.form_response.report_date if data.form_response else ""
+        filename = format_store_output_filename(data.metadata.store_name, data.metadata.asm_name, r_date, "xlsx")
         dest_path = os.path.join(self.output_dir, filename)
         wb.save(dest_path)
         logger.info(f"Generated excel report successfully at: {dest_path}")

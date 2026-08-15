@@ -264,7 +264,9 @@ class DocxGenerator:
                             doc.add_paragraph() # spacer
 
         # Save doc
-        filename = f"BienBan_KiemTra_{data.metadata.store_code}_{datetime.now().strftime('%Y%m%d')}.docx"
+        from utils.filename_formatter import format_store_output_filename
+        r_date = data.form_response.report_date if data.form_response else ""
+        filename = format_store_output_filename(data.metadata.store_name, data.metadata.asm_name, r_date, "docx")
         dest_path = os.path.join(self.output_dir, filename)
         doc.save(dest_path)
         logger.info(f"Generated docx report successfully at: {dest_path}")

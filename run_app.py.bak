@@ -11,16 +11,11 @@ from tkinter import ttk, messagebox
 import pandas as pd
 import yaml
 
-_APP_DIR = os.path.dirname(os.path.abspath(__file__))
-if _APP_DIR not in sys.path:
-    sys.path.insert(0, _APP_DIR)
-import ap_theme  # design system An Phước (navy/crimson + Be Vietnam Pro)
-
 class StoreVisitApp:
     def __init__(self, root):
         self.root = root
         self.root.title("StoreVisit - Tự Động Hóa Báo Cáo Kiểm Tra Cụm Cửa Hàng")
-        self.root.geometry("980x800")
+        self.root.geometry("900x700")
         self.root.minsize(800, 600)
         
         # Paths
@@ -74,42 +69,34 @@ class StoreVisitApp:
         except Exception as e:
             print(f"Warning: Failed to init MarketSurveyCache: {e}")
             
-        # Styles & Themes — An Phước design system (navy/crimson + Be Vietnam Pro)
-        ap_theme.load_fonts()
-        self.T = ap_theme.apply(self.root)
-        self.root.configure(bg=ap_theme.SURFACE)
-        self.style = ttk.Style(self.root)
-        fam = self.T.family
-        # Ánh xạ các style-name sẵn có của app sang bảng màu thương hiệu
-        self.style.configure("Header.TLabel", font=(fam, 15, "bold"), foreground=ap_theme.NAVY)
-        self.style.configure("Accent.TButton", font=(fam, 10, "bold"), foreground="white",
-                             background=ap_theme.NAVY, borderwidth=0, focusthickness=0, padding=(12, 7))
-        self.style.map("Accent.TButton",
-                       background=[("active", ap_theme.NAVY_DARK), ("disabled", "#9AA3B5")])
-        self.style.configure("Cancel.TButton", font=(fam, 10, "bold"), foreground="white",
-                             background=ap_theme.CRIMSON, borderwidth=0, focusthickness=0, padding=(12, 7))
-        self.style.map("Cancel.TButton",
-                       background=[("active", ap_theme.CRIMSON_DK), ("disabled", "#9AA3B5")])
-        self.style.configure("Card.TFrame", background=ap_theme.CARD)
-        self.style.configure("Progress.Horizontal.TProgressbar", thickness=10,
-                             background=ap_theme.CRIMSON, troughcolor=ap_theme.BORDER, borderwidth=0)
+        # Styles & Themes
+        self.style = ttk.Style()
+        self.style.theme_use("clam")
+        
+        # Palette: Navy, Soft gray, Teal
+        self.style.configure(".", font=("Segoe UI", 10))
+        self.style.configure("TLabel", foreground="#2C3E50")
+        self.style.configure("Header.TLabel", font=("Segoe UI", 15, "bold"), foreground="#0A2342")
+        self.style.configure("Accent.TButton", font=("Segoe UI", 10, "bold"), foreground="white", background="#0A2342")
+        self.style.map("Accent.TButton", background=[("active", "#1A3D6C"), ("disabled", "#BDC3C7")])
+        self.style.configure("Cancel.TButton", font=("Segoe UI", 10, "bold"), foreground="white", background="#C0392B")
+        self.style.map("Cancel.TButton", background=[("active", "#E74C3C"), ("disabled", "#BDC3C7")])
+        
+        self.style.configure("Card.TFrame", background="#F8F9FA", relief="groove", borderwidth=1)
+        self.style.configure("Progress.Horizontal.TProgressbar", thickness=15)
         
         self._build_ui()
         self._load_data()
 
     def _build_ui(self):
-        # Header thương hiệu + Footer mark (An Phước) — bọc quanh layout gốc
-        ap_theme.Header(
-            self.root, title="StoreVisit Pro",
-            subtitle="Tự động hóa Báo cáo Công tác Kiểm tra Cụm Cửa hàng",
-            app_tag="RETAIL COMMANDER",
-        ).pack(fill="x")
-        ap_theme.Footer(self.root, extra="StoreVisit Pro").pack(side="bottom", fill="x")
-
         # Main Layout container
         main_frame = ttk.Frame(self.root, padding=15)
         main_frame.pack(fill=tk.BOTH, expand=True)
-
+        
+        # Header
+        header = ttk.Label(main_frame, text="HỆ THỐNG TỰ ĐỘNG HÓA BÁO CÁO CÔNG TÁC CỬA HÀNG (STOREVISIT)", style="Header.TLabel")
+        header.pack(pady=(0, 10), anchor="w")
+        
         # Notebook for Tabs
         notebook = ttk.Notebook(main_frame)
         notebook.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
@@ -181,14 +168,11 @@ class StoreVisitApp:
         self.btn_run = ttk.Button(btn_frame_core, text="TẠO BÁO CÁO CỤM (CLUSTER)", style="Accent.TButton", command=self._start_report_job)
         self.btn_run.pack(side=tk.LEFT, padx=(0, 10))
         
-        self.btn_exec_weekly = ttk.Button(btn_frame_core, text="🚀 BÁO CÁO TUẦN EXECUTIVE", style="Accent.TButton", command=lambda: self._start_executive_job("weekly"))
+        self.btn_exec_weekly = ttk.Button(btn_frame_core, text="🚀 BÁO CÁO TUẦN EXECUTIVE (PPTX + EXCEL)", style="Accent.TButton", command=lambda: self._start_executive_job("weekly"))
         self.btn_exec_weekly.pack(side=tk.LEFT, padx=(0, 10))
         
-        self.btn_exec_monthly = ttk.Button(btn_frame_core, text="📊 BÁO CÁO THÁNG EXECUTIVE", style="Accent.TButton", command=lambda: self._start_executive_job("monthly"))
-        self.btn_exec_monthly.pack(side=tk.LEFT, padx=(0, 10))
-        
-        self.btn_email_core = ttk.Button(btn_frame_core, text="📧 GỬI MAIL BÁO CÁO", command=self._open_manual_email_modal)
-        self.btn_email_core.pack(side=tk.LEFT)
+        self.btn_exec_monthly = ttk.Button(btn_frame_core, text="📊 BÁO CÁO THÁNG EXECUTIVE (PPTX + EXCEL)", style="Accent.TButton", command=lambda: self._start_executive_job("monthly"))
+        self.btn_exec_monthly.pack(side=tk.LEFT)
         
         # --- TAB 2: Google Sync ---
         # Sync control
@@ -237,10 +221,7 @@ class StoreVisitApp:
         btn_frame_google = ttk.Frame(tab_google)
         btn_frame_google.pack(fill=tk.X)
         self.btn_run_google = ttk.Button(btn_frame_google, text="TẠO BÁO CÁO TỪ GOOGLE FORMS", style="Accent.TButton", command=self._start_google_report_job)
-        self.btn_run_google.pack(side=tk.LEFT, padx=(0, 10))
-        
-        self.btn_email_google = ttk.Button(btn_frame_google, text="📧 GỬI MAIL BÁO CÁO", command=self._open_manual_email_modal)
-        self.btn_email_google.pack(side=tk.LEFT)
+        self.btn_run_google.pack(side=tk.LEFT)
 
         # --- TAB 3: Market Survey ---
         # Sync control
@@ -306,7 +287,7 @@ class StoreVisitApp:
         console_frame = ttk.LabelFrame(main_frame, text=" NHẬT KÝ CHI TIẾT (LIVE LOG) ", padding=10)
         console_frame.pack(fill=tk.BOTH, expand=True)
         
-        self.log_text = tk.Text(console_frame, height=5, font=("Consolas", 9), background="#0F1729", foreground="#E6EAF2", wrap=tk.WORD)
+        self.log_text = tk.Text(console_frame, height=5, font=("Consolas", 9), background="#1E1E1E", foreground="#F8F9FA", wrap=tk.WORD)
         self.log_text.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
         
         log_scroll = ttk.Scrollbar(console_frame, orient="vertical", command=self.log_text.yview)
@@ -596,18 +577,19 @@ class StoreVisitApp:
             asm_name = payload.get("asm", payload.get("asm_name", "ASM"))
             report_date = payload.get("report_date", datetime.now().strftime("%d/%m/%Y"))
 
-            # Prompt for email sending with interactive confirmation & editable entry box (Topmost)
-            self.root.after(100, lambda: self._prompt_and_send_email(
-                store_code, store_name, asm_name, report_date, pptx_path, pdf_path, docx_path, xlsx_path
-            ))
-
             # Open output folder
             if pptx_path:
                 output_dir = os.path.dirname(pptx_path)
+                messagebox.showinfo("Thành Công", f"Đã xuất báo cáo thành công tại:\n{output_dir}")
                 try:
                     os.startfile(output_dir)
                 except Exception:
                     pass
+            
+            # Interactive Email Modal Prompt (Option 2: Confirm & Edit Email)
+            self.root.after(300, lambda: self._prompt_and_send_email(
+                store_code, store_name, asm_name, report_date, pptx_path, pdf_path, docx_path, xlsx_path
+            ))
             self._finalize_job()
             
         elif msg_type == "job_cancelled":
@@ -632,11 +614,8 @@ class StoreVisitApp:
         # Create Toplevel Modal Window
         win = tk.Toplevel(self.root)
         win.title("📧 XÁC NHẬN GỬI EMAIL BÁO CÁO CÔNG TÁC")
-        win.geometry("580x340")
+        win.geometry("560x320")
         win.resizable(False, False)
-        win.attributes("-topmost", True)
-        win.lift()
-        win.focus_force()
         win.transient(self.root)
         win.grab_set()
 
@@ -707,74 +686,6 @@ class StoreVisitApp:
 
         btn_skip = ttk.Button(frame_btns, text="❌ BỎ QUA / KHÔNG GỬI", command=win.destroy)
         btn_skip.pack(side=tk.LEFT)
-
-    def _open_manual_email_modal(self):
-        """Open email prompt modal manually for selected store/response."""
-        selected_items = self.tree.selection() if hasattr(self, "tree") else []
-        store_code = ""
-        store_name = ""
-        asm_name = ""
-        report_date = ""
-
-        if selected_items:
-            item = selected_items[0]
-            vals = self.tree.item(item, "values")
-            if vals:
-                store_code = str(vals[1]).strip()
-                report_date = str(vals[2]).strip()
-                asm_name = str(vals[3]).strip()
-                store_name = store_code
-        else:
-            checked_stores = [code for code, var in self.store_vars.items() if var.get() == 1]
-            if checked_stores:
-                store_code = checked_stores[0]
-                store_name = store_code
-            else:
-                messagebox.showwarning("Chọn Cửa Hàng", "Vui lòng chọn 1 bản ghi trong danh sách (Tab Google Forms) hoặc tích chọn 1 cửa hàng (Tab Báo cáo Cụm) để gửi mail.")
-                return
-
-        if hasattr(self, "loader") and self.loader:
-            try:
-                df_store = self.loader.load_dim_store()
-                match = df_store[df_store["StoreCode"] == store_code]
-                if not match.empty:
-                    store_name = match.iloc[0]["StoreName"]
-                    if not asm_name:
-                        asm_name = str(match.iloc[0]["ASM"])
-            except Exception:
-                pass
-
-        if not store_name:
-            store_name = store_code
-
-        output_dir = self.loader.get_path("output_dir") if hasattr(self, "loader") and self.loader else "output"
-        pptx_path = ""
-        pdf_path = ""
-        docx_path = ""
-        xlsx_path = ""
-
-        from utils.filename_formatter import remove_accents
-        if os.path.exists(output_dir):
-            for root_dir, dirs, files in os.walk(output_dir):
-                for f in files:
-                    clean_f = f.lower()
-                    if store_code.lower() in clean_f or (store_name and remove_accents(store_name).lower() in clean_f):
-                        full_p = os.path.join(root_dir, f)
-                        if clean_f.endswith(".pptx"): pptx_path = full_p
-                        elif clean_f.endswith(".pdf"): pdf_path = full_p
-                        elif clean_f.endswith(".docx"): docx_path = full_p
-                        elif clean_f.endswith(".xlsx"): xlsx_path = full_p
-
-        self._prompt_and_send_email(
-            store_code=store_code,
-            store_name=store_name,
-            asm_name=asm_name,
-            report_date=report_date or datetime.now().strftime("%d/%m/%Y"),
-            pptx_path=pptx_path,
-            pdf_path=pdf_path,
-            docx_path=docx_path,
-            xlsx_path=xlsx_path
-        )
 
     def _on_job_failed(self, error: str, tb: str):
         self.progress_lbl["text"] = "Trạng thái: Gặp lỗi trong quá trình tạo báo cáo."

@@ -267,17 +267,23 @@ def main():
 
             sender.send_progress(60, "Đang tạo Bảng tính Excel Analytics Dashboard (5 Tabs)...")
             output_dir = loader.get_path("output_dir")
+            from utils.filename_formatter import format_executive_output_filename
             period_tag = "Tuan" if args.period_type == "weekly" else ("Thang" if args.period_type == "monthly" else "Quy")
+            ref_date_str = agg_data.get("period_name", "") or datetime.now().strftime("%d%m%Y")
+            
+            exec_excel_name = format_executive_output_filename(args.period_type, asm_name, ref_date_str, "xlsx")
+            exec_pptx_name = format_executive_output_filename(args.period_type, asm_name, ref_date_str, "pptx")
+
             final_job_dir = os.path.join(output_dir, f"BaoCao_Executive_{period_tag}_{asm_name}_{job_id[:8]}")
             os.makedirs(final_job_dir, exist_ok=True)
 
             excel_gen = ExecutiveExcelGenerator()
-            excel_path = os.path.join(final_job_dir, f"BaoCao_Executive_{period_tag}_{asm_name}.xlsx")
+            excel_path = os.path.join(final_job_dir, exec_excel_name)
             excel_gen.generate(agg_data, excel_path)
 
             sender.send_progress(85, "Đang tạo Slides PowerPoint Trình Chiếu Executive (5 Slides)...")
             pptx_gen = ExecutivePPTXGenerator()
-            pptx_path = os.path.join(final_job_dir, f"BaoCao_Executive_{period_tag}_{asm_name}.pptx")
+            pptx_path = os.path.join(final_job_dir, exec_pptx_name)
             pptx_gen.generate(agg_data, pptx_path)
 
             sender.send_progress(100, f"Đã hoàn thành Báo cáo Combo Executive {args.period_type}!")
@@ -781,25 +787,36 @@ def main():
             os.makedirs(final_job_dir, exist_ok=True)
             
             # Copy each store's file into a subfolder
+            from utils.filename_formatter import format_store_output_filename
             final_job_dirs = []
-            for store_key, store_pptx in store_pptx_paths:
-                store_code = store_code_mapping.get(store_key, store_key)
-                store_subfolder = os.path.join(final_job_dir, f"BaoCao_{store_code}")
+            for store_rep in store_reports:
+                s_code = store_rep.metadata.store_code
+                s_name = store_rep.metadata.store_name
+                s_asm = store_rep.metadata.asm_name
+                s_date = store_rep.form_response.report_date if store_rep.form_response else ""
+                
+                store_subfolder = os.path.join(final_job_dir, f"BaoCao_{s_code}")
                 os.makedirs(store_subfolder, exist_ok=True)
                 
-                shutil.copy2(store_pptx, os.path.join(store_subfolder, "report.pptx"))
-                shutil.copy2(os.path.join(job_temp_dir, f"report_{store_code}.pdf"), os.path.join(store_subfolder, "report.pdf"))
+                fn_pptx = format_store_output_filename(s_name, s_asm, s_date, "pptx")
+                fn_pdf = format_store_output_filename(s_name, s_asm, s_date, "pdf")
+                fn_docx = format_store_output_filename(s_name, s_asm, s_date, "docx")
+                fn_xlsx = format_store_output_filename(s_name, s_asm, s_date, "xlsx")
                 
-                # Copy DOCX and XLSX
-                pdf_p = os.path.join(job_temp_dir, f"report_{store_code}.pdf")
-                docx_p = os.path.join(job_temp_dir, f"report_{store_code}.docx")
-                xlsx_p = os.path.join(job_temp_dir, f"report_{store_code}.xlsx")
-                pptx_p = store_pptx
+                pptx_src = os.path.join(job_temp_dir, f"report_{s_code}.pptx")
+                pdf_src = os.path.join(job_temp_dir, f"report_{s_code}.pdf")
+                docx_src = os.path.join(job_temp_dir, f"report_{s_code}.docx")
+                xlsx_src = os.path.join(job_temp_dir, f"report_{s_code}.xlsx")
                 
-                if os.path.exists(docx_p):
-                    shutil.copy2(docx_p, os.path.join(store_subfolder, "report.docx"))
-                if os.path.exists(xlsx_p):
-                    shutil.copy2(xlsx_p, os.path.join(store_subfolder, "report.xlsx"))
+                pptx_p = os.path.join(store_subfolder, fn_pptx)
+                pdf_p = os.path.join(store_subfolder, fn_pdf)
+                docx_p = os.path.join(store_subfolder, fn_docx)
+                xlsx_p = os.path.join(store_subfolder, fn_xlsx)
+                
+                if os.path.exists(pptx_src): shutil.copy2(pptx_src, pptx_p)
+                if os.path.exists(pdf_src): shutil.copy2(pdf_src, pdf_p)
+                if os.path.exists(docx_src): shutil.copy2(docx_src, docx_p)
+                if os.path.exists(xlsx_src): shutil.copy2(xlsx_src, xlsx_p)
                 
                 # Trigger email sending (Disabled by default to prevent unwanted background emails)
                 ENABLE_AUTO_EMAIL = False
@@ -863,9 +880,17 @@ def main():
             if not store_pptx_paths:
                 raise ValueError("Không có cửa hàng nào được tạo báo cáo thành công do lỗi dữ liệu đầu vào hoặc không map được Store Code.")
                 
-            first_store_code = store_code_mapping.get(store_pptx_paths[0][0], store_pptx_paths[0][0])
-            final_pptx = os.path.join(final_job_dir, f"BaoCao_{first_store_code}", "report.pptx")
-            final_pdf = os.path.join(final_job_dir, f"BaoCao_{first_store_code}", "report.pdf")
+            first_rep = store_reports[0]
+            first_code = first_rep.metadata.store_code
+            first_name = first_rep.metadata.store_name
+            first_asm = first_rep.metadata.asm_name
+            first_date = first_rep.form_response.report_date if first_rep.form_response else ""
+            
+            f_pptx_name = format_store_output_filename(first_name, first_asm, first_date, "pptx")
+            f_pdf_name = format_store_output_filename(first_name, first_asm, first_date, "pdf")
+            
+            final_pptx = os.path.join(final_job_dir, f"BaoCao_{first_code}", f_pptx_name)
+            final_pdf = os.path.join(final_job_dir, f"BaoCao_{first_code}", f_pdf_name)
             final_manifest = os.path.join(final_job_dir, "manifest.json")
             sender.send_job_completed(final_pptx, final_pdf, final_manifest)
 
