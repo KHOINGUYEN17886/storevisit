@@ -14,7 +14,6 @@ class JobLock:
     def acquire(self) -> bool:
         """Try to acquire the lock. Returns True if successful, False otherwise."""
         if os.path.exists(self.lock_file):
-            # Read PID in lock file
             try:
                 with open(self.lock_file, "r") as f:
                     pid_str = f.read().strip()
@@ -23,9 +22,8 @@ class JobLock:
                     if self._is_pid_running(pid):
                         return False
             except Exception:
-                pass # If file is unreadable, assume we can overwrite
+                pass
                 
-        # Write current PID
         try:
             with open(self.lock_file, "w") as f:
                 f.write(str(os.getpid()))
@@ -33,22 +31,23 @@ class JobLock:
         except Exception:
             return False
 
-    def release(self):
+    def release(self, force: bool = False):
         """Release the lock by deleting the lock file."""
         if os.path.exists(self.lock_file):
             try:
-                # Only delete if it belongs to our PID
-                with open(self.lock_file, "r") as f:
-                    pid_str = f.read().strip()
-                if pid_str.isdigit() and int(pid_str) == os.getpid():
+                if force:
                     os.remove(self.lock_file)
+                else:
+                    with open(self.lock_file, "r") as f:
+                        pid_str = f.read().strip()
+                    if pid_str.isdigit() and (int(pid_str) == os.getpid() or not self._is_pid_running(int(pid_str))):
+                        os.remove(self.lock_file)
             except Exception:
                 pass
 
     def _is_pid_running(self, pid: int) -> bool:
         """Check if a process with the given PID is running on Windows."""
         import ctypes
-        # Get exit code of process
         PROCESS_QUERY_INFORMATION = 0x0400
         STILL_ACTIVE = 259
         kernel32 = ctypes.windll.kernel32

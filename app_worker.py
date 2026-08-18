@@ -40,8 +40,7 @@ def check_cancellation(cancel_file_path: str, sender: IPCMessageSender) -> bool:
 
 def send_email_for_store(loader, store_code, store_name, asm_name, report_date, pdf_path, docx_path, pptx_path, xlsx_path, target_email: str = None):
     import base64
-    import urllib.request
-    import urllib.parse
+    import requests
     
     webapp_url = loader.config.get("google", {}).get("webapp_url", "")
     if not webapp_url:
@@ -82,29 +81,21 @@ def send_email_for_store(loader, store_code, store_name, asm_name, report_date, 
             "xlsxName": f"BangSoLieu_KiemTra_{store_code}_{datetime.now().strftime('%Y%m%d')}.xlsx"
         }
         
-        data_bytes = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            webapp_url,
-            data=data_bytes,
-            headers={"Content-Type": "application/json"},
-            method="POST"
-        )
+        resp = requests.post(webapp_url, json=payload, timeout=45, allow_redirects=True)
+        res_body = resp.text
+        print(f"[Email] Raw response from GAS (HTTP {resp.status_code}): {res_body[:500]}")
         
-        # Set timeout to 25s to prevent blocking worker if GAS email processing is slow
-        with urllib.request.urlopen(req, timeout=25) as response:
-            res_body = response.read().decode("utf-8")
-            print(f"[Email] Raw response from GAS (first 1000 chars): {res_body[:1000]}")
-            try:
-                res_json = json.loads(res_body)
-                if res_json.get("success"):
-                    print(f"[Email] Successfully sent email for {store_code}.")
-                    print(f"        Drive File IDs: PDF={res_json.get('pdfFileId')}, Word={res_json.get('docxFileId')}, PPTX={res_json.get('pptxFileId')}, Excel={res_json.get('xlsxFileId')}")
-                    return True
-                else:
-                    print(f"[Email] Apps Script failed to send email: {res_json.get('error')}")
-            except Exception as json_err:
-                print(f"[Email] Failed to parse JSON response: {json_err}")
-                
+        try:
+            res_json = resp.json()
+            if res_json.get("success"):
+                print(f"[Email] Successfully sent email for {store_code}.")
+                print(f"        Drive File IDs: PDF={res_json.get('pdfFileId')}, Word={res_json.get('docxFileId')}, PPTX={res_json.get('pptxFileId')}, Excel={res_json.get('xlsxFileId')}")
+                return True
+            else:
+                print(f"[Email] Apps Script failed to send email: {res_json.get('error')}")
+        except Exception as json_err:
+            print(f"[Email] Failed to parse JSON response: {json_err}")
+            
     except Exception as e:
         print(f"[Email] Error in send_email_for_store for {store_code}: {e}")
         import traceback

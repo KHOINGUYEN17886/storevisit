@@ -201,6 +201,31 @@ class StoreVisitApp:
         self.lbl_sync_status = ttk.Label(sync_frame, text="Lần sync gần nhất: Chưa đồng bộ", font=("Segoe UI", 9, "italic"))
         self.lbl_sync_status.pack(side=tk.LEFT, anchor="center")
         
+        # Multi-Criteria Filter Bar
+        filter_frame = ttk.LabelFrame(tab_google, text=" 🔍 BỘ LỌC ĐA TIÊU CHÍ (MULTI-CRITERIA FILTER) ", padding=8)
+        filter_frame.pack(fill=tk.X, pady=(0, 8))
+
+        ttk.Label(filter_frame, text="ASM:").grid(row=0, column=0, padx=(0, 4), sticky="w")
+        self.filter_asm_var = tk.StringVar(value="Tất cả ASM")
+        self.combo_filter_asm = ttk.Combobox(filter_frame, textvariable=self.filter_asm_var, state="readonly", width=18)
+        self.combo_filter_asm.grid(row=0, column=1, padx=(0, 15), sticky="w")
+        self.combo_filter_asm.bind("<<ComboboxSelected>>", lambda e: self._refresh_treeview())
+
+        ttk.Label(filter_frame, text="Cửa hàng:").grid(row=0, column=2, padx=(0, 4), sticky="w")
+        self.filter_store_var = tk.StringVar(value="")
+        self.entry_filter_store = ttk.Entry(filter_frame, textvariable=self.filter_store_var, width=14)
+        self.entry_filter_store.grid(row=0, column=3, padx=(0, 15), sticky="w")
+        self.entry_filter_store.bind("<KeyRelease>", lambda e: self._refresh_treeview())
+
+        ttk.Label(filter_frame, text="Trạng thái:").grid(row=0, column=4, padx=(0, 4), sticky="w")
+        self.filter_status_var = tk.StringVar(value="Tất cả trạng thái")
+        self.combo_filter_status = ttk.Combobox(filter_frame, textvariable=self.filter_status_var, values=["Tất cả trạng thái", "Chưa xử lý (pending)", "Đã xử lý (done)", "Xử lý bị lỗi (error)"], state="readonly", width=16)
+        self.combo_filter_status.grid(row=0, column=5, padx=(0, 15), sticky="w")
+        self.combo_filter_status.bind("<<ComboboxSelected>>", lambda e: self._refresh_treeview())
+
+        btn_reset_filter = ttk.Button(filter_frame, text="🔄 Đặt lại", command=self._reset_tab2_filters)
+        btn_reset_filter.grid(row=0, column=6, padx=(5, 0), sticky="w")
+
         # Responses List
         list_frame = ttk.LabelFrame(tab_google, text=" DANH SÁCH BẢN GHI ĐANG CHỜ TẠO BÁO CÁO ", padding=10)
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
@@ -240,7 +265,10 @@ class StoreVisitApp:
         self.btn_run_google.pack(side=tk.LEFT, padx=(0, 10))
         
         self.btn_email_google = ttk.Button(btn_frame_google, text="📧 GỬI MAIL BÁO CÁO", command=self._open_manual_email_modal)
-        self.btn_email_google.pack(side=tk.LEFT)
+        self.btn_email_google.pack(side=tk.LEFT, padx=(0, 10))
+
+        self.btn_diag_google = ttk.Button(btn_frame_google, text="🛠️ CHUẨN ĐOÁN LỖI", command=self._open_diagnostic_inspector)
+        self.btn_diag_google.pack(side=tk.LEFT)
 
         # --- TAB 3: Market Survey ---
         # Sync control
@@ -842,6 +870,11 @@ class StoreVisitApp:
         self.worker_process = None
         self.current_job_id = None
         self.cancel_file_path = None
+        try:
+            from job_lock import JobLock
+            JobLock().release(force=True)
+        except Exception:
+            pass
         self._set_ui_blocked(False)
         self._refresh_treeview()
 
@@ -887,6 +920,12 @@ class StoreVisitApp:
         self._write_log(f"❌ Đồng bộ thất bại: {err_msg}")
         messagebox.showerror("Lỗi Đồng Bộ", f"Không thể đồng bộ dữ liệu từ Google Sheets:\n{err_msg}")
 
+    def _reset_tab2_filters(self):
+        if hasattr(self, "filter_asm_var"): self.filter_asm_var.set("Tất cả ASM")
+        if hasattr(self, "filter_store_var"): self.filter_store_var.set("")
+        if hasattr(self, "filter_status_var"): self.filter_status_var.set("Tất cả trạng thái")
+        self._refresh_treeview()
+
     def _refresh_treeview(self):
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -894,9 +933,38 @@ class StoreVisitApp:
         if not self.form_cache:
             return
             
-        self.form_cache.load() # Reload cache files
+        self.form_cache.load()
         responses = self.form_cache.get_all()
+
+        # Update ASM filter dropdown values dynamically
+        if hasattr(self, "combo_filter_asm"):
+            asm_list = sorted(list({r.asm_name for r in responses if r.asm_name}))
+            curr_vals = list(self.combo_filter_asm["values"])
+            new_vals = ["Tất cả ASM"] + asm_list
+            if curr_vals != new_vals:
+                self.combo_filter_asm["values"] = new_vals
+
+        sel_asm = self.filter_asm_var.get() if hasattr(self, "filter_asm_var") else "Tất cả ASM"
+        search_store = self.filter_store_var.get().strip().upper() if hasattr(self, "filter_store_var") else ""
+        sel_status = self.filter_status_var.get() if hasattr(self, "filter_status_var") else "Tất cả trạng thái"
+
         for r in responses:
+            # ASM Filter
+            if sel_asm != "Tất cả ASM" and r.asm_name != sel_asm:
+                continue
+
+            # Store Search Filter
+            if search_store and (search_store not in r.store_code.upper() and search_store not in r.store_name.upper()):
+                continue
+
+            # Status Filter
+            if sel_status == "Chưa xử lý (pending)" and r.status != "pending":
+                continue
+            elif sel_status == "Đã xử lý (done)" and r.status != "done":
+                continue
+            elif sel_status == "Xử lý bị lỗi (error)" and r.status != "error":
+                continue
+
             self.tree.insert("", tk.END, values=(
                 r.response_id,
                 r.store_code,
@@ -905,6 +973,108 @@ class StoreVisitApp:
                 r.cht_name,
                 r.status
             ))
+
+    def _open_diagnostic_inspector(self):
+        """Pop up an Enterprise Diagnostic Inspector window to scan system health & error logs."""
+        win = tk.Toplevel(self.root)
+        win.title("🛠️ BẢNG CHẨN ĐOÁN HỆ THỐNG VÀ KIỂM TRA LỖI (DIAGNOSTIC INSPECTOR)")
+        win.geometry("750x540")
+        win.transient(self.root)
+        win.attributes("-topmost", True)
+        win.lift()
+        win.focus_force()
+        win.grab_set()
+
+        win.geometry("+%d+%d" % (self.root.winfo_x() + 40, self.root.winfo_y() + 40))
+
+        lbl_title = ttk.Label(win, text="🛠️ BẢNG CHẨN ĐOÁN TOÀN DIỆN VÀ TOÀN VẸN HỆ THỐNG", font=("Segoe UI", 12, "bold"), foreground="#0A2342")
+        lbl_title.pack(anchor="w", padx=15, pady=(15, 5))
+
+        txt_diag = tk.Text(win, font=("Consolas", 9.5), background="#0F1729", foreground="#00FF66", wrap=tk.WORD)
+        txt_diag.pack(fill=tk.BOTH, expand=True, padx=15, pady=10)
+
+        diag_lines = []
+        diag_lines.append("=========================================================================")
+        diag_lines.append(f"  STOREVISIT PRO DIAGNOSTIC INSPECTOR - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        diag_lines.append("=========================================================================\n")
+
+        # 1. Environment & Dependencies
+        diag_lines.append("[1] THÔNG TIN MÔI TRƯỜNG & THƯ VIỆN DỰ ÁN:")
+        diag_lines.append(f"  • Operating System: Windows ({sys.platform})")
+        diag_lines.append(f"  • Python Interpreter: {sys.executable}")
+        diag_lines.append(f"  • Working Directory: {self.root_dir}")
+
+        for pkg in ["pandas", "pptx", "openpyxl", "requests"]:
+            try:
+                mod = __import__(pkg)
+                ver = getattr(mod, "__version__", "OK")
+                diag_lines.append(f"  ✓ Library '{pkg}': Installed (v{ver})")
+            except Exception as ex:
+                diag_lines.append(f"  ❌ Library '{pkg}': MISSING ({ex})")
+
+        # 2. Configuration & Key Files
+        diag_lines.append("\n[2] KIỂM TRA TỆP CẤU HÌNH & GOOGLE CREDENTIALS:")
+        cfg_path = os.path.join(self.root_dir, "config", "app_config.yaml")
+        diag_lines.append(f"  • app_config.yaml: {'✓ Exists' if os.path.exists(cfg_path) else '❌ MISSING'}")
+
+        cred_path = self.config.get("google", {}).get("credentials_path", "")
+        if not os.path.isabs(cred_path): cred_path = os.path.join(self.root_dir, cred_path)
+        diag_lines.append(f"  • google_credentials.json: {'✓ Exists' if os.path.exists(cred_path) else '❌ MISSING'}")
+
+        w_url = self.config.get("google", {}).get("webapp_url", "")
+        diag_lines.append(f"  • Apps Script WebApp URL: {'✓ Configured' if w_url else '⚠️ NOT CONFIGURED'}")
+
+        # 3. Data Cache Files
+        diag_lines.append("\n[3] TRẠNG THÁI CACHE DỮ LIỆU:")
+        fc_path = os.path.join(self.root_dir, "data", "form_cache.json")
+        if os.path.exists(fc_path):
+            try:
+                with open(fc_path, "r", encoding="utf-8") as f:
+                    fc_data = json.load(f)
+                diag_lines.append(f"  ✓ form_cache.json: {len(fc_data)} bản ghi")
+            except Exception as e:
+                diag_lines.append(f"  ❌ form_cache.json: Lỗi đọc file ({e})")
+        else:
+            diag_lines.append("  ⚠️ form_cache.json: Chưa có file cache")
+
+        # 4. Lock File & Worker Subprocess Status
+        diag_lines.append("\n[4] TIẾN TRÌNH CON & KHÓA NỀN (LOCK FILE):")
+        lock_p = os.path.join(self.root_dir, "temp", "app.lock")
+        if os.path.exists(lock_p):
+            try:
+                with open(lock_p, "r") as f:
+                    pid = f.read().strip()
+                diag_lines.append(f"  ⚠ app.lock đang tồn tại (PID: {pid})")
+            except Exception:
+                diag_lines.append("  ⚠ app.lock đang tồn tại")
+        else:
+            diag_lines.append("  ✓ Khoá temp/app.lock: SẠCH (Sẵn sàng chạy tiến trình mới)")
+
+        diag_lines.append(f"  • Worker Status: {'Đang chạy (RUNNING)' if self.is_running else 'RẢNH (IDLE)'}")
+
+        diag_report = "\n".join(diag_lines)
+        txt_diag.insert(tk.END, diag_report)
+
+        btn_frame = ttk.Frame(win)
+        btn_frame.pack(fill=tk.X, padx=15, pady=(0, 15))
+
+        def copy_to_clipboard():
+            self.root.clipboard_clear()
+            self.root.clipboard_append(diag_report)
+            messagebox.showinfo("Đã Sao Chép", "Đã sao chép toàn bộ báo cáo chuẩn đoán vào Clipboard!", parent=win)
+
+        def destroy_win():
+            try:
+                win.grab_release()
+            except Exception:
+                pass
+            win.destroy()
+
+        btn_copy = ttk.Button(btn_frame, text="📋 SAO CHÉP BÁO CÁO CHẨN ĐOÁN", style="Accent.TButton", command=copy_to_clipboard)
+        btn_copy.pack(side=tk.LEFT, padx=(0, 10))
+
+        btn_close = ttk.Button(btn_frame, text="ĐÓNG", command=destroy_win)
+        btn_close.pack(side=tk.LEFT)
 
     def _refresh_survey_treeview(self):
         for item in self.tree_survey.get_children():
