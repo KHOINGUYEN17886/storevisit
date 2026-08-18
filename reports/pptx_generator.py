@@ -86,13 +86,13 @@ class PPTXGenerator:
         # 1. STORE_COVER
         cover_slide = slide_map.get("STORE_COVER")
         if cover_slide:
-            self._fill_text(cover_slide, "TXT_STORE_NAME", f"Cửa hàng An Phước {data.metadata.store_name}", font_size=20, bold=True, align="center")
+            self._fill_text(cover_slide, "TXT_STORE_NAME", f"Cửa hàng An Phước {data.metadata.store_name}", font_size=26, bold=True, align="center")
             report_date = data.form_response.report_date if data.form_response and data.form_response.report_date else "-"
-            self._fill_text(cover_slide, "TXT_REPORT_DATE", report_date, font_size=16, align="center")
+            self._fill_text(cover_slide, "TXT_REPORT_DATE", report_date, font_size=18, bold=True, align="center")
             asm_name = data.form_response.asm_name if data.form_response and data.form_response.asm_name else data.metadata.asm_name
-            self._fill_text(cover_slide, "TXT_ASM_NAME", asm_name, font_size=16, align="center")
+            self._fill_text(cover_slide, "TXT_ASM_NAME", asm_name, font_size=18, bold=True, align="center")
             cht_name = data.form_response.cht_name if data.form_response and data.form_response.cht_name else data.staff.cht_name
-            self._fill_text(cover_slide, "TXT_CHT_NAME", cht_name, font_size=16, align="center")
+            self._fill_text(cover_slide, "TXT_CHT_NAME", cht_name, font_size=18, bold=True, align="center")
 
         # 2. STORE_GENERAL_INFO
         info_slide = slide_map.get("STORE_GENERAL_INFO")

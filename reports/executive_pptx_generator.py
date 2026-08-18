@@ -56,28 +56,28 @@ class ExecutivePPTXGenerator:
 
     def _add_header(self, slide, title_text: str, subtitle_text: str):
         # Header Banner Background
-        shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(1.15))
+        shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(1.2))
         shape.fill.solid()
         shape.fill.fore_color.rgb = self.navy
         shape.line.color.rgb = self.navy
 
         # Title Text Box
-        txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.12), Inches(12.333), Inches(0.55))
+        txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.12), Inches(12.333), Inches(0.65))
         tf = txBox.text_frame
         tf.word_wrap = True
         p = tf.paragraphs[0]
         p.text = title_text
-        p.font.size = Pt(20)
+        p.font.size = Pt(24)
         p.font.bold = True
         p.font.color.rgb = RGBColor(255, 255, 255)
-        p.font.name = "Calibri"
+        p.font.name = "Be Vietnam Pro"
 
         # Subtitle Text
         p2 = tf.add_paragraph()
         p2.text = subtitle_text
-        p2.font.size = Pt(12)
+        p2.font.size = Pt(14)
         p2.font.color.rgb = self.gold
-        p2.font.name = "Calibri"
+        p2.font.name = "Be Vietnam Pro"
 
     def _build_slide1(self, slide, data):
         self._add_header(slide, "BÁO CÁO CÔNG TÁC CỬA HÀNG & THỊ TRƯỜNG - BAN GIÁM ĐỐC", f"Kỳ báo cáo: {data.get('period_name', '')} | Phạm vi: {data.get('asm_filter', 'ALL')}")
@@ -113,19 +113,22 @@ class ExecutivePPTXGenerator:
 
             p1 = tf.paragraphs[0]
             p1.text = title
-            p1.font.size = Pt(12)
+            p1.font.name = "Be Vietnam Pro"
+            p1.font.size = Pt(14)
             p1.font.bold = True
             p1.font.color.rgb = self.navy
 
             p2 = tf.add_paragraph()
             p2.text = val
-            p2.font.size = Pt(28)
+            p2.font.name = "Be Vietnam Pro"
+            p2.font.size = Pt(32)
             p2.font.bold = True
-            p2.font.color.rgb = self.crimson if "Nghiêm trọng" in title or "Chưa Đạt" in val else self.navy
+            p2.font.color.rgb = self.crimson if "NGHIÊM TRỌNG" in title or "Chưa Đạt" in val else self.navy
 
             p3 = tf.add_paragraph()
             p3.text = sub
-            p3.font.size = Pt(11)
+            p3.font.name = "Be Vietnam Pro"
+            p3.font.size = Pt(12)
             p3.font.color.rgb = self.dark_gray
 
     def _build_slide2(self, slide, data):
@@ -148,6 +151,13 @@ class ExecutivePPTXGenerator:
             cell = table.cell(0, idx)
             cell.text = h
             cell.fill.solid()
+            cell.fill.fore_color.rgb = self.navy
+            for p in cell.text_frame.paragraphs:
+                p.font.name = "Be Vietnam Pro"
+                p.font.size = Pt(13)
+                p.font.bold = True
+                p.font.color.rgb = RGBColor(255, 255, 255)
+                p.alignment = PP_ALIGN.CENTER
             cell.fill.fore_color.rgb = self.navy
             cell.vertical_anchor = MSO_ANCHOR.MIDDLE
             for p in cell.text_frame.paragraphs:

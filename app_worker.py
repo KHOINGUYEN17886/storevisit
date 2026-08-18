@@ -946,6 +946,11 @@ def main():
             merge_eng.close_powerpoint()
             merge_eng = None
             
+            from utils.filename_formatter import format_cluster_output_filename
+            cluster_name_val = f"Cum_{asm_name}"
+            cluster_pptx_name = format_cluster_output_filename(cluster_name_val, asm_name, ref_date, "pptx")
+            cluster_pdf_name = format_cluster_output_filename(cluster_name_val, asm_name, ref_date, "pdf")
+
             # Create manifest
             manifest_data = {
                 "job_id": job_id,
@@ -954,8 +959,8 @@ def main():
                 "store_count": len(selected_stores),
                 "expected_slides": expected_slide_count,
                 "files": {
-                    "pptx": "report.pptx",
-                    "pdf": "report.pdf"
+                    "pptx": cluster_pptx_name,
+                    "pdf": cluster_pdf_name
                 }
             }
             with open(job_manifest_path, "w", encoding="utf-8") as f:
@@ -979,11 +984,22 @@ def main():
                         print(f"Error marking response {resp.response_id} as done: {ex}", file=sys.stderr)
 
             shutil.move(staging_dir, final_job_dir)
+            
+            # Rename staging files to standard cluster filenames inside final_job_dir
+            old_pptx = os.path.join(final_job_dir, "report.pptx")
+            old_pdf = os.path.join(final_job_dir, "report.pdf")
+            final_pptx = os.path.join(final_job_dir, cluster_pptx_name)
+            final_pdf = os.path.join(final_job_dir, cluster_pdf_name)
+            
+            if os.path.exists(old_pptx):
+                if os.path.exists(final_pptx): os.remove(final_pptx)
+                os.rename(old_pptx, final_pptx)
+            if os.path.exists(old_pdf):
+                if os.path.exists(final_pdf): os.remove(final_pdf)
+                os.rename(old_pdf, final_pdf)
+
             sender.send_stage_completed("Kiểm định chất lượng (QC)")
             
-            # Send completed
-            final_pptx = os.path.join(final_job_dir, "report.pptx")
-            final_pdf = os.path.join(final_job_dir, "report.pdf")
             final_manifest = os.path.join(final_job_dir, "manifest.json")
             sender.send_job_completed(final_pptx, final_pdf, final_manifest)
         

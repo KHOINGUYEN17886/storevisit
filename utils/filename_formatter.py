@@ -62,6 +62,17 @@ def format_store_output_filename(store_name: str, asm_name: str, report_date: st
     clean_ext = ext.lstrip(".")
     return f"{clean_store}-{clean_asm}-{date_part}.{clean_ext}"
 
+def format_cluster_output_filename(cluster_name: str, asm_name: str, report_date: str, ext: str) -> str:
+    """
+    Formats cluster report filenames as: BaoCao_Cum_[TenCum]-[ASM]-[DDMMYYYY].[ext]
+    Example: 'BaoCao_Cum_TPHCM-NguyenVanDung-18082026.pptx'
+    """
+    clean_cum = clean_name_for_filename(cluster_name) or "Cum"
+    clean_asm = clean_name_for_filename(asm_name) or "ASM"
+    date_part = format_date_ddmmyyyy(report_date)
+    clean_ext = ext.lstrip(".")
+    return f"BaoCao_Cum_{clean_cum}-{clean_asm}-{date_part}.{clean_ext}"
+
 def format_executive_output_filename(period_type: str, asm_name: str, report_date: str, ext: str) -> str:
     """
     Formats executive combo report filenames as: BaoCao_Executive_[PeriodTag]-[ASM]-[DDMMYYYY].[ext]
