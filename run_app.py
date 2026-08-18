@@ -20,8 +20,8 @@ class StoreVisitApp:
     def __init__(self, root):
         self.root = root
         self.root.title("StoreVisit - Tự Động Hóa Báo Cáo Kiểm Tra Cụm Cửa Hàng")
-        self.root.geometry("980x800")
-        self.root.minsize(800, 600)
+        self.root.geometry("1020x840")
+        self.root.minsize(900, 650)
         
         # Paths
         self.root_dir = os.path.dirname(os.path.abspath(__file__))
@@ -45,6 +45,7 @@ class StoreVisitApp:
         self.last_event_time = 0
         self.watchdog_thread = None
         self.is_running = False
+        self.latest_error_text = ""
         
         # Initialize Google Form Response Cache & Market Survey Cache
         self.form_cache = None
@@ -313,33 +314,78 @@ class StoreVisitApp:
         self.btn_run_survey = ttk.Button(btn_frame_survey, text="TỔNG HỢP BÁO CÁO KHẢO SÁT (EXCEL)", style="Accent.TButton", command=self._start_survey_consolidate_job)
         self.btn_run_survey.pack(side=tk.LEFT)
 
-        # --- SHARED PANELS (Progress & Log) ---
+        # --- SHARED PANELS (Progress & Log & Diagnostic Station) ---
         # Middle Panel: Progress & Operations
         ops_frame = ttk.LabelFrame(main_frame, text=" TIẾN TRÌNH XỬ LÝ (JOB STATUS) ", padding=10)
-        ops_frame.pack(fill=tk.X, pady=(0, 10))
+        ops_frame.pack(fill=tk.X, pady=(0, 8))
         
         btn_frame = ttk.Frame(ops_frame)
         btn_frame.pack(fill=tk.X, pady=(0, 5))
         
-        self.btn_cancel = ttk.Button(btn_frame, text="HỦY BỎ JOB ĐANG CHẠY", style="Cancel.TButton", state=tk.DISABLED, command=self._trigger_cancel)
-        self.btn_cancel.pack(side=tk.LEFT)
+        self.btn_cancel = ttk.Button(btn_frame, text="🛑 HỦY BỎ JOB ĐANG CHẠY", style="Cancel.TButton", state=tk.DISABLED, command=self._trigger_cancel)
+        self.btn_cancel.pack(side=tk.LEFT, padx=(0, 10))
+
+        self.btn_unlock = ttk.Button(btn_frame, text="🔓 MỞ KHÓA KHẨN CẤP (RESET)", style="Accent.TButton", command=self._emergency_unlock)
+        self.btn_unlock.pack(side=tk.LEFT)
         
-        self.progress_lbl = ttk.Label(ops_frame, text="Trạng thái: Sẵn sàng thực hiện")
-        self.progress_lbl.pack(anchor="w", pady=(2, 2))
+        self.progress_lbl = ttk.Label(ops_frame, text="Trạng thái: Sẵn sàng thực hiện", font=("Segoe UI", 10, "bold"))
+        self.progress_lbl.pack(anchor="w", pady=(4, 2))
         
         self.progress_bar = ttk.Progressbar(ops_frame, style="Progress.Horizontal.TProgressbar", mode="determinate")
         self.progress_bar.pack(fill=tk.X)
         
-        # Bottom Panel: Console Log output
-        console_frame = ttk.LabelFrame(main_frame, text=" NHẬT KÝ CHI TIẾT (LIVE LOG) ", padding=10)
-        console_frame.pack(fill=tk.BOTH, expand=True)
+        # Bottom Panel: Integrated Notebook (Live Console & Live Diagnostic Inspector)
+        self.bottom_notebook = ttk.Notebook(main_frame)
+        self.bottom_notebook.pack(fill=tk.BOTH, expand=True, pady=(5, 0))
+
+        # Tab A: Live Log Console
+        tab_console = ttk.Frame(self.bottom_notebook, padding=6)
+        self.bottom_notebook.add(tab_console, text=" 📜 NHẬT KÝ THỜI GIAN THỰC (LIVE LOG) ")
+
+        console_tools = ttk.Frame(tab_console)
+        console_tools.pack(fill=tk.X, pady=(0, 4))
         
-        self.log_text = tk.Text(console_frame, height=5, font=("Consolas", 9), background="#0F1729", foreground="#E6EAF2", wrap=tk.WORD)
+        btn_copy_log = ttk.Button(console_tools, text="📋 Sao chép Log", command=self._copy_live_log)
+        btn_copy_log.pack(side=tk.LEFT, padx=(0, 6))
+
+        btn_clear_log = ttk.Button(console_tools, text="🧹 Xóa trắng Log", command=self._clear_live_log)
+        btn_clear_log.pack(side=tk.LEFT)
+
+        log_container = ttk.Frame(tab_console)
+        log_container.pack(fill=tk.BOTH, expand=True)
+
+        self.log_text = tk.Text(log_container, height=6, font=("Consolas", 10), background="#0F1729", foreground="#E6EAF2", wrap=tk.WORD)
         self.log_text.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
         
-        log_scroll = ttk.Scrollbar(console_frame, orient="vertical", command=self.log_text.yview)
+        log_scroll = ttk.Scrollbar(log_container, orient="vertical", command=self.log_text.yview)
         log_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.log_text.configure(yscrollcommand=log_scroll.set)
+
+        # Tab B: Live Diagnostic Inspector & Real-Time Error Pane
+        tab_diag = ttk.Frame(self.bottom_notebook, padding=6)
+        self.bottom_notebook.add(tab_diag, text=" 🛠️ BẢNG CHẨN ĐOÁN HỆ THỐNG & BẮT LỖI TỰ ĐỘNG ")
+
+        diag_tools = ttk.Frame(tab_diag)
+        diag_tools.pack(fill=tk.X, pady=(0, 4))
+
+        self.lbl_diag_status_bar = ttk.Label(diag_tools, text="Trạng thái hệ thống: Đang khởi tạo...", font=("Segoe UI", 9, "bold"), foreground="#0A2342")
+        self.lbl_diag_status_bar.pack(side=tk.LEFT, padx=(0, 10))
+
+        btn_refresh_diag = ttk.Button(diag_tools, text="🔄 Quét lại Chẩn đoán", command=self._update_diagnostic_dashboard)
+        btn_refresh_diag.pack(side=tk.LEFT, padx=(0, 6))
+
+        btn_copy_diag = ttk.Button(diag_tools, text="📋 Sao chép Báo cáo", command=self._copy_diagnostic_report)
+        btn_copy_diag.pack(side=tk.LEFT, padx=(0, 6))
+
+        diag_container = ttk.Frame(tab_diag)
+        diag_container.pack(fill=tk.BOTH, expand=True)
+
+        self.diag_text = tk.Text(diag_container, height=6, font=("Consolas", 10), background="#0B132B", foreground="#00FF66", wrap=tk.WORD)
+        self.diag_text.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
+
+        diag_scroll = ttk.Scrollbar(diag_container, orient="vertical", command=self.diag_text.yview)
+        diag_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.diag_text.configure(yscrollcommand=diag_scroll.set)
         
         # Bind close window behavior
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -359,6 +405,7 @@ class StoreVisitApp:
             self._write_log("Đã tải thành công danh sách ASM từ DimStore_Final.xlsx")
             self._refresh_treeview()
             self._refresh_survey_treeview()
+            self._update_diagnostic_dashboard()
         except Exception as e:
             messagebox.showerror("Lỗi Đọc Dữ Liệu", f"Không thể tải tệp DimStore_Final.xlsx: {str(e)}")
 
@@ -566,6 +613,8 @@ class StoreVisitApp:
                 
         except Exception as e:
             self.root.after(0, lambda: self._on_job_failed(str(e), traceback.format_exc()))
+        finally:
+            self.root.after(0, self._finalize_job)
 
     def _parse_ipc_line(self, line: str):
         """Parse structured JSON lines from worker stdout."""
@@ -587,6 +636,7 @@ class StoreVisitApp:
         if msg_type == "job_started":
             self.progress_lbl["text"] = "Trạng thái: Đang khởi chạy job..."
             self._write_log("Tiến trình worker đã kết nối thành công.")
+            self._update_diagnostic_dashboard()
             
         elif msg_type == "stage_started":
             stage = payload.get("stage", "")
@@ -624,7 +674,7 @@ class StoreVisitApp:
             asm_name = payload.get("asm", payload.get("asm_name", "ASM"))
             report_date = payload.get("report_date", datetime.now().strftime("%d/%m/%Y"))
 
-            # Prompt for email sending with interactive confirmation & editable entry box (Topmost)
+            # Prompt for email sending with interactive confirmation (Topmost, No Grab Lock)
             self.root.after(100, lambda: self._prompt_and_send_email(
                 store_code, store_name, asm_name, report_date, pptx_path, pdf_path, docx_path, xlsx_path
             ))
@@ -657,16 +707,15 @@ class StoreVisitApp:
             except Exception:
                 default_email = ""
                 
-        # Create Toplevel Modal Window
+        # Create Toplevel Window (NO grab_set to prevent Tkinter input freezing)
         win = tk.Toplevel(self.root)
         win.title("📧 XÁC NHẬN GỬI EMAIL BÁO CÁO CÔNG TÁC")
         win.geometry("580x340")
         win.resizable(False, False)
+        win.transient(self.root)
         win.attributes("-topmost", True)
         win.lift()
         win.focus_force()
-        win.transient(self.root)
-        win.grab_set()
 
         # Center on parent window
         win.geometry("+%d+%d" % (self.root.winfo_x() + 50, self.root.winfo_y() + 50))
@@ -675,7 +724,7 @@ class StoreVisitApp:
         lbl_title = ttk.Label(win, text="📧 XÁC NHẬN GỬI EMAIL BÁO CÁO CÔNG TÁC", font=("Segoe UI", 12, "bold"), foreground="#0A2342")
         lbl_title.pack(anchor="w", padx=20, pady=(20, 5))
 
-        lbl_info = ttk.Label(win, text=f"• Cửa hàng: {store_code} - {store_name}\n• ASM Phụ trách: {asm_name} | Ngày: {report_date}", font=("Segoe UI", 9.5))
+        lbl_info = ttk.Label(win, text=f"• Cửa hàng: {store_code} - {store_name}\n• ASM Phụ trách: {asm_name} | Ngày: {report_date}", font=("Segoe UI", 10))
         lbl_info.pack(anchor="w", padx=20, pady=(0, 15))
 
         # Input Frame
@@ -692,6 +741,10 @@ class StoreVisitApp:
 
         lbl_status = ttk.Label(win, text="", font=("Segoe UI", 9, "italic"), foreground="#007ACC")
         lbl_status.pack(anchor="w", padx=20, pady=(0, 10))
+
+        def close_dialog():
+            win.destroy()
+            self.root.focus_set()
 
         def do_send():
             target_email = email_var.get().strip()
@@ -720,7 +773,7 @@ class StoreVisitApp:
                     self.root.after(0, lambda: self._write_log(f"❌ LỖI GỬI MAIL: {ex}"))
                     self.root.after(0, lambda: messagebox.showerror("Lỗi Gửi Mail", f"Lỗi phát sinh khi gửi mail: {ex}", parent=self.root))
                 finally:
-                    self.root.after(0, win.destroy)
+                    self.root.after(0, close_dialog)
 
             t = threading.Thread(target=send_bg)
             t.daemon = True
@@ -733,7 +786,7 @@ class StoreVisitApp:
         btn_send = ttk.Button(frame_btns, text="📧 GỬI EMAIL NGAY", style="Accent.TButton", command=do_send)
         btn_send.pack(side=tk.LEFT, padx=(0, 10))
 
-        btn_skip = ttk.Button(frame_btns, text="❌ BỎ QUA / KHÔNG GỬI", command=win.destroy)
+        btn_skip = ttk.Button(frame_btns, text="❌ BỎ QUA / KHÔNG GỬI", command=close_dialog)
         btn_skip.pack(side=tk.LEFT)
 
     def _open_manual_email_modal(self):
@@ -809,8 +862,19 @@ class StoreVisitApp:
         self._write_log(f"❌ THẤT BẠI: {error}")
         if tb:
             self._write_log(f"Traceback chi tiết:\n{tb}")
-        messagebox.showerror("Thất Bại", f"Quá trình tạo báo cáo thất bại:\n{error}")
+        
+        self.latest_error_text = f"THỜI GIAN GẶP LỖI: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nLỖI CHI TIẾT: {error}\n\nTRACEBACK ĐẦY ĐỦ:\n{tb}"
+        self._update_diagnostic_dashboard()
+        
+        # Automatically switch to the Diagnostic Tab so user immediately sees the root cause!
+        try:
+            if hasattr(self, "bottom_notebook"):
+                self.bottom_notebook.select(1)
+        except Exception:
+            pass
+            
         self._finalize_job()
+        messagebox.showerror("Thất Bại", f"Quá trình tạo báo cáo thất bại:\n{error}\n\nĐã ghi nhận toàn bộ chẩn đoán tại tab '🛠️ BẢNG CHẨN ĐOÁN HỆ THỐNG' bên dưới.")
 
     def _trigger_cancel(self):
         """Write cancel signal file."""
@@ -825,9 +889,153 @@ class StoreVisitApp:
                 self._write_log(f"Lỗi gửi tín hiệu hủy: {e}")
                 self._force_kill_subprocess()
 
+    def _emergency_unlock(self):
+        """Emergency reset to unblock UI, force release locks, and kill orphan workers."""
+        self._write_log("⚠️ [MỞ KHÓA KHẨN CẤP] Đang tiến hành giải phóng toàn bộ khóa và tiến trình con...")
+        self.is_running = False
+        self._force_kill_subprocess()
+        try:
+            from job_lock import JobLock
+            JobLock().release(force=True)
+        except Exception:
+            pass
+        
+        # Clean any lock & sig files
+        try:
+            import glob
+            for f in glob.glob(os.path.join(self.root_dir, "temp", "*.sig")):
+                try: os.remove(f)
+                except Exception: pass
+            for f in glob.glob(os.path.join(self.root_dir, "temp", "*.lock")):
+                try: os.remove(f)
+                except Exception: pass
+        except Exception:
+            pass
+
+        self._set_ui_blocked(False)
+        self.progress_lbl["text"] = "Trạng thái: Đã mở khóa thành công! Hệ thống sẵn sàng."
+        self.progress_bar["value"] = 0
+        self._write_log("✓ ĐÃ MỞ KHÓA HỆ THỐNG THÀNH CÔNG! Giao diện đã sẵn sàng nhận lệnh mới.")
+        self._update_diagnostic_dashboard()
+        messagebox.showinfo("Đã Mở Khóa Khẩn Cấp", "✓ Đã mở khóa và khôi phục giao diện thành công!\nToàn bộ tiến trình con và file khóa đã được dọn sạch.")
+
+    def _copy_live_log(self):
+        """Copy entire live console log text to clipboard."""
+        try:
+            content = self.log_text.get("1.0", tk.END).strip()
+            if content:
+                self.root.clipboard_clear()
+                self.root.clipboard_append(content)
+                messagebox.showinfo("Sao Chép", "Đã sao chép toàn bộ Nhật ký Live Log vào Clipboard!")
+            else:
+                messagebox.showinfo("Sao Chép", "Nhật ký hiện đang trống.")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể sao chép: {e}")
+
+    def _clear_live_log(self):
+        """Clear live console log."""
+        self.log_text.delete("1.0", tk.END)
+        self._write_log("Đã xóa trắng nhật ký.")
+
+    def _copy_diagnostic_report(self):
+        """Copy diagnostic dashboard content to clipboard."""
+        try:
+            content = self.diag_text.get("1.0", tk.END).strip()
+            if content:
+                self.root.clipboard_clear()
+                self.root.clipboard_append(content)
+                messagebox.showinfo("Sao Chép", "Đã sao chép Báo cáo Chẩn đoán Hệ thống vào Clipboard!")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể sao chép: {e}")
+
+    def _update_diagnostic_dashboard(self):
+        """Perform real-time system health check and refresh the diagnostic inspector tab."""
+        if not hasattr(self, "diag_text"):
+            return
+
+        diag_lines = []
+        diag_lines.append("=========================================================================")
+        diag_lines.append(f"  STOREVISIT PRO REALTIME SYSTEM DIAGNOSTICS - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        diag_lines.append("=========================================================================\n")
+
+        # 0. LATEST ERROR FINGERPRINT (IF ANY)
+        if self.latest_error_text:
+            diag_lines.append("🚨 [LỖI PHÁT SINH GẦN NHẤT / LATEST ERROR FINGERPRINT]:")
+            diag_lines.append("-------------------------------------------------------------------------")
+            diag_lines.append(self.latest_error_text)
+            diag_lines.append("-------------------------------------------------------------------------\n")
+            status_text = "Hệ thống ghi nhận LỖI! Vui lòng kiểm tra báo cáo bên dưới."
+            status_color = "#C00000"
+        else:
+            diag_lines.append("✓ [TRẠNG THÁI HOẠT ĐỘNG]: Không ghi nhận lỗi runtime tồn đọng.\n")
+            status_text = "Hệ thống: SẴN SÀNG | Mọi thành phần hoạt động ổn định"
+            status_color = "#008000"
+
+        # 1. Environment & Dependencies
+        diag_lines.append("[1] MÔI TRƯỜNG PYTHON & THƯ VIỆN BẮT BUỘC:")
+        diag_lines.append(f"  • Operating System: Windows ({sys.platform})")
+        diag_lines.append(f"  • Python Interpreter: {sys.executable}")
+        diag_lines.append(f"  • Project Directory: {self.root_dir}")
+
+        for pkg in ["pandas", "pptx", "openpyxl", "requests", "yaml"]:
+            try:
+                mod = __import__(pkg)
+                ver = getattr(mod, "__version__", "OK")
+                diag_lines.append(f"  ✓ Thư viện '{pkg}': Sẵn sàng (v{ver})")
+            except Exception as ex:
+                diag_lines.append(f"  ❌ Thư viện '{pkg}': THIẾU ({ex})")
+
+        # 2. Configuration & Credentials
+        diag_lines.append("\n[2] TỆP CẤU HÌNH & GOOGLE CREDENTIALS:")
+        cfg_path = os.path.join(self.root_dir, "config", "app_config.yaml")
+        diag_lines.append(f"  • app_config.yaml: {'✓ Đầy đủ' if os.path.exists(cfg_path) else '❌ THIẾU'}")
+
+        cred_path = self.config.get("google", {}).get("credentials_path", "")
+        if not os.path.isabs(cred_path): cred_path = os.path.join(self.root_dir, cred_path)
+        diag_lines.append(f"  • google_credentials.json: {'✓ Hợp lệ' if os.path.exists(cred_path) else '❌ THIẾU'}")
+
+        w_url = self.config.get("google", {}).get("webapp_url", "")
+        diag_lines.append(f"  • Google Apps Script WebApp URL: {'✓ Đã cấu hình' if w_url else '⚠️ CHƯA CẤU HÌNH'}")
+
+        # 3. Data Cache
+        diag_lines.append("\n[3] TRẠNG THÁI DỮ LIỆU & CACHE:")
+        fc_path = os.path.join(self.root_dir, "data", "form_cache.json")
+        if os.path.exists(fc_path):
+            try:
+                with open(fc_path, "r", encoding="utf-8") as f:
+                    fc_data = json.load(f)
+                diag_lines.append(f"  ✓ form_cache.json: {len(fc_data)} phản hồi Google Forms")
+            except Exception as e:
+                diag_lines.append(f"  ❌ form_cache.json: Lỗi đọc file ({e})")
+        else:
+            diag_lines.append("  ⚠️ form_cache.json: Chưa có tệp cache")
+
+        # 4. Lock & Subprocess State
+        diag_lines.append("\n[4] TIẾN TRÌNH WORKER & KHÓA NỀN (LOCK STATE):")
+        lock_p = os.path.join(self.root_dir, "temp", "app.lock")
+        if os.path.exists(lock_p):
+            try:
+                with open(lock_p, "r") as f:
+                    pid = f.read().strip()
+                diag_lines.append(f"  ⚠ File khóa temp/app.lock đang tồn tại (PID: {pid})")
+            except Exception:
+                diag_lines.append("  ⚠ File khóa temp/app.lock đang tồn tại")
+        else:
+            diag_lines.append("  ✓ File khóa temp/app.lock: SẠCH (Không bị chiếm dụng)")
+
+        worker_st = "ĐANG CHẠY (RUNNING)" if self.is_running else "RẢNH (IDLE)"
+        diag_lines.append(f"  • Trạng thái Worker: {worker_st}")
+
+        diag_content = "\n".join(diag_lines)
+        
+        self.diag_text.delete("1.0", tk.END)
+        self.diag_text.insert(tk.END, diag_content)
+
+        if hasattr(self, "lbl_diag_status_bar"):
+            self.lbl_diag_status_bar.config(text=f"Trạng thái: {status_text} | Worker: {worker_st}", foreground=status_color)
+
     def _run_watchdog(self):
         """Monitor event timeouts in background thread."""
-        # Configurable watchdog timeout per stage, default to 300s
         watchdog_timeout = 300 
         
         while self.is_running:
@@ -859,7 +1067,7 @@ class StoreVisitApp:
         # Clean lock
         try:
             from job_lock import JobLock
-            JobLock().release()
+            JobLock().release(force=True)
         except Exception:
             pass
             
@@ -877,6 +1085,7 @@ class StoreVisitApp:
             pass
         self._set_ui_blocked(False)
         self._refresh_treeview()
+        self._update_diagnostic_dashboard()
 
     def _sync_google_forms(self):
         if not self.form_cache:
@@ -913,11 +1122,14 @@ class StoreVisitApp:
         self.lbl_sync_status["text"] = f"Lần sync gần nhất: {now_str} (Thêm mới: {new_count})"
         self._write_log(f"✓ Đồng bộ thành công! Lấy được {new_count} phản hồi mới.")
         self._refresh_treeview()
+        self._update_diagnostic_dashboard()
         
     def _on_sync_failed(self, err_msg):
         self.btn_sync["state"] = tk.NORMAL
         self.lbl_sync_status["text"] = "Đồng bộ thất bại"
         self._write_log(f"❌ Đồng bộ thất bại: {err_msg}")
+        self.latest_error_text = f"LỖI ĐỒNG BỘ GOOGLE SHEETS:\n{err_msg}"
+        self._update_diagnostic_dashboard()
         messagebox.showerror("Lỗi Đồng Bộ", f"Không thể đồng bộ dữ liệu từ Google Sheets:\n{err_msg}")
 
     def _reset_tab2_filters(self):
@@ -975,106 +1187,10 @@ class StoreVisitApp:
             ))
 
     def _open_diagnostic_inspector(self):
-        """Pop up an Enterprise Diagnostic Inspector window to scan system health & error logs."""
-        win = tk.Toplevel(self.root)
-        win.title("🛠️ BẢNG CHẨN ĐOÁN HỆ THỐNG VÀ KIỂM TRA LỖI (DIAGNOSTIC INSPECTOR)")
-        win.geometry("750x540")
-        win.transient(self.root)
-        win.attributes("-topmost", True)
-        win.lift()
-        win.focus_force()
-        win.grab_set()
-
-        win.geometry("+%d+%d" % (self.root.winfo_x() + 40, self.root.winfo_y() + 40))
-
-        lbl_title = ttk.Label(win, text="🛠️ BẢNG CHẨN ĐOÁN TOÀN DIỆN VÀ TOÀN VẸN HỆ THỐNG", font=("Segoe UI", 12, "bold"), foreground="#0A2342")
-        lbl_title.pack(anchor="w", padx=15, pady=(15, 5))
-
-        txt_diag = tk.Text(win, font=("Consolas", 9.5), background="#0F1729", foreground="#00FF66", wrap=tk.WORD)
-        txt_diag.pack(fill=tk.BOTH, expand=True, padx=15, pady=10)
-
-        diag_lines = []
-        diag_lines.append("=========================================================================")
-        diag_lines.append(f"  STOREVISIT PRO DIAGNOSTIC INSPECTOR - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        diag_lines.append("=========================================================================\n")
-
-        # 1. Environment & Dependencies
-        diag_lines.append("[1] THÔNG TIN MÔI TRƯỜNG & THƯ VIỆN DỰ ÁN:")
-        diag_lines.append(f"  • Operating System: Windows ({sys.platform})")
-        diag_lines.append(f"  • Python Interpreter: {sys.executable}")
-        diag_lines.append(f"  • Working Directory: {self.root_dir}")
-
-        for pkg in ["pandas", "pptx", "openpyxl", "requests"]:
-            try:
-                mod = __import__(pkg)
-                ver = getattr(mod, "__version__", "OK")
-                diag_lines.append(f"  ✓ Library '{pkg}': Installed (v{ver})")
-            except Exception as ex:
-                diag_lines.append(f"  ❌ Library '{pkg}': MISSING ({ex})")
-
-        # 2. Configuration & Key Files
-        diag_lines.append("\n[2] KIỂM TRA TỆP CẤU HÌNH & GOOGLE CREDENTIALS:")
-        cfg_path = os.path.join(self.root_dir, "config", "app_config.yaml")
-        diag_lines.append(f"  • app_config.yaml: {'✓ Exists' if os.path.exists(cfg_path) else '❌ MISSING'}")
-
-        cred_path = self.config.get("google", {}).get("credentials_path", "")
-        if not os.path.isabs(cred_path): cred_path = os.path.join(self.root_dir, cred_path)
-        diag_lines.append(f"  • google_credentials.json: {'✓ Exists' if os.path.exists(cred_path) else '❌ MISSING'}")
-
-        w_url = self.config.get("google", {}).get("webapp_url", "")
-        diag_lines.append(f"  • Apps Script WebApp URL: {'✓ Configured' if w_url else '⚠️ NOT CONFIGURED'}")
-
-        # 3. Data Cache Files
-        diag_lines.append("\n[3] TRẠNG THÁI CACHE DỮ LIỆU:")
-        fc_path = os.path.join(self.root_dir, "data", "form_cache.json")
-        if os.path.exists(fc_path):
-            try:
-                with open(fc_path, "r", encoding="utf-8") as f:
-                    fc_data = json.load(f)
-                diag_lines.append(f"  ✓ form_cache.json: {len(fc_data)} bản ghi")
-            except Exception as e:
-                diag_lines.append(f"  ❌ form_cache.json: Lỗi đọc file ({e})")
-        else:
-            diag_lines.append("  ⚠️ form_cache.json: Chưa có file cache")
-
-        # 4. Lock File & Worker Subprocess Status
-        diag_lines.append("\n[4] TIẾN TRÌNH CON & KHÓA NỀN (LOCK FILE):")
-        lock_p = os.path.join(self.root_dir, "temp", "app.lock")
-        if os.path.exists(lock_p):
-            try:
-                with open(lock_p, "r") as f:
-                    pid = f.read().strip()
-                diag_lines.append(f"  ⚠ app.lock đang tồn tại (PID: {pid})")
-            except Exception:
-                diag_lines.append("  ⚠ app.lock đang tồn tại")
-        else:
-            diag_lines.append("  ✓ Khoá temp/app.lock: SẠCH (Sẵn sàng chạy tiến trình mới)")
-
-        diag_lines.append(f"  • Worker Status: {'Đang chạy (RUNNING)' if self.is_running else 'RẢNH (IDLE)'}")
-
-        diag_report = "\n".join(diag_lines)
-        txt_diag.insert(tk.END, diag_report)
-
-        btn_frame = ttk.Frame(win)
-        btn_frame.pack(fill=tk.X, padx=15, pady=(0, 15))
-
-        def copy_to_clipboard():
-            self.root.clipboard_clear()
-            self.root.clipboard_append(diag_report)
-            messagebox.showinfo("Đã Sao Chép", "Đã sao chép toàn bộ báo cáo chuẩn đoán vào Clipboard!", parent=win)
-
-        def destroy_win():
-            try:
-                win.grab_release()
-            except Exception:
-                pass
-            win.destroy()
-
-        btn_copy = ttk.Button(btn_frame, text="📋 SAO CHÉP BÁO CÁO CHẨN ĐOÁN", style="Accent.TButton", command=copy_to_clipboard)
-        btn_copy.pack(side=tk.LEFT, padx=(0, 10))
-
-        btn_close = ttk.Button(btn_frame, text="ĐÓNG", command=destroy_win)
-        btn_close.pack(side=tk.LEFT)
+        """Switch to the integrated Diagnostic Inspector Tab."""
+        if hasattr(self, "bottom_notebook"):
+            self.bottom_notebook.select(1)
+        self._update_diagnostic_dashboard()
 
     def _refresh_survey_treeview(self):
         for item in self.tree_survey.get_children():
@@ -1224,6 +1340,8 @@ class StoreVisitApp:
                 
         except Exception as e:
             self.root.after(0, lambda: self._on_job_failed(str(e), traceback.format_exc()))
+        finally:
+            self.root.after(0, self._finalize_job)
 
     def _on_close(self):
         """Confirm if user wants to close when worker is active."""
