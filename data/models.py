@@ -10,14 +10,18 @@ class StoreMetadata(BaseModel):
     asm_name: str
 
 class RevenueData(BaseModel):
-    revenue_actual: int = Field(default=0, description="MTD revenue in VND")
+    revenue_actual: int = Field(default=0, description="MTD actual revenue in VND")
     revenue_target: int = Field(default=0, description="Monthly target in VND")
-    attainment_pct: float = Field(default=0.0, description="Attainment percentage")
-    revenue_prev: int = Field(default=0, description="Previous month MTD revenue in VND")
-    revenue_yoy: int = Field(default=0, description="YoY month MTD revenue in VND")
-    mom_change_pct: float = Field(default=0.0)
-    yoy_change_pct: float = Field(default=0.0)
+    attainment_pct: float = Field(default=0.0, description="Attainment percentage vs full monthly target")
+    revenue_prev: int = Field(default=0, description="Previous month MTD like-for-like revenue in VND")
+    revenue_yoy: int = Field(default=0, description="YoY month MTD like-for-like revenue in VND")
+    mom_change_pct: float = Field(default=0.0, description="MoM change percentage")
+    yoy_change_pct: float = Field(default=0.0, description="YoY change percentage")
     commentary: str = ""
+    cutoff_day: Optional[int] = None
+    is_mtd: bool = False
+    revenue_target_mtd: int = 0
+    attainment_mtd_pct: float = 0.0
 
 class StockInventory(BaseModel):
     total_qty: int = 0

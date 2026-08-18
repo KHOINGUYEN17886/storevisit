@@ -741,8 +741,12 @@ class PPTXGenerator:
                 self._fill_text(rev_slide, "TXT_REVENUE_COMMENT", data.revenue.commentary or "-")
                 
                 # Set Action Title
-                attainment = data.revenue.attainment_pct if data.revenue.attainment_pct is not None else 0.0
-                self._set_slide_title(rev_slide, "3.1.", f"3.1. DOANH THU ĐẠT {attainment:.1f}% KẾ HOẠCH")
+                if getattr(data.revenue, "is_mtd", False) and getattr(data.revenue, "cutoff_day", None):
+                    attainment = data.revenue.attainment_mtd_pct
+                    self._set_slide_title(rev_slide, "3.1.", f"3.1. DOANH THU MTD ĐẠT {attainment:.1f}% TIẾN ĐỘ ({data.revenue.attainment_pct:.1f}% KH THÁNG)")
+                else:
+                    attainment = data.revenue.attainment_pct if data.revenue.attainment_pct is not None else 0.0
+                    self._set_slide_title(rev_slide, "3.1.", f"3.1. DOANH THU ĐẠT {attainment:.1f}% KẾ HOẠCH")
             
             # If a revenue chart path is provided, we can insert it over the OLE chart area
             chart_img = temp_image_paths.get("revenue_chart", "")
@@ -1698,17 +1702,36 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
         try:
             rev = data.revenue
             if rev and (rev.revenue_actual or rev.revenue_target):
-                s = f"Doanh thu thực hiện lũy kế tháng: {rev.revenue_actual:,.0f} VNĐ"
-                if rev.revenue_target:
-                    s += f", kế hoạch tháng: {rev.revenue_target:,.0f} VNĐ"
-                if rev.attainment_pct:
-                    s += f", hoàn thành {rev.attainment_pct:.1f}% kế hoạch tháng"
-                if rev.revenue_prev:
-                    _mom = ((rev.revenue_actual - rev.revenue_prev) / rev.revenue_prev * 100)
-                    s += f", so với tháng trước (MoM) {'tăng' if _mom >= 0 else 'giảm'} {abs(_mom):.1f}% ({rev.revenue_actual - rev.revenue_prev:+,.0f} VNĐ)"
-                if rev.revenue_yoy:
-                    _yoy = ((rev.revenue_actual - rev.revenue_yoy) / rev.revenue_yoy * 100)
-                    s += f", so với cùng kỳ năm trước (YoY) {'tăng' if _yoy >= 0 else 'giảm'} {abs(_yoy):.1f}% ({rev.revenue_actual - rev.revenue_yoy:+,.0f} VNĐ)"
+                if getattr(rev, "is_mtd", False) and getattr(rev, "cutoff_day", None):
+                    s = f"Doanh thu thực hiện lũy kế MTD (từ ngày 01 đến ngày {rev.cutoff_day:02d}): {rev.revenue_actual:,.0f} VNĐ"
+                    if getattr(rev, "revenue_target_mtd", 0):
+                        s += f", đạt {rev.attainment_mtd_pct:.1f}% tiến độ MTD ({rev.attainment_pct:.1f}% KH cả tháng)"
+                    elif rev.revenue_target:
+                        s += f", kế hoạch cả tháng: {rev.revenue_target:,.0f} VNĐ"
+                    if rev.revenue_prev:
+                        _mom = rev.mom_change_pct
+                        if abs(_mom) < 0.05:
+                            s += f", so với cùng kỳ tháng trước (MoM cùng {rev.cutoff_day} ngày) duy trì ổn định ngang mức (+0.0%)"
+                        else:
+                            s += f", so với cùng kỳ tháng trước (MoM cùng {rev.cutoff_day} ngày) {'tăng' if _mom >= 0 else 'giảm'} {abs(_mom):.1f}% ({rev.revenue_actual - rev.revenue_prev:+,.0f} VNĐ)"
+                    if rev.revenue_yoy:
+                        _yoy = rev.yoy_change_pct
+                        if abs(_yoy) < 0.05:
+                            s += f", so với cùng kỳ năm trước (YoY cùng {rev.cutoff_day} ngày) tương đương (+0.0%)"
+                        else:
+                            s += f", so với cùng kỳ năm trước (YoY cùng {rev.cutoff_day} ngày) {'tăng' if _yoy >= 0 else 'giảm'} {abs(_yoy):.1f}% ({rev.revenue_actual - rev.revenue_yoy:+,.0f} VNĐ)"
+                else:
+                    s = f"Doanh thu thực hiện lũy kế tháng: {rev.revenue_actual:,.0f} VNĐ"
+                    if rev.revenue_target:
+                        s += f", kế hoạch tháng: {rev.revenue_target:,.0f} VNĐ"
+                    if rev.attainment_pct:
+                        s += f", hoàn thành {rev.attainment_pct:.1f}% kế hoạch tháng"
+                    if rev.revenue_prev:
+                        _mom = rev.mom_change_pct
+                        s += f", so với tháng trước (MoM) {'tăng' if _mom >= 0 else 'giảm'} {abs(_mom):.1f}% ({rev.revenue_actual - rev.revenue_prev:+,.0f} VNĐ)"
+                    if rev.revenue_yoy:
+                        _yoy = rev.yoy_change_pct
+                        s += f", so với cùng kỳ năm trước (YoY) {'tăng' if _yoy >= 0 else 'giảm'} {abs(_yoy):.1f}% ({rev.revenue_actual - rev.revenue_yoy:+,.0f} VNĐ)"
                 facts.append(s + ".")
         except Exception:
             pass

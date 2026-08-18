@@ -42,7 +42,15 @@ def send_email_for_store(loader, store_code, store_name, asm_name, report_date, 
     import base64
     import requests
     
-    webapp_url = loader.config.get("google", {}).get("webapp_url", "")
+    if loader is None:
+        try:
+            from data.data_loader import DataLoader
+            loader = DataLoader()
+        except Exception as e:
+            print(f"[Email] Failed to instantiate DataLoader fallback: {e}")
+            return False
+            
+    webapp_url = loader.config.get("google", {}).get("webapp_url", "") if hasattr(loader, "config") else ""
     if not webapp_url:
         print("[Email] webapp_url not configured in app_config.yaml. Skipping email.")
         return False
@@ -389,9 +397,10 @@ def main():
                 asm_name=str(store_asm) if pd_not_na(store_asm) else asm_name
             )
 
-            # 2.1 Fetch Revenue (Dynamic year/month based on report date)
+            # 2.1 Fetch Revenue (Dynamic year/month/cutoff based on report date)
             rev_year = 2026
             rev_month = 7
+            cutoff_day = None
             resp = mapped_responses.get(store_key.upper())
             if resp and resp.report_date:
                 try:
@@ -399,10 +408,11 @@ def main():
                     report_dt = pd.to_datetime(resp.report_date)
                     rev_month = report_dt.month
                     rev_year = report_dt.year
+                    cutoff_day = report_dt.day
                 except Exception as e:
                     print(f"Error parsing report date {resp.report_date}: {e}")
             
-            revenue_data = rev_repo.get_revenue_data(store_key, year=rev_year, month=rev_month)
+            revenue_data = rev_repo.get_revenue_data(store_key, year=rev_year, month=rev_month, cutoff_day=cutoff_day)
             
             # 2.2 Fetch Inventory & Age
             stock_data = inv_repo.get_stock_inventory(store_key)

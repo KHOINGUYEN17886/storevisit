@@ -75,6 +75,14 @@ class StoreVisitApp:
         except Exception as e:
             print(f"Warning: Failed to init MarketSurveyCache: {e}")
             
+        # Initialize DataLoader
+        self.loader = None
+        try:
+            from data.data_loader import DataLoader
+            self.loader = DataLoader(self.config_path)
+        except Exception as e:
+            print(f"Warning: Failed to init DataLoader: {e}")
+            
         # Styles & Themes — An Phước design system (navy/crimson + Be Vietnam Pro)
         ap_theme.load_fonts()
         self.T = ap_theme.apply(self.root)
