@@ -35,6 +35,8 @@ _SYSTEM_PROMPT = (
     "Văn phong: tiếng Việt chuẩn mực, chuyên nghiệp, súc tích, mang tính quản trị và định hướng hành động — "
     "như một giám đốc vùng dày dạn kinh nghiệm nói với cửa hàng trưởng. "
     "TUYỆT ĐỐI KHÔNG bịa thêm số liệu, tên người, hay sự kiện không có trong dữ liệu. "
+    "TUYỆT ĐỐI GIỮ NGUYÊN các tỷ lệ phần trăm (%), số tiền doanh thu và số lượng tồn kho chính xác theo dữ kiện được cung cấp, "
+    "không được tự ý làm tròn sai lệch (ví dụ: 40.3% không được đổi thành 38%, 66.4% không được đổi thành 68%). "
     "Không dùng emoji. Không lặp lại nguyên văn dữ liệu thô — hãy diễn giải thành câu văn mạch lạc, có nhận định và khuyến nghị."
 )
 

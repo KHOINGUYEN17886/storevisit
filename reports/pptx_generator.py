@@ -155,7 +155,28 @@ class PPTXGenerator:
                     print(f"[narrator] exec summary lỗi, dùng fallback: {_e}")
                 if inspection_mode == "cross":
                     general_text = f"🔀 KIỂM TRA CHÉO — thực hiện bởi {asm_name} (thay ASM phụ trách cửa hàng này).\n\n{general_text}"
-                self._fill_text(info_slide, "TXT_GENERAL_COMMENT", general_text)
+                
+                # Dedicated styling for TXT_GENERAL_COMMENT to avoid overlap and font sizing issues
+                comment_found = False
+                for shape in info_slide.shapes:
+                    if shape.name == "TXT_GENERAL_COMMENT" and shape.has_text_frame:
+                        tf = shape.text_frame
+                        tf.clear()
+                        tf.word_wrap = True
+                        tf.margin_left = Inches(0.08)
+                        tf.margin_right = Inches(0.08)
+                        tf.margin_top = Inches(0.04)
+                        tf.margin_bottom = Inches(0.04)
+                        p = tf.paragraphs[0]
+                        p.text = general_text
+                        p.font.name = FONT_PRIMARY
+                        p.font.size = Pt(9.5)
+                        p.font.color.rgb = CLR_INK
+                        p.alignment = PP_ALIGN.LEFT
+                        comment_found = True
+                        break
+                if not comment_found:
+                    self._fill_text(info_slide, "TXT_GENERAL_COMMENT", general_text)
 
         # 3. STORE_FRONTAGE_PHOTOS & STORE_INNER_PHOTOS (Merging if both have no photos)
         frontage_slide = slide_map.get("STORE_FRONTAGE_PHOTOS")
@@ -1677,12 +1698,17 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
         try:
             rev = data.revenue
             if rev and (rev.revenue_actual or rev.revenue_target):
-                s = f"Doanh thu thực hiện {rev.revenue_actual:,.0f} VNĐ"
+                s = f"Doanh thu thực hiện lũy kế tháng: {rev.revenue_actual:,.0f} VNĐ"
+                if rev.revenue_target:
+                    s += f", kế hoạch tháng: {rev.revenue_target:,.0f} VNĐ"
                 if rev.attainment_pct:
-                    s += f", đạt {rev.attainment_pct:.0f}% chỉ tiêu"
-                if getattr(rev, 'yoy_change_pct', 0):
-                    _d = rev.yoy_change_pct
-                    s += f", {'tăng' if _d >= 0 else 'giảm'} {abs(_d):.0f}% so với cùng kỳ năm trước"
+                    s += f", hoàn thành {rev.attainment_pct:.1f}% kế hoạch tháng"
+                if rev.revenue_prev:
+                    _mom = ((rev.revenue_actual - rev.revenue_prev) / rev.revenue_prev * 100)
+                    s += f", so với tháng trước (MoM) {'tăng' if _mom >= 0 else 'giảm'} {abs(_mom):.1f}% ({rev.revenue_actual - rev.revenue_prev:+,.0f} VNĐ)"
+                if rev.revenue_yoy:
+                    _yoy = ((rev.revenue_actual - rev.revenue_yoy) / rev.revenue_yoy * 100)
+                    s += f", so với cùng kỳ năm trước (YoY) {'tăng' if _yoy >= 0 else 'giảm'} {abs(_yoy):.1f}% ({rev.revenue_actual - rev.revenue_yoy:+,.0f} VNĐ)"
                 facts.append(s + ".")
         except Exception:
             pass

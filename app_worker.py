@@ -413,6 +413,32 @@ def main():
             workplace_name = store_staff_workplace.get(store_code, store_name)
             df_store_staff = staff_df[staff_df["Nơi làm việc"] == workplace_name]
             
+            # Robust fuzzy/normalized workplace matching fallback if direct match empty
+            if df_store_staff.empty:
+                import re
+                def _norm_k(s):
+                    if not s: return ""
+                    s = str(s).strip()
+                    for c1, c2 in [('à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ', 'a'),
+                                  ('è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ', 'e'),
+                                  ('ì|í|ị|ỉ|ĩ', 'i'),
+                                  ('ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ', 'o'),
+                                  ('ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ', 'u'),
+                                  ('ỳ|ý|ỵ|ỷ|ỹ', 'y'),
+                                  ('đ', 'd'), ('Đ', 'D')]:
+                        s = re.sub(f'[{c1}]', c2, s)
+                    s = re.sub(r'[^a-zA-Z0-9]', '', s).lower()
+                    s = re.sub(r'^0+(\d)', r'\1', s)
+                    s = re.sub(r'([a-z])0+(\d)', r'\1\2', s)
+                    return s
+                
+                target_norm = _norm_k(store_name)
+                for wp in staff_df["Nơi làm việc"].dropna().unique():
+                    wp_norm = _norm_k(wp)
+                    if wp_norm == target_norm or wp_norm in target_norm or target_norm in wp_norm:
+                        df_store_staff = staff_df[staff_df["Nơi làm việc"] == wp]
+                        break
+
             cht_name = "Chưa bổ nhiệm"
             chp_name = "Chưa bổ nhiệm"
             staff_list = []
