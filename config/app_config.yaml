@@ -1,37 +1,55 @@
-# StoreVisit App Configuration
-
 paths:
-  revenue: "C:\\All_Report\\2_CleanData\\Revenue\\Fact_Revenue_AllYears_Standardized.csv"
-  target: "C:\\All_Report\\2_CleanData\\Target\\TargetMonthly.csv"
-  health_master: "C:\\All_Report\\8_RETAIL_COMMANDER\\OutPut\\02_Merchandising_Master\\MART_HEALTH_MASTER_PERFECT.csv"
-  stock: "C:\\All_Report\\2_CleanData\\Stocks\\MART_Stock_Final_v89.csv"
-  dim_store: "C:\\All_Report\\1_Mapping\\DimStore_Final.xlsx"
-  staff_list: "C:\\All_Report\\1_Mapping\\StaffList_Store_20.04.26.xlsx"
-  weekly_json: "C:\\All_Report\\8_RETAIL_COMMANDER\\scratch\\parsed_raw_data.json"
-  temp_dir: "C:\\All_Report\\8_RETAIL_COMMANDER\\StoreVisit\\temp"
-  output_dir: "C:\\All_Report\\8_RETAIL_COMMANDER\\StoreVisit\\output"
-  templates_dir: "C:\\All_Report\\8_RETAIL_COMMANDER\\StoreVisit\\templates"
-
+  revenue: C:\All_Report\2_CleanData\Revenue\Fact_Revenue_AllYears_Standardized.csv
+  target: C:\All_Report\2_CleanData\Target\TargetMonthly.csv
+  health_master: C:\All_Report\8_RETAIL_COMMANDER\OutPut\02_Merchandising_Master\MART_HEALTH_MASTER_PERFECT.csv
+  stock: C:\All_Report\2_CleanData\Stocks\MART_Stock_Final_v89.csv
+  dim_store: C:\All_Report\1_Mapping\DimStore_Final.xlsx
+  staff_list: C:\All_Report\1_Mapping\StaffList_Store_20.04.26.xlsx
+  weekly_json: C:\All_Report\8_RETAIL_COMMANDER\scratch\parsed_raw_data.json
+  temp_dir: C:\All_Report\8_RETAIL_COMMANDER\StoreVisit\temp
+  output_dir: C:\All_Report\8_RETAIL_COMMANDER\StoreVisit\output
+  templates_dir: C:\All_Report\8_RETAIL_COMMANDER\StoreVisit\templates
 cluster_merge:
   exclude_store_slide_ids:
-    - STORE_COVER
-    - STORE_TOC
-    - STORE_THANK_YOU
-
+  - STORE_COVER
+  - STORE_TOC
+  - STORE_THANK_YOU
 timeouts:
   load_data_seconds: 180
   generate_store_seconds: 300
   merge_seconds: 300
   export_pdf_seconds: 300
   powerpoint_close_seconds: 30
-
 google:
-  credentials_path: "C:\\All_Report\\8_RETAIL_COMMANDER\\StoreVisit\\config\\google_credentials.json"
-  spreadsheet_id: "1Qetn0_6EYEaKQID3Ig4uwX55HhI6Au90Sz8LnVChmEM"
-  sheet_name: "Form Responses 1"
-  drive_photos_cache_dir: "C:\\All_Report\\8_RETAIL_COMMANDER\\StoreVisit\\temp\\drive_photos"
-  survey_sheet_name: "MarketSurvey_Responses"
-  survey_cache_path: "C:\\All_Report\\8_RETAIL_COMMANDER\\StoreVisit\\data\\survey_cache.json"
-  survey_photos_dir: "C:\\All_Report\\8_RETAIL_COMMANDER\\StoreVisit\\temp\\survey_photos"
-  webapp_url: "https://script.google.com/macros/s/AKfycby4EBC5d6vNdiZFNB8TS-iTylazX_KA_Y8Tr4uVeu43JIhSH3hkLEqKYIxDYpV4BqVXfw/exec"
+  credentials_path: C:\All_Report\8_RETAIL_COMMANDER\StoreVisit\config\google_credentials.json
+  spreadsheet_id: 1Qetn0_6EYEaKQID3Ig4uwX55HhI6Au90Sz8LnVChmEM
+  sheet_name: Form Responses 1
+  drive_photos_cache_dir: C:\All_Report\8_RETAIL_COMMANDER\StoreVisit\temp\drive_photos
+  survey_sheet_name: MarketSurvey_Responses
+  survey_cache_path: C:\All_Report\8_RETAIL_COMMANDER\StoreVisit\data\survey_cache.json
+  survey_photos_dir: C:\All_Report\8_RETAIL_COMMANDER\StoreVisit\temp\survey_photos
+  webapp_url: https://script.google.com/macros/s/AKfycby4EBC5d6vNdiZFNB8TS-iTylazX_KA_Y8Tr4uVeu43JIhSH3hkLEqKYIxDYpV4BqVXfw/exec
+email:
+  active_provider: google_webapp
+  smtp:
+    host: smtp.gmail.com
+    port: 587
+    use_tls: true
+    sender_name: Hệ thống Báo cáo StoreVisit - An Phước
+    sender_email: khoind@anphuoc.com.vn
+    sender_password: ''
+  google_webapp:
+    url: https://script.google.com/macros/s/AKfycby4EBC5d6vNdiZFNB8TS-iTylazX_KA_Y8Tr4uVeu43JIhSH3hkLEqKYIxDYpV4BqVXfw/exec
+  default_cc: bgd@anphuoc.com.vn, qlkd@anphuoc.com.vn
+  default_subject_template: BÁO CÁO KIỂM TRA CỬA HÀNG {store_name} ({store_code})
+    - NGÀY {report_date}
+  default_body_template: 'Kính gửi Ban Giám Đốc và Quản Lý Khu Vực,
 
+
+    Đính kèm là bộ tài liệu báo cáo kiểm tra thực tế tại cửa hàng {store_name} ({store_code})
+    thực hiện vào ngày {report_date}.
+
+
+    Trân trọng,
+
+    {asm_name} - QLKD phụ trách'

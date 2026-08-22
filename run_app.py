@@ -197,7 +197,10 @@ class StoreVisitApp:
         self.btn_exec_monthly.pack(side=tk.LEFT, padx=(0, 10))
         
         self.btn_email_core = ttk.Button(btn_frame_core, text="📧 GỬI MAIL BÁO CÁO", command=self._open_manual_email_modal)
-        self.btn_email_core.pack(side=tk.LEFT)
+        self.btn_email_core.pack(side=tk.LEFT, padx=(0, 10))
+
+        self.btn_config_email_core = ttk.Button(btn_frame_core, text="⚙️ CẤU HÌNH EMAIL", command=self._open_email_config_modal)
+        self.btn_config_email_core.pack(side=tk.LEFT)
         
         # --- TAB 2: Google Sync ---
         # Sync control
@@ -275,6 +278,9 @@ class StoreVisitApp:
         
         self.btn_email_google = ttk.Button(btn_frame_google, text="📧 GỬI MAIL BÁO CÁO", command=self._open_manual_email_modal)
         self.btn_email_google.pack(side=tk.LEFT, padx=(0, 10))
+
+        self.btn_config_email_google = ttk.Button(btn_frame_google, text="⚙️ CẤU HÌNH EMAIL", command=self._open_email_config_modal)
+        self.btn_config_email_google.pack(side=tk.LEFT, padx=(0, 10))
 
         self.btn_diag_google = ttk.Button(btn_frame_google, text="🛠️ CHUẨN ĐOÁN LỖI", command=self._open_diagnostic_inspector)
         self.btn_diag_google.pack(side=tk.LEFT)
@@ -706,8 +712,206 @@ class StoreVisitApp:
             tb = payload.get("traceback", "")
             self._on_job_failed(err, tb)
 
+    def _open_email_config_modal(self):
+        """Mở cửa sổ cấu hình email chuyên nghiệp đa kênh (SMTP / Google WebApp / Outlook)."""
+        from utils.email_dispatcher import EmailDispatcher
+        dispatcher = EmailDispatcher(config_path=self.config_path)
+        email_cfg = dispatcher.get_email_config()
+
+        win = tk.Toplevel(self.root)
+        win.title("⚙️ CẤU HÌNH GỬI EMAIL DOANH NGHIỆP (STOREVISIT EMAIL CENTER)")
+        win.geometry("660x650")
+        win.resizable(False, False)
+        win.transient(self.root)
+        win.attributes("-topmost", True)
+        win.lift()
+        win.focus_force()
+        win.geometry("+%d+%d" % (self.root.winfo_x() + 40, self.root.winfo_y() + 30))
+
+        # Title Frame
+        frame_header = ttk.Frame(win, padding=(20, 15, 20, 10))
+        frame_header.pack(fill=tk.X)
+        ttk.Label(frame_header, text="⚙️ CẤU HÌNH TRUNG TÂM GỬI EMAIL", font=("Segoe UI", 13, "bold"), foreground="#0A2342").pack(anchor="w")
+        ttk.Label(frame_header, text="Tùy chỉnh phương thức gửi thư, thông số kết nối máy chủ và mẫu nội dung báo cáo gửi Ban Giám Đốc/ASM.", font=("Segoe UI", 9, "italic")).pack(anchor="w")
+
+        # Provider Selector Frame
+        frame_provider = ttk.LabelFrame(win, text=" 1. CHỌN KÊNH GỬI EMAIL CHÍNH (ACTIVE PROVIDER) ", padding=10)
+        frame_provider.pack(fill=tk.X, padx=20, pady=(0, 10))
+
+        provider_var = tk.StringVar(value=email_cfg.get("active_provider", "google_webapp"))
+        ttk.Radiobutton(frame_provider, text="🌐 Google Apps Script WebApp (Cloud Serverless / Gmail API & Lưu trữ Drive)", variable=provider_var, value="google_webapp").pack(anchor="w", pady=2)
+        ttk.Radiobutton(frame_provider, text="⚡ Direct SMTP Doanh Nghiệp (Gửi trực tiếp tốc độ cao, hỗ trợ đính kèm 25MB+)", variable=provider_var, value="smtp").pack(anchor="w", pady=2)
+        ttk.Radiobutton(frame_provider, text="💻 Microsoft Outlook Desktop COM (Tự động mở qua ứng dụng Outlook trên máy tính)", variable=provider_var, value="outlook").pack(anchor="w", pady=2)
+
+        # Notebook for detailed configuration
+        nb = ttk.Notebook(win, padding=5)
+        nb.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 10))
+
+        # Tab A: Google WebApp
+        tab_gas = ttk.Frame(nb, padding=10)
+        nb.add(tab_gas, text="🌐 Google WebApp")
+        ttk.Label(tab_gas, text="Google Apps Script WebApp Executable URL:").pack(anchor="w", pady=(0, 3))
+        webapp_url_var = tk.StringVar(value=email_cfg.get("google_webapp", {}).get("url", ""))
+        entry_gas_url = ttk.Entry(tab_gas, textvariable=webapp_url_var, font=("Segoe UI", 9))
+        entry_gas_url.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(tab_gas, text="💡 Ghi chú: Kênh này sử dụng WebApp đã cấu hình tại Code.gs để gửi thư và tự động lưu file đính kèm lên Google Drive.", font=("Segoe UI", 8, "italic"), foreground="#666666").pack(anchor="w")
+
+        # Tab B: SMTP Settings
+        tab_smtp = ttk.Frame(nb, padding=10)
+        nb.add(tab_smtp, text="⚡ Direct SMTP")
+        
+        smtp_cfg = email_cfg.get("smtp", {})
+        f_smtp_grid = ttk.Frame(tab_smtp)
+        f_smtp_grid.pack(fill=tk.X)
+
+        ttk.Label(f_smtp_grid, text="SMTP Host:").grid(row=0, column=0, sticky="w", pady=3)
+        smtp_host_var = tk.StringVar(value=smtp_cfg.get("host", "smtp.gmail.com"))
+        entry_smtp_host = ttk.Entry(f_smtp_grid, textvariable=smtp_host_var, width=22)
+        entry_smtp_host.grid(row=0, column=1, sticky="w", padx=(5, 15), pady=3)
+
+        ttk.Label(f_smtp_grid, text="Port:").grid(row=0, column=2, sticky="w", pady=3)
+        smtp_port_var = tk.StringVar(value=str(smtp_cfg.get("port", 587)))
+        entry_smtp_port = ttk.Entry(f_smtp_grid, textvariable=smtp_port_var, width=8)
+        entry_smtp_port.grid(row=0, column=3, sticky="w", padx=(5, 0), pady=3)
+
+        smtp_tls_var = tk.BooleanVar(value=smtp_cfg.get("use_tls", True))
+        chk_tls = ttk.Checkbutton(f_smtp_grid, text="Sử dụng STARTTLS", variable=smtp_tls_var)
+        chk_tls.grid(row=0, column=4, sticky="w", padx=(10, 0), pady=3)
+
+        ttk.Label(f_smtp_grid, text="Tên người gửi:").grid(row=1, column=0, sticky="w", pady=3)
+        smtp_name_var = tk.StringVar(value=smtp_cfg.get("sender_name", "Hệ thống Báo cáo StoreVisit - An Phước"))
+        entry_smtp_name = ttk.Entry(f_smtp_grid, textvariable=smtp_name_var, width=32)
+        entry_smtp_name.grid(row=1, column=1, columnspan=4, sticky="we", padx=(5, 0), pady=3)
+
+        ttk.Label(f_smtp_grid, text="Email gửi (User):").grid(row=2, column=0, sticky="w", pady=3)
+        smtp_email_var = tk.StringVar(value=smtp_cfg.get("sender_email", "khoind@anphuoc.com.vn"))
+        entry_smtp_email = ttk.Entry(f_smtp_grid, textvariable=smtp_email_var, width=32)
+        entry_smtp_email.grid(row=2, column=1, columnspan=4, sticky="we", padx=(5, 0), pady=3)
+
+        ttk.Label(f_smtp_grid, text="Mật khẩu / App Pass:").grid(row=3, column=0, sticky="w", pady=3)
+        smtp_pass_var = tk.StringVar(value=smtp_cfg.get("sender_password", ""))
+        entry_smtp_pass = ttk.Entry(f_smtp_grid, textvariable=smtp_pass_var, show="*", width=32)
+        entry_smtp_pass.grid(row=3, column=1, columnspan=4, sticky="we", padx=(5, 0), pady=3)
+
+        ttk.Label(tab_smtp, text="💡 Gợi ý: Với tài khoản Gmail/Google Workspace, vui lòng sử dụng 'Mật khẩu ứng dụng' (App Password 16 ký tự).", font=("Segoe UI", 8, "italic"), foreground="#666666").pack(anchor="w", pady=(5, 0))
+
+        # Tab C: Default Templates & CC
+        tab_tpl = ttk.Frame(nb, padding=10)
+        nb.add(tab_tpl, text="📋 Mẫu Thư & CC Mặc Định")
+
+        ttk.Label(tab_tpl, text="Danh sách CC mặc định (phân cách bằng dấu phẩy):").pack(anchor="w", pady=(0, 2))
+        default_cc_var = tk.StringVar(value=email_cfg.get("default_cc", ""))
+        entry_cc = ttk.Entry(tab_tpl, textvariable=default_cc_var, font=("Segoe UI", 9))
+        entry_cc.pack(fill=tk.X, pady=(0, 5))
+
+        ttk.Label(tab_tpl, text="Mẫu tiêu đề (Subject Template):").pack(anchor="w", pady=(0, 2))
+        default_subj_var = tk.StringVar(value=email_cfg.get("default_subject_template", "BÁO CÁO KIỂM TRA CỬA HÀNG {store_name} ({store_code}) - NGÀY {report_date}"))
+        entry_subj = ttk.Entry(tab_tpl, textvariable=default_subj_var, font=("Segoe UI", 9))
+        entry_subj.pack(fill=tk.X, pady=(0, 5))
+
+        ttk.Label(tab_tpl, text="Mẫu nội dung thư (Body Template):").pack(anchor="w", pady=(0, 2))
+        txt_body_tpl = tk.Text(tab_tpl, height=5, font=("Segoe UI", 9), wrap=tk.WORD)
+        txt_body_tpl.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        txt_body_tpl.insert("1.0", email_cfg.get("default_body_template", "Kính gửi Ban Giám Đốc và Quản Lý Khu Vực,\n\nĐính kèm là bộ tài liệu báo cáo kiểm tra thực tế tại cửa hàng {store_name} ({store_code}) thực hiện vào ngày {report_date}.\n\nTrân trọng,\n{asm_name} - QLKD phụ trách"))
+
+        ttk.Label(tab_tpl, text="Các biến động hỗ trợ: {store_name}, {store_code}, {asm_name}, {report_date}", font=("Segoe UI", 8, "italic"), foreground="#007ACC").pack(anchor="w")
+
+        # Live Test & Status Area
+        frame_test_status = ttk.Frame(win, padding=(20, 0, 20, 10))
+        frame_test_status.pack(fill=tk.X)
+        lbl_test_status = ttk.Label(frame_test_status, text="", font=("Segoe UI", 9, "bold"), foreground="#007ACC")
+        lbl_test_status.pack(anchor="w")
+
+        def do_test_connection():
+            current_provider = provider_var.get()
+            lbl_test_status["text"] = f"⏳ Đang kiểm tra kết nối tới '{current_provider}'..."
+            lbl_test_status["foreground"] = "#007ACC"
+            btn_test["state"] = tk.DISABLED
+
+            # Temporary save to in-memory config for testing
+            temp_cfg = {
+                "active_provider": current_provider,
+                "smtp": {
+                    "host": smtp_host_var.get().strip(),
+                    "port": int(smtp_port_var.get().strip() or 587),
+                    "use_tls": smtp_tls_var.get(),
+                    "sender_name": smtp_name_var.get().strip(),
+                    "sender_email": smtp_email_var.get().strip(),
+                    "sender_password": smtp_pass_var.get().strip()
+                },
+                "google_webapp": {
+                    "url": webapp_url_var.get().strip()
+                },
+                "default_cc": default_cc_var.get().strip(),
+                "default_subject_template": default_subj_var.get().strip(),
+                "default_body_template": txt_body_tpl.get("1.0", tk.END).strip()
+            }
+
+            def run_test_bg():
+                temp_disp = EmailDispatcher(config_dict={"email": temp_cfg, "google": {"webapp_url": temp_cfg["google_webapp"]["url"]}})
+                success, msg = temp_disp.test_connection(current_provider)
+                def update_ui():
+                    btn_test["state"] = tk.NORMAL
+                    lbl_test_status["text"] = msg
+                    lbl_test_status["foreground"] = "#1E8E3E" if success else "#C0392B"
+                    if success:
+                        messagebox.showinfo("Kiểm Tra Thành Công", msg, parent=win)
+                    else:
+                        messagebox.showerror("Kiểm Tra Thất Bại", msg, parent=win)
+                self.root.after(0, update_ui)
+
+            t = threading.Thread(target=run_test_bg)
+            t.daemon = True
+            t.start()
+
+        def do_save_config():
+            new_cfg = {
+                "active_provider": provider_var.get(),
+                "smtp": {
+                    "host": smtp_host_var.get().strip(),
+                    "port": int(smtp_port_var.get().strip() or 587),
+                    "use_tls": smtp_tls_var.get(),
+                    "sender_name": smtp_name_var.get().strip(),
+                    "sender_email": smtp_email_var.get().strip(),
+                    "sender_password": smtp_pass_var.get().strip()
+                },
+                "google_webapp": {
+                    "url": webapp_url_var.get().strip()
+                },
+                "default_cc": default_cc_var.get().strip(),
+                "default_subject_template": default_subj_var.get().strip(),
+                "default_body_template": txt_body_tpl.get("1.0", tk.END).strip()
+            }
+
+            success = dispatcher.save_email_config(new_cfg)
+            if success:
+                if hasattr(self, "loader") and self.loader:
+                    self.loader.config = dispatcher._load_config_from_disk()
+                self._write_log("✓ ĐÃ CẬP NHẬT VÀ LƯU CẤU HÌNH EMAIL THÀNH CÔNG VÀO APP_CONFIG.YAML.")
+                messagebox.showinfo("Lưu Thành Công", "Cấu hình email đã được lưu thành công vào hệ thống!", parent=win)
+                win.destroy()
+            else:
+                messagebox.showerror("Lỗi Lưu Cấu Hình", "Không thể ghi tệp app_config.yaml. Vui lòng kiểm tra quyền ghi tệp.", parent=win)
+
+        # Action Buttons
+        frame_actions = ttk.Frame(win, padding=(20, 0, 20, 15))
+        frame_actions.pack(fill=tk.X)
+
+        btn_save = ttk.Button(frame_actions, text="💾 LƯU CẤU HÌNH", style="Accent.TButton", command=do_save_config)
+        btn_save.pack(side=tk.LEFT, padx=(0, 10))
+
+        btn_test = ttk.Button(frame_actions, text="🧪 KIỂM TRA KẾT NỐI (TEST)", command=do_test_connection)
+        btn_test.pack(side=tk.LEFT, padx=(0, 10))
+
+        btn_close = ttk.Button(frame_actions, text="ĐÓNG", command=win.destroy)
+        btn_close.pack(side=tk.RIGHT)
+
     def _prompt_and_send_email(self, store_code: str, store_name: str, asm_name: str, report_date: str, pptx_path: str, pdf_path: str = "", docx_path: str = "", xlsx_path: str = ""):
-        """Pop up an interactive email confirmation dialog allowing the user to view/edit recipient email before sending."""
+        """Cửa sổ tương tác chuyên nghiệp gửi email báo cáo trực tiếp từ GUI."""
+        from utils.email_dispatcher import EmailDispatcher
+        dispatcher = EmailDispatcher(config_path=self.config_path)
+        email_cfg = dispatcher.get_email_config()
+
         default_email = ""
         if hasattr(self, "loader") and self.loader:
             try:
@@ -715,87 +919,184 @@ class StoreVisitApp:
             except Exception:
                 default_email = ""
                 
-        # Create Toplevel Window (NO grab_set to prevent Tkinter input freezing)
+        context = {
+            "store_name": store_name or store_code,
+            "store_code": store_code,
+            "asm_name": asm_name or "QLKD",
+            "report_date": report_date or datetime.now().strftime("%d/%m/%Y")
+        }
+
+        default_subject = dispatcher.render_template(email_cfg.get("default_subject_template", "BÁO CÁO KIỂM TRA CỬA HÀNG {store_name} ({store_code}) - NGÀY {report_date}"), context)
+        default_body = dispatcher.render_template(email_cfg.get("default_body_template", ""), context)
+        default_cc = email_cfg.get("default_cc", "")
+
+        # Create Toplevel Window
         win = tk.Toplevel(self.root)
-        win.title("📧 XÁC NHẬN GỬI EMAIL BÁO CÁO CÔNG TÁC")
-        win.geometry("580x340")
+        win.title(f"📧 GỬI EMAIL BÁO CÁO - {store_code}")
+        win.geometry("640x580")
         win.resizable(False, False)
         win.transient(self.root)
         win.attributes("-topmost", True)
         win.lift()
         win.focus_force()
+        win.geometry("+%d+%d" % (self.root.winfo_x() + 45, self.root.winfo_y() + 35))
 
-        # Center on parent window
-        win.geometry("+%d+%d" % (self.root.winfo_x() + 50, self.root.winfo_y() + 50))
+        # Title & Info
+        frame_header = ttk.Frame(win, padding=(20, 15, 20, 5))
+        frame_header.pack(fill=tk.X)
+        ttk.Label(frame_header, text="📧 XÁC NHẬN GỬI EMAIL BÁO CÁO CÔNG TÁC", font=("Segoe UI", 12, "bold"), foreground="#0A2342").pack(anchor="w")
+        ttk.Label(frame_header, text=f"• Cửa hàng: {store_code} - {store_name}  |  ASM: {asm_name}  |  Ngày: {report_date}", font=("Segoe UI", 9, "bold"), foreground="#007ACC").pack(anchor="w", pady=(2, 0))
 
-        # Title Label
-        lbl_title = ttk.Label(win, text="📧 XÁC NHẬN GỬI EMAIL BÁO CÁO CÔNG TÁC", font=("Segoe UI", 12, "bold"), foreground="#0A2342")
-        lbl_title.pack(anchor="w", padx=20, pady=(20, 5))
+        # Form Fields Frame
+        frame_fields = ttk.LabelFrame(win, text=" THÔNG TIN EMAIL GỬI ĐI ", padding=10)
+        frame_fields.pack(fill=tk.BOTH, expand=True, padx=20, pady=(5, 10))
 
-        lbl_info = ttk.Label(win, text=f"• Cửa hàng: {store_code} - {store_name}\n• ASM Phụ trách: {asm_name} | Ngày: {report_date}", font=("Segoe UI", 10))
-        lbl_info.pack(anchor="w", padx=20, pady=(0, 15))
+        # Provider Choice
+        f_p = ttk.Frame(frame_fields)
+        f_p.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(f_p, text="Kênh gửi:", width=12).pack(side=tk.LEFT)
+        provider_choice_var = tk.StringVar(value=email_cfg.get("active_provider", "google_webapp"))
+        cbo_provider = ttk.Combobox(f_p, textvariable=provider_choice_var, values=["google_webapp", "smtp", "outlook"], state="readonly", width=18)
+        cbo_provider.pack(side=tk.LEFT)
+        ttk.Label(f_p, text=" (google_webapp / smtp / outlook)", font=("Segoe UI", 8, "italic"), foreground="#888888").pack(side=tk.LEFT, padx=5)
 
-        # Input Frame
-        frame_input = ttk.LabelFrame(win, text=" ĐỊA CHỈ EMAIL NGƯỜI NHẬN ", padding=10)
-        frame_input.pack(fill=tk.X, padx=20, pady=(0, 15))
+        # To Email
+        f_to = ttk.Frame(frame_fields)
+        f_to.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(f_to, text="Người nhận (To):", width=14).pack(side=tk.LEFT)
+        email_to_var = tk.StringVar(value=default_email)
+        entry_to = ttk.Entry(f_to, textvariable=email_to_var, font=("Segoe UI", 9))
+        entry_to.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        lbl_input_hint = ttk.Label(frame_input, text="Vui lòng kiểm tra địa chỉ Email bên dưới (Có thể gõ sửa trực tiếp):", font=("Segoe UI", 9, "italic"))
-        lbl_input_hint.pack(anchor="w", pady=(0, 5))
+        # CC Emails
+        f_cc = ttk.Frame(frame_fields)
+        f_cc.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(f_cc, text="Bản sao (CC):", width=14).pack(side=tk.LEFT)
+        email_cc_var = tk.StringVar(value=default_cc)
+        entry_cc = ttk.Entry(f_cc, textvariable=email_cc_var, font=("Segoe UI", 9))
+        entry_cc.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        email_var = tk.StringVar(value=default_email)
-        entry_email = ttk.Entry(frame_input, textvariable=email_var, font=("Segoe UI", 10))
-        entry_email.pack(fill=tk.X, pady=(0, 5))
-        entry_email.focus_set()
+        # Subject
+        f_subj = ttk.Frame(frame_fields)
+        f_subj.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(f_subj, text="Tiêu đề thư:", width=14).pack(side=tk.LEFT)
+        subj_var = tk.StringVar(value=default_subject)
+        entry_subj = ttk.Entry(f_subj, textvariable=subj_var, font=("Segoe UI", 9))
+        entry_subj.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        lbl_status = ttk.Label(win, text="", font=("Segoe UI", 9, "italic"), foreground="#007ACC")
-        lbl_status.pack(anchor="w", padx=20, pady=(0, 10))
+        # Attachments Section with size badges
+        frame_att = ttk.LabelFrame(frame_fields, text=" TỆP ĐÍNH KÈM SẼ GỬI ", padding=5)
+        frame_att.pack(fill=tk.X, pady=(5, 5))
+
+        def format_size(fpath):
+            if fpath and os.path.exists(fpath):
+                sz = os.path.getsize(fpath) / (1024 * 1024)
+                return f"({sz:.1f} MB)"
+            return "(Chưa có tệp)"
+
+        var_att_pptx = tk.BooleanVar(value=bool(pptx_path and os.path.exists(pptx_path)))
+        var_att_pdf = tk.BooleanVar(value=bool(pdf_path and os.path.exists(pdf_path)))
+        var_att_docx = tk.BooleanVar(value=bool(docx_path and os.path.exists(docx_path)))
+        var_att_xlsx = tk.BooleanVar(value=bool(xlsx_path and os.path.exists(xlsx_path)))
+
+        f_att_grid = ttk.Frame(frame_att)
+        f_att_grid.pack(fill=tk.X)
+
+        chk_pptx = ttk.Checkbutton(f_att_grid, text=f"📊 PowerPoint {format_size(pptx_path)}", variable=var_att_pptx)
+        chk_pptx.grid(row=0, column=0, sticky="w", padx=(5, 15), pady=2)
+        if not pptx_path or not os.path.exists(pptx_path): chk_pptx["state"] = tk.DISABLED
+
+        chk_pdf = ttk.Checkbutton(f_att_grid, text=f"📄 PDF {format_size(pdf_path)}", variable=var_att_pdf)
+        chk_pdf.grid(row=0, column=1, sticky="w", padx=(5, 15), pady=2)
+        if not pdf_path or not os.path.exists(pdf_path): chk_pdf["state"] = tk.DISABLED
+
+        chk_docx = ttk.Checkbutton(f_att_grid, text=f"📝 Word {format_size(docx_path)}", variable=var_att_docx)
+        chk_docx.grid(row=0, column=2, sticky="w", padx=(5, 15), pady=2)
+        if not docx_path or not os.path.exists(docx_path): chk_docx["state"] = tk.DISABLED
+
+        chk_xlsx = ttk.Checkbutton(f_att_grid, text=f"📈 Excel {format_size(xlsx_path)}", variable=var_att_xlsx)
+        chk_xlsx.grid(row=0, column=3, sticky="w", padx=(5, 5), pady=2)
+        if not xlsx_path or not os.path.exists(xlsx_path): chk_xlsx["state"] = tk.DISABLED
+
+        # Body
+        ttk.Label(frame_fields, text="Nội dung thư:").pack(anchor="w", pady=(3, 2))
+        txt_body = tk.Text(frame_fields, height=4, font=("Segoe UI", 9), wrap=tk.WORD)
+        txt_body.pack(fill=tk.BOTH, expand=True, pady=(0, 2))
+        txt_body.insert("1.0", default_body)
+
+        # Status Line
+        lbl_status = ttk.Label(win, text="", font=("Segoe UI", 9, "bold"), foreground="#007ACC")
+        lbl_status.pack(anchor="w", padx=20, pady=(0, 8))
 
         def close_dialog():
             win.destroy()
             self.root.focus_set()
 
         def do_send():
-            target_email = email_var.get().strip()
-            if not target_email or "@" not in target_email:
-                messagebox.showwarning("Email Chưa Hợp Lệ", "Vui lòng nhập địa chỉ Email hợp lệ (chứa ký tự '@').", parent=win)
+            target_to = email_to_var.get().strip()
+            if not target_to or "@" not in target_to:
+                messagebox.showwarning("Email Chưa Hợp Lệ", "Vui lòng nhập địa chỉ Email người nhận hợp lệ (chứa '@').", parent=win)
                 return
+
+            chosen_attachments = []
+            if var_att_pptx.get() and pptx_path and os.path.exists(pptx_path): chosen_attachments.append(pptx_path)
+            if var_att_pdf.get() and pdf_path and os.path.exists(pdf_path): chosen_attachments.append(pdf_path)
+            if var_att_docx.get() and docx_path and os.path.exists(docx_path): chosen_attachments.append(docx_path)
+            if var_att_xlsx.get() and xlsx_path and os.path.exists(xlsx_path): chosen_attachments.append(xlsx_path)
 
             btn_send["state"] = tk.DISABLED
             btn_skip["state"] = tk.DISABLED
-            lbl_status["text"] = f"Đang gửi email báo cáo tới '{target_email}'..."
+            btn_cfg["state"] = tk.DISABLED
+            lbl_status["text"] = f"⏳ Đang gửi email qua kênh '{provider_choice_var.get()}'..."
+            lbl_status["foreground"] = "#007ACC"
+
+            final_subj = subj_var.get().strip()
+            final_body = txt_body.get("1.0", tk.END).strip()
+            final_cc = email_cc_var.get().strip()
+            final_provider = provider_choice_var.get()
 
             def send_bg():
-                try:
-                    from app_worker import send_email_for_store
-                    success = send_email_for_store(
-                        self.loader, store_code, store_name, asm_name, report_date,
-                        pdf_path, docx_path, pptx_path, xlsx_path, target_email=target_email
-                    )
+                success, msg = dispatcher.send_report_email(
+                    to_email=target_to,
+                    subject=final_subj,
+                    body=final_body,
+                    cc_emails=final_cc,
+                    attachments=chosen_attachments,
+                    context=context,
+                    provider=final_provider
+                )
+                def on_done():
                     if success:
-                        self.root.after(0, lambda: self._write_log(f"✓ ĐÃ GỬI MAIL BÁO CÁO THÀNH CÔNG TỚI: {target_email}"))
-                        self.root.after(0, lambda: messagebox.showinfo("Thành Công", f"Đã gửi email báo cáo thành công tới:\n{target_email}", parent=self.root))
+                        self._write_log(f"✓ ĐÃ GỬI MAIL THÀNH CÔNG CHO {store_code} TỚI: {target_to} (Kênh: {final_provider})")
+                        messagebox.showinfo("Gửi Thành Công", f"Đã gửi email báo cáo thành công!\n\n• Người nhận: {target_to}\n• Kênh gửi: {final_provider}\n• Đính kèm: {len(chosen_attachments)} tệp", parent=self.root)
+                        close_dialog()
                     else:
-                        self.root.after(0, lambda: self._write_log(f"❌ GỬI MAIL THẤT BẠI TỚI: {target_email}"))
-                        self.root.after(0, lambda: messagebox.showerror("Gửi Mail Thất Bại", f"Không thể gửi email tới {target_email}. Vui lòng kiểm tra lại cấu hình WebApp URL.", parent=self.root))
-                except Exception as ex:
-                    self.root.after(0, lambda: self._write_log(f"❌ LỖI GỬI MAIL: {ex}"))
-                    self.root.after(0, lambda: messagebox.showerror("Lỗi Gửi Mail", f"Lỗi phát sinh khi gửi mail: {ex}", parent=self.root))
-                finally:
-                    self.root.after(0, close_dialog)
+                        self._write_log(f"❌ GỬI MAIL THẤT BẠI CHO {store_code}: {msg}")
+                        lbl_status["text"] = f"❌ {msg}"
+                        lbl_status["foreground"] = "#C0392B"
+                        btn_send["state"] = tk.NORMAL
+                        btn_skip["state"] = tk.NORMAL
+                        btn_cfg["state"] = tk.NORMAL
+                        messagebox.showerror("Gửi Mail Thất Bại", f"Gửi mail thất bại qua kênh '{final_provider}':\n\n{msg}\n\nVui lòng kiểm tra lại trong phần 'Cấu hình Email'.", parent=win)
+
+                self.root.after(0, on_done)
 
             t = threading.Thread(target=send_bg)
             t.daemon = True
             t.start()
 
-        # Button Frame
-        frame_btns = ttk.Frame(win)
-        frame_btns.pack(fill=tk.X, padx=20, pady=(0, 15))
+        # Action Buttons Frame
+        frame_btns = ttk.Frame(win, padding=(20, 0, 20, 15))
+        frame_btns.pack(fill=tk.X)
 
         btn_send = ttk.Button(frame_btns, text="📧 GỬI EMAIL NGAY", style="Accent.TButton", command=do_send)
         btn_send.pack(side=tk.LEFT, padx=(0, 10))
 
-        btn_skip = ttk.Button(frame_btns, text="❌ BỎ QUA / KHÔNG GỬI", command=close_dialog)
-        btn_skip.pack(side=tk.LEFT)
+        btn_cfg = ttk.Button(frame_btns, text="⚙️ CẤU HÌNH", command=self._open_email_config_modal)
+        btn_cfg.pack(side=tk.LEFT, padx=(0, 10))
+
+        btn_skip = ttk.Button(frame_btns, text="❌ HỦY / BỎ QUA", command=close_dialog)
+        btn_skip.pack(side=tk.RIGHT)
 
     def _open_manual_email_modal(self):
         """Open email prompt modal manually for selected store/response."""

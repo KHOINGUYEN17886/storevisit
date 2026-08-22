@@ -38,76 +38,49 @@ def check_cancellation(cancel_file_path: str, sender: IPCMessageSender) -> bool:
         return True
     return False
 
-def send_email_for_store(loader, store_code, store_name, asm_name, report_date, pdf_path, docx_path, pptx_path, xlsx_path, target_email: str = None):
-    import base64
-    import requests
-    
-    if loader is None:
-        try:
-            from data.data_loader import DataLoader
-            loader = DataLoader()
-        except Exception as e:
-            print(f"[Email] Failed to instantiate DataLoader fallback: {e}")
-            return False
-            
-    webapp_url = loader.config.get("google", {}).get("webapp_url", "") if hasattr(loader, "config") else ""
-    if not webapp_url:
-        print("[Email] webapp_url not configured in app_config.yaml. Skipping email.")
-        return False
-        
-    print(f"[Email] Sending report email for {store_code} to '{target_email or 'default ASM'}' via Apps Script webapp: {webapp_url}...")
-    
-    def get_base64_data(file_path, mime_type):
-        if file_path and os.path.exists(file_path):
-            try:
-                with open(file_path, "rb") as f:
-                    encoded = base64.b64encode(f.read()).decode("utf-8")
-                    return f"data:{mime_type};base64,{encoded}"
-            except Exception as e:
-                print(f"[Email] Error encoding file {file_path}: {e}")
-        return ""
-
+def send_email_for_store(loader, store_code, store_name, asm_name, report_date, pdf_path, docx_path, pptx_path, xlsx_path, target_email: str = None, cc_emails: str = "", custom_subject: str = "", custom_body: str = "", provider: str = None):
     try:
-        pdf_b64 = get_base64_data(pdf_path, "application/pdf")
-        docx_b64 = get_base64_data(docx_path, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-        pptx_b64 = get_base64_data(pptx_path, "application/vnd.openxmlformats-officedocument.presentationml.presentation")
-        xlsx_b64 = get_base64_data(xlsx_path, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        from utils.email_dispatcher import EmailDispatcher
+        ed = EmailDispatcher(config_dict=loader.config if loader and hasattr(loader, "config") else None)
+        email_cfg = ed.get_email_config()
         
-        payload = {
-            "action": "send_email",
-            "targetEmail": target_email or "",
-            "storeName": store_name,
-            "reportDate": report_date,
-            "asmName": asm_name,
-            "pdfBase64": pdf_b64,
-            "pdfName": f"BienBan_KiemTra_{store_code}_{datetime.now().strftime('%Y%m%d')}.pdf",
-            "docxBase64": docx_b64,
-            "docxName": f"BienBan_KiemTra_{store_code}_{datetime.now().strftime('%Y%m%d')}.docx",
-            "pptxBase64": pptx_b64,
-            "pptxName": f"BaoCao_KiemTra_{store_code}_{datetime.now().strftime('%Y%m%d')}.pptx",
-            "xlsxBase64": xlsx_b64,
-            "xlsxName": f"BangSoLieu_KiemTra_{store_code}_{datetime.now().strftime('%Y%m%d')}.xlsx"
-        }
-        
-        resp = requests.post(webapp_url, json=payload, timeout=45, allow_redirects=True)
-        res_body = resp.text
-        print(f"[Email] Raw response from GAS (HTTP {resp.status_code}): {res_body[:500]}")
-        
-        try:
-            res_json = resp.json()
-            if res_json.get("success"):
-                print(f"[Email] Successfully sent email for {store_code}.")
-                print(f"        Drive File IDs: PDF={res_json.get('pdfFileId')}, Word={res_json.get('docxFileId')}, PPTX={res_json.get('pptxFileId')}, Excel={res_json.get('xlsxFileId')}")
-                return True
-            else:
-                print(f"[Email] Apps Script failed to send email: {res_json.get('error')}")
-        except Exception as json_err:
-            print(f"[Email] Failed to parse JSON response: {json_err}")
+        # Resolve target email if empty
+        if not target_email and loader and hasattr(loader, "get_asm_email"):
+            target_email = loader.get_asm_email(asm_name)
             
+        if not target_email:
+            print(f"[Email] Không tìm thấy địa chỉ email người nhận cho {store_code}. Bỏ qua.")
+            return False
+
+        context = {
+            "store_name": store_name or store_code,
+            "store_code": store_code,
+            "asm_name": asm_name or "QLKD",
+            "report_date": report_date or datetime.now().strftime("%d/%m/%Y")
+        }
+
+        subject = custom_subject or ed.render_template(email_cfg.get("default_subject_template", "BÁO CÁO KIỂM TRA CỬA HÀNG {store_name} ({store_code}) - NGÀY {report_date}"), context)
+        body = custom_body or ed.render_template(email_cfg.get("default_body_template", ""), context)
+        cc_final = cc_emails if cc_emails != "" else email_cfg.get("default_cc", "")
+
+        attachments = [p for p in [pptx_path, pdf_path, docx_path, xlsx_path] if p and os.path.exists(p)]
+
+        success, msg = ed.send_report_email(
+            to_email=target_email,
+            subject=subject,
+            body=body,
+            cc_emails=cc_final,
+            attachments=attachments,
+            context=context,
+            provider=provider
+        )
+        print(f"[Email] Result for {store_code}: {msg}")
+        return success
     except Exception as e:
-        print(f"[Email] Error in send_email_for_store for {store_code}: {e}")
+        print(f"[Email] Error in send_email_for_store: {e}")
         import traceback
         traceback.print_exc()
+        return False
         
     return False
 
