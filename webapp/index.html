@@ -5679,9 +5679,16 @@
       }
       
       // Load survey fields
-      var _kk = Object.keys(draft.survey || {}); for (var _ii = 0; _ii < _kk.length; _ii++) { var name = _kk[_ii], val = draft.survey || {}[_kk[_ii]];
+      var _kk = Object.keys(draft.survey || {}); for (var _ii = 0; _ii < _kk.length; _ii++) { 
+        var name = _kk[_ii], val = (draft.survey || {})[name];
         const el = document.querySelector(`[name="${name}"]`);
-        if (el) el.value = val;
+        if (el) {
+          let strVal = "";
+          if (typeof val === "string") strVal = val;
+          else if (val && typeof val === "object") strVal = val.answer || val.value || val.text || "";
+          strVal = (strVal || "").replace(/\[object\s+Object\]/gi, "").trim();
+          el.value = strVal;
+        }
       }
 
       // Restore brand presence checkboxes
@@ -6452,7 +6459,8 @@
       const surveyData = {};
       document.querySelectorAll('[name^="survey_"]').forEach(el => {
         const key = el.name.replace("survey_", "");
-        surveyData[key] = { answer: el.value };
+        let cleanVal = (el.value || "").replace(/\[object\s+Object\]/gi, "").trim();
+        surveyData[key] = { answer: cleanVal };
       });
       
       // Update formState overall rating structures before JSON stringification
@@ -6851,7 +6859,8 @@
       const surveyData = {};
       document.querySelectorAll('[name^="survey_"]').forEach(el => {
         const key = el.name.replace("survey_", "");
-        surveyData[key] = { answer: el.value || "" };
+        let cleanVal = (el.value || "").replace(/\[object\s+Object\]/gi, "").trim();
+        surveyData[key] = { answer: cleanVal };
       });
       
       formData.general_photos = generalPhotos;
@@ -8796,10 +8805,17 @@
     
     if (rowData.survey_json) {
       try {
-        const survey = JSON.parse(rowData.survey_json);
-        var _kk = Object.keys(survey); for (var _ii = 0; _ii < _kk.length; _ii++) { var name = _kk[_ii], val = survey[_kk[_ii]];
+        const survey = typeof rowData.survey_json === "string" ? JSON.parse(rowData.survey_json) : rowData.survey_json;
+        var _kk = Object.keys(survey); for (var _ii = 0; _ii < _kk.length; _ii++) { 
+          var name = _kk[_ii], val = survey[name];
           const el = document.querySelector(`[name="survey_${name}"]`);
-          if (el) el.value = val.answer || val;
+          if (el) {
+            let strVal = "";
+            if (typeof val === "string") strVal = val;
+            else if (val && typeof val === "object") strVal = val.answer || val.value || val.text || "";
+            strVal = (strVal || "").replace(/\[object\s+Object\]/gi, "").trim();
+            el.value = strVal;
+          }
         }
       } catch(e) {
         console.error("Lỗi parse survey_json:", e);

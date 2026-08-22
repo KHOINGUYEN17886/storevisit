@@ -35,6 +35,23 @@ def _is_placeholder_gray(rgb) -> bool:
     return is_grayish and luminance >= 110  # xám sáng → coi là placeholder hint
 
 
+def _clean_qc_artifacts(text, fallback: str = "") -> str:
+    """Loại bỏ triệt để các chuỗi rác javascript như [object Object], [o, none/nan/null."""
+    if text is None:
+        return fallback
+    s = str(text).strip()
+    # Remove javascript object string artifacts
+    s = re.sub(r"\[object\s+Object\]", "", s, flags=re.IGNORECASE).strip()
+    # Remove broken trailing/leading brackets from truncated JS strings
+    s = re.sub(r"\s*\[o\]?\s*$", "", s, flags=re.IGNORECASE).strip()
+    s = re.sub(r"^\[o\]?\s*", "", s, flags=re.IGNORECASE).strip()
+    # Normalize internal spaces
+    s = re.sub(r"\s+", " ", s).strip()
+    if not s or s.lower() in ["none", "nan", "null", "undefined", "-", ""]:
+        return fallback
+    return s
+
+
 class PPTXGenerator:
     def __init__(self, template_path: str):
         self.template_path = template_path
@@ -897,10 +914,8 @@ class PPTXGenerator:
                                 run_a = p.add_run()
                                 raw_ans = survey_dict.get(q_key)
                                 if isinstance(raw_ans, dict):
-                                    raw_ans = raw_ans.get("answer", raw_ans.get("value", ""))
-                                ans_str = str(raw_ans).strip() if raw_ans is not None else ""
-                                if not ans_str or ans_str == "[object Object]" or ans_str.lower() in ["none", "nan", "null"]:
-                                    ans_str = "Chưa trả lời"
+                                    raw_ans = raw_ans.get("answer", raw_ans.get("value", raw_ans.get("text", "")))
+                                ans_str = _clean_qc_artifacts(raw_ans, fallback="Chưa trả lời")
                                 run_a.text = ans_str
                                 run_a.font.name = FONT_PRIMARY
                                 run_a.font.size = Pt(8.5)
@@ -1453,6 +1468,8 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
 
 
     def _fill_text(self, slide, shape_name: str, new_text: str, font_size: int = 14, bold: bool = False, align: str = "left"):
+        if new_text is not None and isinstance(new_text, str) and "[object" in new_text:
+            new_text = _clean_qc_artifacts(new_text, fallback="-")
         for shape in slide.shapes:
             if shape.name == shape_name and shape.has_text_frame:
                 # 1. Detect original style from template
@@ -1632,6 +1649,8 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
                     s.text_frame.paragraphs[0].runs[0].font.bold = True
 
     def _fill_text_by_prefix_or_name(self, slide, name_or_prefix: str, new_text: str, font_size: int = 11, bold: bool = False):
+        if new_text is not None and isinstance(new_text, str) and "[object" in new_text:
+            new_text = _clean_qc_artifacts(new_text, fallback="-")
         for shape in slide.shapes:
             if shape.has_text_frame:
                 txt = shape.text_frame.text.strip()
@@ -2234,7 +2253,9 @@ Quy định viết để đảm bảo chất lượng kiểm soát (QC) và tuy�
 
     def _set_cell_text_preserve_format(self, cell, text):
         """Write text to cell, preserving font name, size, bold, color, and paragraph alignment from cell's first run."""
-        text = str(text)
+        text = str(text) if text is not None else ""
+        if "[object" in text:
+            text = _clean_qc_artifacts(text, fallback="-")
         font_name = FONT_PRIMARY
         font_size = Pt(11)
         bold = False

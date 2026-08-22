@@ -127,10 +127,22 @@ class GoogleSheetsReader:
         # Parse checklist_json if present in the row
         checklist_json_val = find_val(["checklist_json", "checklist"], "")
         checklist_json_str = str(checklist_json_val).strip() if checklist_json_val else ""
+        if checklist_json_str:
+            checklist_json_str = re.sub(r"\[object\s+Object\]", "", checklist_json_str, flags=re.IGNORECASE)
+            checklist_json_str = re.sub(r"\s*\[o\]?\s*(?=\\n|\"|\'|,)", "", checklist_json_str, flags=re.IGNORECASE)
         checklist_data = {}
         if checklist_json_str:
             try:
                 checklist_data = json.loads(checklist_json_str)
+                # Sanitize any nested survey answers
+                if isinstance(checklist_data, dict) and "survey" in checklist_data:
+                    for s_k, s_v in checklist_data["survey"].items():
+                        if isinstance(s_v, dict) and "answer" in s_v:
+                            ans = str(s_v["answer"])
+                            ans = re.sub(r"\[object\s+Object\]", "", ans, flags=re.IGNORECASE).strip()
+                            ans = re.sub(r"\s*\[o\]?\s*$", "", ans, flags=re.IGNORECASE).strip()
+                            s_v["answer"] = ans
+                    checklist_json_str = json.dumps(checklist_data, ensure_ascii=False)
             except Exception as e:
                 logger.error(f"Error parsing checklist_json for row {row_id}: {e}")
 
