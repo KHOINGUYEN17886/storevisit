@@ -8738,154 +8738,13 @@
 
 
   
-  <!-- MODAL ĐỒNG BỘ STORESINFO (Dành riêng cho Master Nguyễn Đăng Khôi) -->
-  <div class="modal fade" id="syncStoresInfoModal" tabindex="-1" aria-labelledby="syncStoresInfoModalLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
-        <div class="modal-header text-white p-3 px-4" style="background: linear-gradient(135deg, #0A2342 0%, #153E6F 100%) !important;">
-          <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-arrow-repeat fs-5 text-warning"></i>
-            <div>
-              <h5 class="modal-title fw-bold mb-0" id="syncStoresInfoModalLabel">Đồng Bộ Dữ Liệu StoresInfo.xlsx</h5>
-              <div class="small text-white-50" style="font-size: 12px;">Quyền Quản Trị Master: Nguyễn Đăng Khôi</div>
-            </div>
-          </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-4 bg-light">
-          <div class="alert alert-info py-2 px-3 small mb-3">
-            <i class="bi bi-info-circle me-1"></i> Chọn file <strong>StoresInfo.xlsx</strong> từ máy tính của bạn để cập nhật ngay danh sách 11 ASM, 5 Vùng và 185 cửa hàng lên hệ thống.
-          </div>
+  
 
-          <div class="card p-3 bg-white border mb-3">
-            <label class="form-label fw-bold text-dark small mb-2">📁 Chọn tệp StoresInfo.xlsx từ máy tính:</label>
-            <input type="file" class="form-control mb-2" id="storesInfoFileInput" accept=".xlsx, .xls" onchange="handleStoresInfoFileSelected(event)">
-            <div class="small text-muted" id="syncFileInfoText">Chưa chọn file (Mặc định sử dụng nguồn C:\All_Report\1_Mapping\StoresInfo.xlsx).</div>
-          </div>
 
-          <div id="syncProgressContainer" class="d-none mb-3">
-            <div class="d-flex justify-content-between small text-muted mb-1">
-              <span id="syncProgressLabel">Đang xử lý dữ liệu...</span>
-              <span id="syncProgressPct" class="fw-bold text-dark">0%</span>
-            </div>
-            <div class="progress" style="height: 6px;">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" id="syncProgressBar" style="width: 0%;"></div>
-            </div>
-          </div>
 
-          <div class="alert alert-success d-none py-2 px-3 small" id="syncSuccessMsg"></div>
-          <div class="alert alert-danger d-none py-2 px-3 small" id="syncErrorMsg"></div>
-        </div>
-        <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
-          <button type="button" class="btn btn-warning text-dark fw-bold px-4 shadow-sm" id="btnExecuteSyncStoresInfo" onclick="executeSyncStoresInfo()">
-            <i class="bi bi-cloud-upload-fill me-1"></i> Thực Hiện Đồng Bộ Ngay
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-<!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
-  <div class="modal fade" id="multiDraftHubModal" tabindex="-1" aria-labelledby="multiDraftHubModalLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
-        <div class="modal-header text-white p-3 px-4" style="background: linear-gradient(135deg, #0A2342 0%, #153E6F 100%) !important;">
-          <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-folder2-open fs-5 text-warning"></i>
-            <div>
-              <h5 class="modal-title fw-bold mb-0" id="multiDraftHubModalLabel">Trung Tâm Quản Lý Bản Nháp</h5>
-              <div class="small text-white-50" style="font-size: 12px;" id="multiDraftHubSubTitle">Danh sách các báo cáo đang làm dở của bạn</div>
-            </div>
-          </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-4 bg-light">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-card-checklist me-1 text-primary"></i> Bản nháp đang lưu (<span id="draftCountBadge">0</span>)</h6>
-            <button type="button" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm" onclick="startNewReportBlank()" style="background: #C41E3A; border-color: #C41E3A;">
-              <i class="bi bi-plus-circle me-1"></i> + Tạo Báo Cáo Mới
-            </button>
-          </div>
 
-          <div id="multiDraftCardsContainer">
-            <!-- Dynamic Draft Cards -->
-          </div>
-        </div>
-        <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
-          <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Mỗi bản nháp được lưu riêng biệt theo Cửa hàng & Ngày kiểm tra.</span>
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<!-- RESUME DRAFT WELCOME MODAL -->
-  <div class="modal fade" id="resumeDraftModal" tabindex="-1" aria-labelledby="resumeDraftModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
-        <div class="modal-header bg-primary text-white" style="background: linear-gradient(135deg, #0A2342 0%, #1E4E8C 100%) !important;">
-          <h5 class="modal-title fw-bold" id="resumeDraftModalLabel">
-            <i class="bi bi-file-earmark-medical-fill me-2 text-warning"></i>Phát Hiện Bản Nháp Đang Làm Dở
-          </h5>
-        </div>
-        <div class="modal-body p-4">
-          <p class="text-secondary mb-3">Hệ thống phát hiện bạn có một báo cáo kiểm tra cửa hàng chưa hoàn tất trước đó:</p>
-          <div class="p-3 bg-light rounded-3 border mb-3">
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted small">Cửa hàng:</span>
-              <strong class="text-primary" id="modalDraftStoreName">--</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted small">ASM Kiểm tra:</span>
-              <strong class="text-dark" id="modalDraftAsmName">--</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted small">Ngày kiểm tra:</span>
-              <span class="fw-semibold text-dark" id="modalDraftDate">--</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted small">Tiến độ Checklist:</span>
-              <span class="badge bg-info text-dark" id="modalDraftProgress">0/52 mục | 0 ảnh</span>
-            </div>
-            <div class="d-flex justify-content-between">
-              <span class="text-muted small">Thời điểm lưu:</span>
-              <span class="small text-secondary" id="modalDraftTimestamp">--</span>
-            </div>
-          </div>
-          <div class="alert alert-info py-2 px-3 small mb-0">
-            <i class="bi bi-info-circle me-1"></i> Bạn có thể chọn <strong>Tiếp tục làm bản nháp này</strong> để điền tiếp các mục còn thiếu, hoặc <strong>Bắt đầu báo cáo mới</strong>.
-          </div>
-        </div>
-        <div class="modal-footer bg-light border-0 p-3 d-flex justify-content-between">
-          <button type="button" class="btn btn-outline-danger" onclick="discardDraftAndStartNew()">
-            <i class="bi bi-trash me-1"></i> Bắt Đầu Báo Cáo Mới
-          </button>
-          <button type="button" class="btn btn-primary px-4 fw-bold" onclick="resumeDraftConfirmed()" style="background: #0A2342; border-color: #0A2342;">
-            <i class="bi bi-play-fill me-1"></i> Tiếp Tục Làm Bản Nháp
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DRAFT DETAILS MODAL -->
-  <div class="modal fade" id="draftDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow">
-        <div class="modal-header text-white" style="background: #0A2342;">
-          <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i>Chi Tiết Bản Nháp Đã Lưu</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-3" id="draftDetailsBody">
-          <!-- Populated via JS -->
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  
 
 </body></html>`);
     printWindow.document.close();
@@ -9884,9 +9743,6 @@
       } else {
         btnSyncStores.classList.add("d-none");
       }
-    } else {
-        menuUsersItem.classList.add("d-none");
-      }
     }
     
     // Auto-select ASM Name in Form if matching.
@@ -10365,124 +10221,6 @@
     }, 400);
   }
 
-  function togglePortalPasswordVisibility() {
-    const passInput = document.getElementById("portalPassword");
-    const toggleText = document.getElementById("portalTogglePassText");
-    if (passInput) {
-      if (passInput.type === "password") {
-        passInput.type = "text";
-        if (toggleText) toggleText.textContent = "Ẩn";
-      } else {
-        passInput.type = "password";
-        if (toggleText) toggleText.textContent = "Hiện";
-      }
-    }
-  }
-
-  function quickFillPortalLogin(username, password) {
-    document.getElementById("portalUsername").value = username;
-    document.getElementById("portalPassword").value = password;
-  }
-
-  function submitPortalLoginForm(e) {
-    e.preventDefault();
-    const uInput = document.getElementById("portalUsername");
-    const pInput = document.getElementById("portalPassword");
-    const errBox = document.getElementById("portalLoginError");
-    const btn = document.getElementById("btnPortalLoginSubmit");
-
-    const username = uInput.value.trim();
-    const password = pInput.value.trim();
-    if (!username || !password) return;
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xác thực...';
-    errBox.classList.add("d-none");
-
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run
-        .withSuccessHandler(function(res) {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
-          if (res && res.success && res.user) {
-            currentUser = res.user;
-            localStorage.setItem("storevisit_user", JSON.stringify(res.user));
-            showMainAppUI(res.user);
-          } else {
-            errBox.textContent = (res && res.error) ? res.error : "Tên đăng nhập hoặc mật khẩu không chính xác.";
-            errBox.classList.remove("d-none");
-          }
-        })
-        .withFailureHandler(function(err) {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
-          // Client fallback authentication if offline
-          const fallbackUser = simulateLocalLogin(username, password);
-          if (fallbackUser) {
-            currentUser = fallbackUser;
-            localStorage.setItem("storevisit_user", JSON.stringify(fallbackUser));
-            showMainAppUI(fallbackUser);
-          } else {
-            errBox.textContent = "Lỗi kết nối: " + (err.message || err);
-            errBox.classList.remove("d-none");
-          }
-        })
-        .loginUser(username, password);
-    } else {
-      // Local development mock login
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
-        const fallbackUser = simulateLocalLogin(username, password);
-        if (fallbackUser) {
-          currentUser = fallbackUser;
-          localStorage.setItem("storevisit_user", JSON.stringify(fallbackUser));
-          showMainAppUI(fallbackUser);
-        } else {
-          errBox.textContent = "Tên đăng nhập hoặc mật khẩu không chính xác (Thử: khoi / khoi6868 hoặc tien / tien2026).";
-          errBox.classList.remove("d-none");
-        }
-      }, 300);
-    }
-  }
-
-  function simulateLocalLogin(username, password) {
-    const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
-    const u = norm(username);
-    
-    const SEED_USERS = [
-      { uname: "khoi", pass: "khoi6868", fullName: "ASM Nguyễn Đăng Khôi", role: "master", region: "HCM", alias: ["khoi", "khoind", "dangkhoi"] },
-      { uname: "tien", pass: "tien2026", fullName: "ASM Đỗ Thị Hoa Tiên", role: "asm", region: "HCM", alias: ["tien", "hoatien"] },
-      { uname: "huong", pass: "huong2026", fullName: "ASM Đoàn Thị Kim Hương", role: "asm", region: "Miền Tây, Miền Trung- Tây Nguyên", alias: ["huong", "kimhuong"] },
-      { uname: "ttdung", pass: "dung2026", fullName: "ASM Trần Thanh Dũng", role: "asm", region: "HCM, Miền Tây", alias: ["ttdung", "dungtt", "thanhdung"] },
-      { uname: "dung", pass: "dung2026", fullName: "ASM Nguyễn Quốc Dũng", role: "asm", region: "HCM, Miền Trung- Tây Nguyên", alias: ["dung", "quocdung"] },
-      { uname: "linh", pass: "linh2026", fullName: "ASM Đinh Thị Cát Linh", role: "asm", region: "HCM", alias: ["linh", "catlinh"] },
-      { uname: "tin", pass: "tin2026", fullName: "ASM Nguyễn Lâm Trung Tín", role: "asm", region: "HCM, Miền Đông", alias: ["tin", "trungtin"] },
-      { uname: "quan", pass: "quan2026", fullName: "ASM Nguyễn Lê Quân", role: "asm", region: "Miền Trung- Tây Nguyên", alias: ["quan", "lequan"] },
-      { uname: "lam", pass: "lam2026", fullName: "ASM Hồ Thị Lâm", role: "asm", region: "HCM", alias: ["lam", "thilam"] },
-      { uname: "hn", pass: "hn2026", fullName: "ASM Hà Nội", role: "asm", region: "HN", alias: ["hn", "hanoi"] },
-      { uname: "ni", pass: "ni2026", fullName: "ASM Ni", role: "asm", region: "HCM", alias: ["ni", "onlineweb"] }
-    ];
-
-    for (const su of SEED_USERS) {
-      if (su.uname === u || su.alias.includes(u) || norm(su.fullName).includes(u)) {
-        if (password === su.pass || password === "123456" || password === "khoi6868") {
-          return { username: su.uname, fullName: su.fullName, role: su.role, region: su.region, stores: "ALL" };
-        }
-      }
-    }
-    return null;
-  }
-
-  function logoutUser() {
-    if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
-      currentUser = null;
-      localStorage.removeItem("storevisit_user");
-      activeDraftId = null;
-      showAuthPortalUI();
-    }
-  }
-
   // 2. MULTI-DRAFT STORAGE REGISTRY
   function getDraftsIndex() {
     try {
@@ -10934,9 +10672,6 @@
     }
   }
 
-  }
-
-
   // ==========================================
   // MASTER STORESINFO SYNC CONTROLLER
   // ==========================================
@@ -11089,13 +10824,196 @@
   document.addEventListener("DOMContentLoaded", function() {
     checkUserSession();
   });
+
+
+  // ==========================================
+  // FULL-SCREEN ENTERPRISE AUTH PORTAL CONTROLLER
+  // ==========================================
+  function togglePortalPasswordVisibility() {
+    const passInput = document.getElementById("portalPassword");
+    const toggleText = document.getElementById("portalTogglePassText");
+    if (passInput) {
+      if (passInput.type === "password") {
+        passInput.type = "text";
+        if (toggleText) toggleText.textContent = "Ẩn";
+      } else {
+        passInput.type = "password";
+        if (toggleText) toggleText.textContent = "Hiện";
+      }
+    }
+  }
+
+  function quickFillPortalLogin(username, password) {
+    const uInput = document.getElementById("portalUsername");
+    const pInput = document.getElementById("portalPassword");
+    if (uInput) uInput.value = username;
+    if (pInput) pInput.value = password;
+    const errBox = document.getElementById("portalLoginError");
+    if (errBox) errBox.classList.add("d-none");
+  }
+
+  function submitPortalLoginForm(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const uInput = document.getElementById("portalUsername");
+    const pInput = document.getElementById("portalPassword");
+    const errBox = document.getElementById("portalLoginError");
+    const btn = document.getElementById("btnPortalLoginSubmit");
+
+    if (!uInput || !pInput) return;
+    const username = uInput.value.trim();
+    const password = pInput.value.trim();
+    if (!username || !password) {
+      if (errBox) {
+        errBox.textContent = "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.";
+        errBox.classList.remove("d-none");
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xác thực...';
+    }
+    if (errBox) errBox.classList.add("d-none");
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+          }
+          if (res && res.success && res.user) {
+            currentUser = res.user;
+            localStorage.setItem("storevisit_user", JSON.stringify(res.user));
+            showMainAppUI(res.user);
+          } else {
+            if (errBox) {
+              errBox.textContent = (res && res.error) ? res.error : "Tên đăng nhập hoặc mật khẩu không chính xác.";
+              errBox.classList.remove("d-none");
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+          }
+          const fallbackUser = simulateLocalLogin(username, password);
+          if (fallbackUser) {
+            currentUser = fallbackUser;
+            localStorage.setItem("storevisit_user", JSON.stringify(fallbackUser));
+            showMainAppUI(fallbackUser);
+          } else {
+            if (errBox) {
+              errBox.textContent = "Lỗi kết nối: " + (err.message || err);
+              errBox.classList.remove("d-none");
+            }
+          }
+        })
+        .loginUser(username, password);
+    } else {
+      setTimeout(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+        }
+        const fallbackUser = simulateLocalLogin(username, password);
+        if (fallbackUser) {
+          currentUser = fallbackUser;
+          localStorage.setItem("storevisit_user", JSON.stringify(fallbackUser));
+          showMainAppUI(fallbackUser);
+        } else {
+          if (errBox) {
+            errBox.textContent = "Tên đăng nhập hoặc mật khẩu không chính xác (Thử: khoi / khoi6868 hoặc tien / tien2026).";
+            errBox.classList.remove("d-none");
+          }
+        }
+      }, 300);
+    }
+  }
+
+  function simulateLocalLogin(username, password) {
+    const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
+    const u = norm(username);
+    
+    const SEED_USERS = [
+      { uname: "khoi", pass: "khoi6868", fullName: "ASM Nguyễn Đăng Khôi", role: "master", region: "HCM", alias: ["khoi", "khoind", "dangkhoi"] },
+      { uname: "tien", pass: "tien2026", fullName: "ASM Đỗ Thị Hoa Tiên", role: "asm", region: "HCM", alias: ["tien", "hoatien"] },
+      { uname: "huong", pass: "huong2026", fullName: "ASM Đoàn Thị Kim Hương", role: "asm", region: "Miền Tây, Miền Trung- Tây Nguyên", alias: ["huong", "kimhuong"] },
+      { uname: "ttdung", pass: "dung2026", fullName: "ASM Trần Thanh Dũng", role: "asm", region: "HCM, Miền Tây", alias: ["ttdung", "dungtt", "thanhdung"] },
+      { uname: "dung", pass: "dung2026", fullName: "ASM Nguyễn Quốc Dũng", role: "asm", region: "HCM, Miền Trung- Tây Nguyên", alias: ["dung", "quocdung"] },
+      { uname: "linh", pass: "linh2026", fullName: "ASM Đinh Thị Cát Linh", role: "asm", region: "HCM", alias: ["linh", "catlinh"] },
+      { uname: "tin", pass: "tin2026", fullName: "ASM Nguyễn Lâm Trung Tín", role: "asm", region: "HCM, Miền Đông", alias: ["tin", "trungtin"] },
+      { uname: "quan", pass: "quan2026", fullName: "ASM Nguyễn Lê Quân", role: "asm", region: "Miền Trung- Tây Nguyên", alias: ["quan", "lequan"] },
+      { uname: "lam", pass: "lam2026", fullName: "ASM Hồ Thị Lâm", role: "asm", region: "HCM", alias: ["lam", "thilam"] },
+      { uname: "hn", pass: "hn2026", fullName: "ASM Hà Nội", role: "asm", region: "HN", alias: ["hn", "hanoi"] },
+      { uname: "ni", pass: "ni2026", fullName: "ASM Ni", role: "asm", region: "HCM", alias: ["ni", "onlineweb"] }
+    ];
+
+    for (const su of SEED_USERS) {
+      if (su.uname === u || su.alias.includes(u) || norm(su.fullName).includes(u)) {
+        if (password === su.pass || password === "123456" || password === "khoi6868") {
+          return { username: su.uname, fullName: su.fullName, role: su.role, region: su.region, stores: "ALL" };
+        }
+      }
+    }
+    return null;
+  }
+
+  function checkUserSession() {
+    try {
+      const savedUserStr = localStorage.getItem("storevisit_user");
+      if (savedUserStr) {
+        const user = JSON.parse(savedUserStr);
+        if (user && user.username) {
+          currentUser = user;
+          showMainAppUI(user);
+          return;
+        }
+      }
+    } catch(e) {
+      console.warn("Session check error:", e);
+    }
+    showAuthPortalUI();
+  }
+
+  function showAuthPortalUI() {
+    const portal = document.getElementById("appAuthPortal");
+    const mainApp = document.getElementById("appMainContainer");
+    if (portal) portal.classList.remove("d-none");
+    if (mainApp) mainApp.classList.add("d-none");
+  }
+
+  function showMainAppUI(user) {
+    const portal = document.getElementById("appAuthPortal");
+    const mainApp = document.getElementById("appMainContainer");
+    if (portal) portal.classList.add("d-none");
+    if (mainApp) mainApp.classList.remove("d-none");
+
+    applyUserSession(user);
+    refreshDraftCounters();
+
+    setTimeout(() => {
+      const userDrafts = getDraftsForCurrentUser();
+      if (userDrafts.length > 0 && !activeDraftId) {
+        openMultiDraftHub();
+      }
+    }, 400);
+  }
+
+  function logoutUser() {
+    if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
+      currentUser = null;
+      localStorage.removeItem("storevisit_user");
+      activeDraftId = null;
+      showAuthPortalUI();
+    }
+  }
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  </div><!-- END APP MAIN CONTAINER -->
-
-
-  
   <!-- MODAL ĐỒNG BỘ STORESINFO (Dành riêng cho Master Nguyễn Đăng Khôi) -->
   <div class="modal fade" id="syncStoresInfoModal" tabindex="-1" aria-labelledby="syncStoresInfoModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
@@ -11118,7 +11036,7 @@
           <div class="card p-3 bg-white border mb-3">
             <label class="form-label fw-bold text-dark small mb-2">📁 Chọn tệp StoresInfo.xlsx từ máy tính:</label>
             <input type="file" class="form-control mb-2" id="storesInfoFileInput" accept=".xlsx, .xls" onchange="handleStoresInfoFileSelected(event)">
-            <div class="small text-muted" id="syncFileInfoText">Chưa chọn file (Mặc định sử dụng nguồn C:\All_Report\1_Mapping\StoresInfo.xlsx).</div>
+            <div class="small text-muted" id="syncFileInfoText">Chưa chọn file (Mặc định sử dụng nguồn StoresInfo.xlsx).</div>
           </div>
 
           <div id="syncProgressContainer" class="d-none mb-3">
@@ -11144,7 +11062,7 @@
     </div>
   </div>
 
-<!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
+  <!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
   <div class="modal fade" id="multiDraftHubModal" tabindex="-1" aria-labelledby="multiDraftHubModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
@@ -11173,55 +11091,6 @@
         <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
           <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Mỗi bản nháp được lưu riêng biệt theo Cửa hàng & Ngày kiểm tra.</span>
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<!-- RESUME DRAFT WELCOME MODAL -->
-  <div class="modal fade" id="resumeDraftModal" tabindex="-1" aria-labelledby="resumeDraftModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
-        <div class="modal-header bg-primary text-white" style="background: linear-gradient(135deg, #0A2342 0%, #1E4E8C 100%) !important;">
-          <h5 class="modal-title fw-bold" id="resumeDraftModalLabel">
-            <i class="bi bi-file-earmark-medical-fill me-2 text-warning"></i>Phát Hiện Bản Nháp Đang Làm Dở
-          </h5>
-        </div>
-        <div class="modal-body p-4">
-          <p class="text-secondary mb-3">Hệ thống phát hiện bạn có một báo cáo kiểm tra cửa hàng chưa hoàn tất trước đó:</p>
-          <div class="p-3 bg-light rounded-3 border mb-3">
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted small">Cửa hàng:</span>
-              <strong class="text-primary" id="modalDraftStoreName">--</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted small">ASM Kiểm tra:</span>
-              <strong class="text-dark" id="modalDraftAsmName">--</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted small">Ngày kiểm tra:</span>
-              <span class="fw-semibold text-dark" id="modalDraftDate">--</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span class="text-muted small">Tiến độ Checklist:</span>
-              <span class="badge bg-info text-dark" id="modalDraftProgress">0/52 mục | 0 ảnh</span>
-            </div>
-            <div class="d-flex justify-content-between">
-              <span class="text-muted small">Thời điểm lưu:</span>
-              <span class="small text-secondary" id="modalDraftTimestamp">--</span>
-            </div>
-          </div>
-          <div class="alert alert-info py-2 px-3 small mb-0">
-            <i class="bi bi-info-circle me-1"></i> Bạn có thể chọn <strong>Tiếp tục làm bản nháp này</strong> để điền tiếp các mục còn thiếu, hoặc <strong>Bắt đầu báo cáo mới</strong>.
-          </div>
-        </div>
-        <div class="modal-footer bg-light border-0 p-3 d-flex justify-content-between">
-          <button type="button" class="btn btn-outline-danger" onclick="discardDraftAndStartNew()">
-            <i class="bi bi-trash me-1"></i> Bắt Đầu Báo Cáo Mới
-          </button>
-          <button type="button" class="btn btn-primary px-4 fw-bold" onclick="resumeDraftConfirmed()" style="background: #0A2342; border-color: #0A2342;">
-            <i class="bi bi-play-fill me-1"></i> Tiếp Tục Làm Bản Nháp
-          </button>
         </div>
       </div>
     </div>
