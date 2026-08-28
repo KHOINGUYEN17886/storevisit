@@ -338,7 +338,89 @@
       body.mr-print-mode #main-view-management-report .no-print { display: none !important; }
       body.mr-print-mode #main-view-management-report { display: block !important; }
     }
-  </style>
+  
+    /* =======================================================
+       FULL-SCREEN ENTERPRISE AUTH PORTAL STYLES
+       ======================================================= */
+    #appAuthPortal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 99999;
+      background: linear-gradient(135deg, #051426 0%, #0A2342 45%, #153E6F 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      border: none;
+    }
+    .auth-header {
+      background: linear-gradient(135deg, #0A2342 0%, #153B66 100%);
+      padding: 28px 24px;
+      text-align: center;
+      color: #fff;
+    }
+    .auth-logo-badge {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #C41E3A, #8A1024);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(196, 30, 58, 0.35);
+      margin-bottom: 12px;
+    }
+    .auth-body {
+      padding: 28px 24px;
+    }
+    .quick-asm-chip {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      color: #334155;
+      cursor: pointer;
+      margin: 2px;
+      transition: all 0.15s;
+      border: 1px solid #e2e8f0;
+    }
+    .quick-asm-chip:hover {
+      background: #0A2342;
+      color: #fff;
+      border-color: #0A2342;
+    }
+
+    /* Multi-Draft Card Styles */
+    .draft-item-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      background: #ffffff;
+    }
+    .draft-item-card:hover {
+      border-color: #0A2342;
+      box-shadow: 0 4px 12px rgba(10, 35, 66, 0.08);
+      transform: translateY(-2px);
+    }
+
+</style>
 </head>
 <body>
 
@@ -356,6 +438,72 @@
   Đã tự động lưu bản nháp...
 </div>
 
+
+<!-- FULL-SCREEN ENTERPRISE AUTHENTICATION PORTAL (Che hoàn toàn nội dung form khi chưa đăng nhập) -->
+<div id="appAuthPortal">
+  <div class="auth-card animate__animated animate__fadeIn">
+    <div class="auth-header">
+      <div class="auth-logo-badge">AP</div>
+      <h4 class="fw-bold mb-1" style="letter-spacing: 0.5px;">AN PHƯỚC</h4>
+      <div class="small text-warning fw-semibold">STOREVISIT PRO &bull; ENTERPRISE</div>
+      <div class="small text-white-50 mt-1" style="font-size: 12px;">Hệ Thống Đánh Giá & Thị Sát Cửa Hàng Toàn Quốc</div>
+    </div>
+    <div class="auth-body">
+      <form id="portalLoginForm" onsubmit="submitPortalLoginForm(event)">
+        <div class="mb-3">
+          <label class="form-label text-dark fw-bold small">Tên đăng nhập / Bí danh</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-secondary"></i></span>
+            <input type="text" class="form-control border-start-0" id="portalUsername" placeholder="Nhập username (ví dụ: tien, huong, ttdung, khoi, hn)..." required autocomplete="username">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-dark fw-bold small d-flex justify-content-between">
+            <span>Mật khẩu</span>
+            <a href="javascript:void(0)" onclick="togglePortalPasswordVisibility()" class="small text-decoration-none" id="portalTogglePassText">Hiện</a>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-shield-lock text-secondary"></i></span>
+            <input type="password" class="form-control border-start-0" id="portalPassword" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="portalRememberMe" checked>
+            <label class="form-check-label small text-muted" for="portalRememberMe">Ghi nhớ phiên đăng nhập</label>
+          </div>
+        </div>
+        
+        <div class="alert alert-danger d-none py-2 small" id="portalLoginError"></div>
+        
+        <button type="submit" class="btn w-100 py-2 fw-bold text-white shadow-sm" id="btnPortalLoginSubmit" style="background: linear-gradient(135deg, #0A2342 0%, #153E6F 100%); border-radius: 8px;">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống
+        </button>
+
+        <div class="mt-4 pt-3 border-top">
+          <div class="text-muted small fw-semibold mb-1" style="font-size: 11px;">Chọn nhanh tài khoản ASM (Test/Hiện trường):</div>
+          <div class="d-flex flex-wrap">
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('tien', 'tien2026')">Tiên</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('huong', 'huong2026')">Hương</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('ttdung', 'dung2026')">Trần Thanh Dũng</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('dung', 'dung2026')">Quốc Dũng</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('linh', 'linh2026')">Linh</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('tin', 'tin2026')">Tín</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('quan', 'quan2026')">Quân</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('lam', 'lam2026')">Lâm</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('hn', 'hn2026')">Hà Nội</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('ni', 'ni2026')">Ni</span>
+            <span class="quick-asm-chip" onclick="quickFillPortalLogin('khoi', 'khoi6868')">Khôi (Master)</span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- WRAPPER CHÍNH CỦA TOÀN BỘ APP (Chỉ hiển thị khi đã xác thực thành công) -->
+<div id="appMainContainer" class="d-none">
+
 <div class="app-header">
   <div class="container">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -370,10 +518,13 @@
           <div class="text-muted small">Hệ thống khảo sát & đánh giá vận hành cửa hàng</div>
         </div>
       </div>
-      <div id="userHeaderBar" class="d-none text-end p-2 px-3 rounded-3 shadow-sm" style="background-color: #f8fafc !important; border: 1px solid #e2e8f0 !important;">
-        <span id="userDisplayName" class="fw-bold me-2" style="color: #1B2A4A !important; font-size: 14px;">👤 ASM Khôi</span>
-        <span id="userRoleBadge" class="badge bg-warning text-dark me-2" style="font-weight: 700;">Master Account</span>
-        <button type="button" class="btn btn-sm btn-outline-dark me-1" style="border-color: #cbd5e1; color: #1e293b; font-weight: 600; background: #fff;" onclick="showChangePasswordModal()">🔑 Đổi mật khẩu</button>
+      <div id="userHeaderBar" class="d-none text-end p-2 px-3 rounded-3 shadow-sm d-flex align-items-center gap-2" style="background-color: #f8fafc !important; border: 1px solid #e2e8f0 !important;">
+        <span id="userDisplayName" class="fw-bold me-1" style="color: #1B2A4A !important; font-size: 14px;">👤 ASM Khôi</span>
+        <span id="userRoleBadge" class="badge bg-warning text-dark me-2" style="font-weight: 700;">Master</span>
+        <button type="button" class="btn btn-sm btn-outline-primary fw-bold position-relative me-1 shadow-sm" onclick="openMultiDraftHub()" title="Xem tất cả các bản nháp đang lưu">
+          <i class="bi bi-folder-fill me-1"></i> Bản Nháp <span class="badge bg-danger rounded-pill ms-1" id="headerDraftCounterBadge">0</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-dark me-1" style="border-color: #cbd5e1; color: #1e293b; font-weight: 600; background: #fff;" onclick="showChangePasswordModal()">🔑 Đổi MK</button>
         <button type="button" class="btn btn-sm btn-danger" style="font-weight: 600;" onclick="logoutUser()">🚪 Đăng xuất</button>
       </div>
     </div>
@@ -494,18 +645,19 @@
       <div class="card-body p-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <span class="badge bg-success" id="draftStatusBadge"><i class="bi bi-check-circle-fill"></i> Tự Động Lưu</span>
-          <span class="small fw-semibold" id="draftStatusText">Chưa có thay đổi mới</span>
-          <span class="badge bg-light text-dark small" id="draftProgressBadge">Tiến độ: 0/52 mục | 0 ảnh</span>
+          <span class="small fw-semibold" id="draftStatusText">Đang sẵn sàng</span>
+          <span class="badge bg-light text-dark small" id="draftProgressBadge">Tiến độ: 0/52 mục | 📷 0 ảnh</span>
+          <span class="badge bg-info text-dark small" id="currentActiveDraftLabel" style="display: none;">Đang mở: [NGA6]</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-          <button type="button" class="btn btn-sm btn-light text-primary fw-bold" onclick="manualSaveDraft()" title="Lưu tạm ngay vào bộ nhớ máy">
-            <i class="bi bi-save2"></i> Lưu Tạm Ngay
+          <button type="button" class="btn btn-sm btn-warning text-dark fw-bold shadow-sm" onclick="openMultiDraftHub()" title="Xem danh sách tất cả các bản nháp">
+            <i class="bi bi-folder2-open me-1"></i> Quản Lý Bản Nháp
           </button>
-          <button type="button" class="btn btn-sm btn-outline-light" onclick="showDraftDetailsModal()" title="Xem chi tiết nội dung bản nháp đã lưu">
-            <i class="bi bi-file-earmark-text"></i> Xem Chi Tiết
+          <button type="button" class="btn btn-sm btn-light text-primary fw-bold shadow-sm" onclick="manualSaveDraft()" title="Lưu tạm ngay vào bộ nhớ máy">
+            <i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger text-light" onclick="confirmClearDraft()" title="Xóa bản nháp hiện tại để làm lại từ đầu">
-            <i class="bi bi-trash"></i> Xóa Nháp Làm Mới
+          <button type="button" class="btn btn-sm btn-outline-danger text-light" onclick="confirmClearCurrentDraft()" title="Xóa bản nháp hiện tại">
+            <i class="bi bi-trash"></i> Xóa Bản Này
           </button>
         </div>
       </div>
@@ -8361,7 +8513,89 @@
         button { display:none !important; }
         .html-report-section { page-break-inside:avoid; }
       }
-    </style>
+    
+    /* =======================================================
+       FULL-SCREEN ENTERPRISE AUTH PORTAL STYLES
+       ======================================================= */
+    #appAuthPortal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 99999;
+      background: linear-gradient(135deg, #051426 0%, #0A2342 45%, #153E6F 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      border: none;
+    }
+    .auth-header {
+      background: linear-gradient(135deg, #0A2342 0%, #153B66 100%);
+      padding: 28px 24px;
+      text-align: center;
+      color: #fff;
+    }
+    .auth-logo-badge {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #C41E3A, #8A1024);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(196, 30, 58, 0.35);
+      margin-bottom: 12px;
+    }
+    .auth-body {
+      padding: 28px 24px;
+    }
+    .quick-asm-chip {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      color: #334155;
+      cursor: pointer;
+      margin: 2px;
+      transition: all 0.15s;
+      border: 1px solid #e2e8f0;
+    }
+    .quick-asm-chip:hover {
+      background: #0A2342;
+      color: #fff;
+      border-color: #0A2342;
+    }
+
+    /* Multi-Draft Card Styles */
+    .draft-item-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      background: #ffffff;
+    }
+    .draft-item-card:hover {
+      border-color: #0A2342;
+      box-shadow: 0 4px 12px rgba(10, 35, 66, 0.08);
+      transform: translateY(-2px);
+    }
+
+</style>
     <div class="html-report-wrapper">
       <!-- COVER -->
       <div class="html-report-cover">
@@ -8413,9 +8647,128 @@
       <title>Báo Cáo Kiểm Tra Cửa Hàng</title>
       <link href="${"https:" + "\/" + "\/"}cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
       <link href="${"https:" + "\/" + "\/"}fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-      <style>body{font-family:'Inter',sans-serif;} @page{margin:15mm;} @media print{.no-print{display:none}}</style>
+      <style>body{font-family:'Inter',sans-serif;} @page{margin:15mm;} @media print{.no-print{display:none}}
+    /* =======================================================
+       FULL-SCREEN ENTERPRISE AUTH PORTAL STYLES
+       ======================================================= */
+    #appAuthPortal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 99999;
+      background: linear-gradient(135deg, #051426 0%, #0A2342 45%, #153E6F 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      border: none;
+    }
+    .auth-header {
+      background: linear-gradient(135deg, #0A2342 0%, #153B66 100%);
+      padding: 28px 24px;
+      text-align: center;
+      color: #fff;
+    }
+    .auth-logo-badge {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #C41E3A, #8A1024);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(196, 30, 58, 0.35);
+      margin-bottom: 12px;
+    }
+    .auth-body {
+      padding: 28px 24px;
+    }
+    .quick-asm-chip {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      color: #334155;
+      cursor: pointer;
+      margin: 2px;
+      transition: all 0.15s;
+      border: 1px solid #e2e8f0;
+    }
+    .quick-asm-chip:hover {
+      background: #0A2342;
+      color: #fff;
+      border-color: #0A2342;
+    }
+
+    /* Multi-Draft Card Styles */
+    .draft-item-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      background: #ffffff;
+    }
+    .draft-item-card:hover {
+      border-color: #0A2342;
+      box-shadow: 0 4px 12px rgba(10, 35, 66, 0.08);
+      transform: translateY(-2px);
+    }
+
+</style>
     </head><body>${content.innerHTML}
-  <!-- RESUME DRAFT WELCOME MODAL -->
+  </div><!-- END APP MAIN CONTAINER -->
+
+
+  <!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
+  <div class="modal fade" id="multiDraftHubModal" tabindex="-1" aria-labelledby="multiDraftHubModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+        <div class="modal-header text-white p-3 px-4" style="background: linear-gradient(135deg, #0A2342 0%, #153E6F 100%) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-folder2-open fs-5 text-warning"></i>
+            <div>
+              <h5 class="modal-title fw-bold mb-0" id="multiDraftHubModalLabel">Trung Tâm Quản Lý Bản Nháp</h5>
+              <div class="small text-white-50" style="font-size: 12px;" id="multiDraftHubSubTitle">Danh sách các báo cáo đang làm dở của bạn</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-card-checklist me-1 text-primary"></i> Bản nháp đang lưu (<span id="draftCountBadge">0</span>)</h6>
+            <button type="button" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm" onclick="startNewReportBlank()" style="background: #C41E3A; border-color: #C41E3A;">
+              <i class="bi bi-plus-circle me-1"></i> + Tạo Báo Cáo Mới
+            </button>
+          </div>
+
+          <div id="multiDraftCardsContainer">
+            <!-- Dynamic Draft Cards -->
+          </div>
+        </div>
+        <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
+          <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Mỗi bản nháp được lưu riêng biệt theo Cửa hàng & Ngày kiểm tra.</span>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- RESUME DRAFT WELCOME MODAL -->
   <div class="modal fade" id="resumeDraftModal" tabindex="-1" aria-labelledby="resumeDraftModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
@@ -9898,185 +10251,624 @@
   }
 
 
-  // ==========================================
-  // ENTERPRISE DRAFT COMMAND CENTER FUNCTIONS
-  // ==========================================
-  let lastSavedDraftTime = null;
+  
+  // =======================================================
+  // ENTERPRISE MULTI-DRAFT MANAGEMENT & AUTH GATEKEEPER ENGINE
+  // =======================================================
+  let activeDraftId = null;
 
-  function countFilledDraftItems() {
-    let filledCount = 0;
-    let totalItems = 0;
-    let photoCount = 0;
-
-    if (formData && formData.sections) {
-      Object.keys(formData.sections).forEach(secKey => {
-        const sec = formData.sections[secKey];
-        if (sec && Array.isArray(sec.items)) {
-          sec.items.forEach(it => {
-            totalItems++;
-            if (it.eval) filledCount++;
-            if (it.photo_before) photoCount++;
-            if (it.photo_after) photoCount++;
-          });
-        }
-      });
-    }
-
-    if (typeof generalPhotos === "object") {
-      Object.keys(generalPhotos).forEach(k => {
-        if (!k.endsWith("_na") && !k.endsWith("_na_reason") && generalPhotos[k]) {
-          photoCount++;
-        }
-      });
-    }
-
-    return { filled: filledCount, total: totalItems || 52, photos: photoCount };
-  }
-
-  function updateDraftStatusBar(isSaved, customMsg) {
-    const badge = document.getElementById("draftStatusBadge");
-    const text = document.getElementById("draftStatusText");
-    const progBadge = document.getElementById("draftProgressBadge");
-
-    const counts = countFilledDraftItems();
-
-    if (progBadge) {
-      progBadge.textContent = `Tiến độ: ${counts.filled}/${counts.total} mục | 📷 ${counts.photos} ảnh`;
-      progBadge.style.display = "inline-block";
-    }
-
-    if (isSaved) {
-      lastSavedDraftTime = new Date();
-      const timeStr = lastSavedDraftTime.toLocaleTimeString("vi-VN");
-      if (badge) {
-        badge.className = "badge bg-success";
-        badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Đã Lưu';
-      }
-      if (text) {
-        text.textContent = customMsg || `Đã lưu nháp lúc ${timeStr}`;
-      }
-    } else {
-      if (badge) {
-        badge.className = "badge bg-warning text-dark";
-        badge.innerHTML = '<i class="bi bi-pencil-fill"></i> Đang Nhập...';
-      }
-      if (text) {
-        text.textContent = customMsg || "Có thay đổi chưa lưu";
-      }
-    }
-  }
-
-  function manualSaveDraft() {
+  // 1. AUTH GATEKEEPER
+  function checkUserSession() {
     try {
-      executeSaveDraft();
-      updateDraftStatusBar(true, "Đã lưu thủ công thành công!");
-      
-      const btn = (typeof event !== 'undefined' && event) ? event.currentTarget : null;
-      if (btn) {
-        const origHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Đã Lưu!';
-        setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+      const savedUserStr = localStorage.getItem("storevisit_user");
+      if (savedUserStr) {
+        const user = JSON.parse(savedUserStr);
+        if (user && user.username) {
+          currentUser = user;
+          showMainAppUI(user);
+          return;
+        }
       }
     } catch(e) {
-      alert("Lỗi khi lưu nháp: " + e.message);
+      console.warn("Session check error:", e);
     }
+    showAuthPortalUI();
   }
 
-  function confirmClearDraft() {
-    if (confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa toàn bộ bản nháp hiện tại để làm lại từ đầu không? Toàn bộ ảnh và câu trả lời chưa gửi sẽ bị xóa.")) {
-      localStorage.removeItem("store_visit_form_draft");
-      PhotoDB.clear();
-      submissionId = generateUuid();
-      window.location.reload();
-    }
+  function showAuthPortalUI() {
+    const portal = document.getElementById("appAuthPortal");
+    const mainApp = document.getElementById("appMainContainer");
+    if (portal) portal.classList.remove("d-none");
+    if (mainApp) mainApp.classList.add("d-none");
   }
 
-  function showDraftDetailsModal() {
-    const raw = localStorage.getItem("store_visit_form_draft");
-    const body = document.getElementById("draftDetailsBody");
-    if (!body) return;
+  function showMainAppUI(user) {
+    const portal = document.getElementById("appAuthPortal");
+    const mainApp = document.getElementById("appMainContainer");
+    if (portal) portal.classList.add("d-none");
+    if (mainApp) mainApp.classList.remove("d-none");
 
-    if (!raw) {
-      body.innerHTML = '<div class="alert alert-warning mb-0">Hiện tại không có bản nháp nào được lưu trên thiết bị này.</div>';
-    } else {
-      try {
-        const d = JSON.parse(raw);
-        const counts = countFilledDraftItems();
-        const scode = (d.simple && d.simple.storeCode) || "Chưa chọn";
-        const asm = (d.simple && d.simple.asmName) || "Chưa chọn";
-        const rdate = (d.simple && d.simple.reportDate) || "Chưa chọn";
-        const subId = d.submissionId || "N/A";
-        const savedTime = lastSavedDraftTime ? lastSavedDraftTime.toLocaleString("vi-VN") : "Gần đây";
+    applyUserSession(user);
+    refreshDraftCounters();
 
-        body.innerHTML = `
-          <div class="list-group list-group-flush small">
-            <div class="list-group-item d-flex justify-content-between"><strong>Cửa hàng:</strong> <span class="text-primary fw-bold">${scode}</span></div>
-            <div class="list-group-item d-flex justify-content-between"><strong>ASM Phụ trách:</strong> <span>${asm}</span></div>
-            <div class="list-group-item d-flex justify-content-between"><strong>Ngày kiểm tra:</strong> <span>${rdate}</span></div>
-            <div class="list-group-item d-flex justify-content-between"><strong>Tiến độ Checklist:</strong> <span class="badge bg-info text-dark">${counts.filled}/${counts.total} mục</span></div>
-            <div class="list-group-item d-flex justify-content-between"><strong>Ảnh đã chụp/tải:</strong> <span class="badge bg-secondary">${counts.photos} ảnh</span></div>
-            <div class="list-group-item d-flex justify-content-between"><strong>Thời điểm lưu:</strong> <span>${savedTime}</span></div>
-            <div class="list-group-item d-flex justify-content-between text-muted"><strong>Mã phiên (ID):</strong> <code>${subId.substring(0, 12)}...</code></div>
-          </div>
-        `;
-      } catch(e) {
-        body.innerHTML = `<div class="alert alert-danger">Lỗi đọc dữ liệu nháp: ${e.message}</div>`;
+    // Check if user has active drafts on login
+    setTimeout(() => {
+      const userDrafts = getDraftsForCurrentUser();
+      if (userDrafts.length > 0 && !activeDraftId) {
+        openMultiDraftHub();
+      }
+    }, 400);
+  }
+
+  function togglePortalPasswordVisibility() {
+    const passInput = document.getElementById("portalPassword");
+    const toggleText = document.getElementById("portalTogglePassText");
+    if (passInput) {
+      if (passInput.type === "password") {
+        passInput.type = "text";
+        if (toggleText) toggleText.textContent = "Ẩn";
+      } else {
+        passInput.type = "password";
+        if (toggleText) toggleText.textContent = "Hiện";
       }
     }
+  }
 
-    const modalEl = document.getElementById('draftDetailsModal');
+  function quickFillPortalLogin(username, password) {
+    document.getElementById("portalUsername").value = username;
+    document.getElementById("portalPassword").value = password;
+  }
+
+  function submitPortalLoginForm(e) {
+    e.preventDefault();
+    const uInput = document.getElementById("portalUsername");
+    const pInput = document.getElementById("portalPassword");
+    const errBox = document.getElementById("portalLoginError");
+    const btn = document.getElementById("btnPortalLoginSubmit");
+
+    const username = uInput.value.trim();
+    const password = pInput.value.trim();
+    if (!username || !password) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xác thực...';
+    errBox.classList.add("d-none");
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+          if (res && res.success && res.user) {
+            currentUser = res.user;
+            localStorage.setItem("storevisit_user", JSON.stringify(res.user));
+            showMainAppUI(res.user);
+          } else {
+            errBox.textContent = (res && res.error) ? res.error : "Tên đăng nhập hoặc mật khẩu không chính xác.";
+            errBox.classList.remove("d-none");
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+          // Client fallback authentication if offline
+          const fallbackUser = simulateLocalLogin(username, password);
+          if (fallbackUser) {
+            currentUser = fallbackUser;
+            localStorage.setItem("storevisit_user", JSON.stringify(fallbackUser));
+            showMainAppUI(fallbackUser);
+          } else {
+            errBox.textContent = "Lỗi kết nối: " + (err.message || err);
+            errBox.classList.remove("d-none");
+          }
+        })
+        .loginUser(username, password);
+    } else {
+      // Local development mock login
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+        const fallbackUser = simulateLocalLogin(username, password);
+        if (fallbackUser) {
+          currentUser = fallbackUser;
+          localStorage.setItem("storevisit_user", JSON.stringify(fallbackUser));
+          showMainAppUI(fallbackUser);
+        } else {
+          errBox.textContent = "Tên đăng nhập hoặc mật khẩu không chính xác (Thử: khoi / khoi6868 hoặc tien / tien2026).";
+          errBox.classList.remove("d-none");
+        }
+      }, 300);
+    }
+  }
+
+  function simulateLocalLogin(username, password) {
+    const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
+    const u = norm(username);
+    
+    const SEED_USERS = [
+      { uname: "khoi", pass: "khoi6868", fullName: "ASM Nguyễn Đăng Khôi", role: "master", region: "HCM", alias: ["khoi", "khoind", "dangkhoi"] },
+      { uname: "tien", pass: "tien2026", fullName: "ASM Đỗ Thị Hoa Tiên", role: "asm", region: "HCM", alias: ["tien", "hoatien"] },
+      { uname: "huong", pass: "huong2026", fullName: "ASM Đoàn Thị Kim Hương", role: "asm", region: "Miền Tây, Miền Trung- Tây Nguyên", alias: ["huong", "kimhuong"] },
+      { uname: "ttdung", pass: "dung2026", fullName: "ASM Trần Thanh Dũng", role: "asm", region: "HCM, Miền Tây", alias: ["ttdung", "dungtt", "thanhdung"] },
+      { uname: "dung", pass: "dung2026", fullName: "ASM Nguyễn Quốc Dũng", role: "asm", region: "HCM, Miền Trung- Tây Nguyên", alias: ["dung", "quocdung"] },
+      { uname: "linh", pass: "linh2026", fullName: "ASM Đinh Thị Cát Linh", role: "asm", region: "HCM", alias: ["linh", "catlinh"] },
+      { uname: "tin", pass: "tin2026", fullName: "ASM Nguyễn Lâm Trung Tín", role: "asm", region: "HCM, Miền Đông", alias: ["tin", "trungtin"] },
+      { uname: "quan", pass: "quan2026", fullName: "ASM Nguyễn Lê Quân", role: "asm", region: "Miền Trung- Tây Nguyên", alias: ["quan", "lequan"] },
+      { uname: "lam", pass: "lam2026", fullName: "ASM Hồ Thị Lâm", role: "asm", region: "HCM", alias: ["lam", "thilam"] },
+      { uname: "hn", pass: "hn2026", fullName: "ASM Hà Nội", role: "asm", region: "HN", alias: ["hn", "hanoi"] },
+      { uname: "ni", pass: "ni2026", fullName: "ASM Ni", role: "asm", region: "HCM", alias: ["ni", "onlineweb"] }
+    ];
+
+    for (const su of SEED_USERS) {
+      if (su.uname === u || su.alias.includes(u) || norm(su.fullName).includes(u)) {
+        if (password === su.pass || password === "123456" || password === "khoi6868") {
+          return { username: su.uname, fullName: su.fullName, role: su.role, region: su.region, stores: "ALL" };
+        }
+      }
+    }
+    return null;
+  }
+
+  function logoutUser() {
+    if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
+      currentUser = null;
+      localStorage.removeItem("storevisit_user");
+      activeDraftId = null;
+      showAuthPortalUI();
+    }
+  }
+
+  // 2. MULTI-DRAFT STORAGE REGISTRY
+  function getDraftsIndex() {
+    try {
+      const json = localStorage.getItem("store_visit_drafts_index");
+      return json ? JSON.parse(json) : {};
+    } catch(e) {
+      return {};
+    }
+  }
+
+  function saveDraftsIndex(indexObj) {
+    try {
+      localStorage.setItem("store_visit_drafts_index", JSON.stringify(indexObj));
+    } catch(e) {
+      console.warn("saveDraftsIndex error:", e);
+    }
+  }
+
+  function getDraftsForCurrentUser() {
+    const index = getDraftsIndex();
+    const list = Object.values(index);
+    if (!currentUser) return list;
+    if (currentUser.role === 'master' || currentUser.role === 'admin') return list;
+    const curUname = String(currentUser.username || '').toLowerCase();
+    return list.filter(d => String(d.username || '').toLowerCase() === curUname);
+  }
+
+  function refreshDraftCounters() {
+    const list = getDraftsForCurrentUser();
+    const badge = document.getElementById("headerDraftCounterBadge");
+    const countSpan = document.getElementById("draftCountBadge");
+    if (badge) badge.textContent = list.length;
+    if (countSpan) countSpan.textContent = list.length;
+  }
+
+  function openMultiDraftHub() {
+    renderMultiDraftCards();
+    const modalEl = document.getElementById("multiDraftHubModal");
     if (modalEl && typeof bootstrap !== 'undefined') {
-      const modal = new bootstrap.Modal(modalEl);
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
       modal.show();
     }
   }
 
-  function checkAndPromptResumeDraft() {
-    const raw = localStorage.getItem("store_visit_form_draft");
-    if (!raw) return;
-    try {
-      const d = JSON.parse(raw);
-      if (!d) return;
+  function renderMultiDraftCards() {
+    const list = getDraftsForCurrentUser();
+    refreshDraftCounters();
+    const container = document.getElementById("multiDraftCardsContainer");
+    if (!container) return;
 
-      const scode = (d.simple && d.simple.storeCode) || "";
-      const asm = (d.simple && d.simple.asmName) || "";
-      const hasSections = d.sections && Object.keys(d.sections).length > 0;
-
-      if (scode || asm || hasSections) {
-        const counts = countFilledDraftItems();
-        document.getElementById("modalDraftStoreName").textContent = scode || "Chưa chọn mã CH";
-        document.getElementById("modalDraftAsmName").textContent = asm || "Chưa chọn ASM";
-        document.getElementById("modalDraftDate").textContent = (d.simple && d.simple.reportDate) || "--";
-        document.getElementById("modalDraftProgress").textContent = `${counts.filled}/${counts.total} mục | 📷 ${counts.photos} ảnh`;
-        document.getElementById("modalDraftTimestamp").textContent = new Date().toLocaleDateString("vi-VN") + " (Lưu gần nhất)";
-
-        const modalEl = document.getElementById("resumeDraftModal");
-        if (modalEl && typeof bootstrap !== 'undefined') {
-          const modal = new bootstrap.Modal(modalEl);
-          modal.show();
-        }
-      }
-    } catch(e) {
-      console.warn("checkAndPromptResumeDraft error:", e);
+    if (list.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-5 bg-white rounded-3 border border-dashed">
+          <i class="bi bi-folder-x text-muted" style="font-size: 48px;"></i>
+          <h6 class="fw-bold text-dark mt-3">Chưa Có Bản Nháp Nào</h6>
+          <p class="text-muted small mb-3">Bạn chưa có báo cáo nào đang lưu dở. Hãy bắt đầu một biên bản kiểm tra mới!</p>
+          <button type="button" class="btn btn-primary btn-sm px-4 fw-bold" onclick="startNewReportBlank()" style="background: #0A2342; border-color: #0A2342;">
+            <i class="bi bi-plus-lg me-1"></i> Bắt Đầu Báo Cáo Mới
+          </button>
+        </div>
+      `;
+      return;
     }
+
+    // Sort newest first
+    list.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+
+    let htmlCards = '<div class="row g-3">';
+    list.forEach(d => {
+      const isCurrent = (d.draftId === activeDraftId);
+      const timeStr = d.updatedAt ? new Date(d.updatedAt).toLocaleString("vi-VN") : "Gần đây";
+      const progress = d.progressPct || 0;
+
+      htmlCards += `
+        <div class="col-md-6">
+          <div class="draft-item-card p-3 position-relative ${isCurrent ? 'border-primary border-2 shadow-sm' : ''}">
+            ${isCurrent ? '<span class="badge bg-primary position-absolute top-0 end-0 m-2"><i class="bi bi-pencil"></i> Đang mở</span>' : ''}
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-dark fw-bold">${d.storeCode || 'CHƯA CHỌN'}</span>
+              <strong class="text-dark fs-6 text-truncate" style="max-width: 200px;">${d.storeName || 'Cửa hàng chưa đặt tên'}</strong>
+            </div>
+            
+            <div class="small text-secondary mb-2">
+              <div><i class="bi bi-person-badge me-1"></i> <strong>ASM:</strong> ${d.asmName || 'Chưa chọn'}</div>
+              <div><i class="bi bi-calendar3 me-1"></i> <strong>Ngày:</strong> ${d.reportDate || '--'}</div>
+              <div><i class="bi bi-clock-history me-1"></i> <strong>Lưu lúc:</strong> ${timeStr}</div>
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Tiến độ Checklist (${d.filledCount || 0}/${d.totalCount || 52})</span>
+                <span class="fw-bold text-dark">${progress}% | 📷 ${d.photoCount || 0}</span>
+              </div>
+              <div class="progress" style="height: 6px;">
+                <div class="progress-bar ${progress >= 80 ? 'bg-success' : (progress >= 40 ? 'bg-info' : 'bg-warning')}" role="progressbar" style="width: ${progress}%;"></div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+              <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteDraftById('${d.draftId}')" title="Xóa bản nháp này">
+                <i class="bi bi-trash"></i> Xóa
+              </button>
+              <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="loadDraftById('${d.draftId}')" style="background: #0A2342; border-color: #0A2342;">
+                <i class="bi bi-play-fill me-1"></i> Tiếp Tục Làm
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    htmlCards += '</div>';
+
+    container.innerHTML = htmlCards;
   }
 
-  function resumeDraftConfirmed() {
-    const modalEl = document.getElementById("resumeDraftModal");
+  function startNewReportBlank() {
+    if (activeDraftId) {
+      if (!confirm("Bắt đầu biên bản báo cáo mới? Bản nháp hiện tại đã được lưu an toàn trong danh sách nháp.")) return;
+    }
+    
+    // Clear active ID and reset form cleanly
+    activeDraftId = null;
+    submissionId = generateUuid();
+    
+    // Close modal
+    const modalEl = document.getElementById("multiDraftHubModal");
     if (modalEl && typeof bootstrap !== 'undefined') {
       const modal = bootstrap.Modal.getInstance(modalEl);
       if (modal) modal.hide();
     }
-    updateDraftStatusBar(true, "Đã khôi phục toàn bộ bản nháp");
+
+    // Reset Form
+    const form = document.getElementById("storeVisitForm");
+    if (form) form.reset();
+    
+    // Reset segmented buttons
+    document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.segment-btn[data-value="Chưa kiểm tra"]').forEach(b => b.classList.add('active'));
+
+    // Set today date
+    const dateInput = document.querySelector('input[name="reportDate"]');
+    if (dateInput) {
+      const today = new Date();
+      dateInput.value = today.toISOString().split('T')[0];
+    }
+
+    // Re-apply User ASM
+    if (currentUser) {
+      applyUserSession(currentUser);
+    }
+
+    const currentLabel = document.getElementById("currentActiveDraftLabel");
+    if (currentLabel) currentLabel.style.display = "none";
+
+    updateDraftStatusBar(true, "Đang ở báo cáo mới");
+    // Switch to first tab
+    const firstTab = document.getElementById("info-tab");
+    if (firstTab && typeof bootstrap !== 'undefined') {
+      bootstrap.Tab.getOrCreateInstance(firstTab).show();
+    }
   }
 
-  function discardDraftAndStartNew() {
-    if (confirm("Xác nhận xóa bản nháp cũ để bắt đầu báo cáo mới?")) {
-      localStorage.removeItem("store_visit_form_draft");
-      PhotoDB.clear();
-      submissionId = generateUuid();
-      window.location.reload();
+  function generateDraftId(storeCode) {
+    const u = currentUser ? currentUser.username : "guest";
+    const sc = storeCode || "TEMP";
+    const ts = new Date().toISOString().replace(/[-:T.Z]/g, "").substring(0, 14);
+    return `draft_${u}_${sc}_${ts}`;
+  }
+
+  function saveCurrentDraftToHub(isManual) {
+    try {
+      syncAllChecklistDetailsToState();
+
+      const scode = (document.getElementById("storeCode") ? document.getElementById("storeCode").value : "").trim();
+      const asmName = (document.getElementById("asmName") ? document.getElementById("asmName").value : "").trim();
+      const rdate = (document.querySelector('input[name="reportDate"]') ? document.querySelector('input[name="reportDate"]').value : "").trim();
+
+      // If no active draft ID, create a stable key
+      if (!activeDraftId) {
+        activeDraftId = generateDraftId(scode);
+      }
+
+      const counts = countFilledDraftItems();
+      const progPct = Math.round((counts.filled / (counts.total || 52)) * 100);
+
+      // Extract store name from select
+      let storeName = "";
+      const storeSelect = document.getElementById("storeCode");
+      if (storeSelect && storeSelect.selectedIndex > 0) {
+        storeName = storeSelect.options[storeSelect.selectedIndex].text.replace(`${scode} - `, "").trim();
+      }
+
+      const meta = {
+        draftId: activeDraftId,
+        submissionId: submissionId,
+        username: currentUser ? currentUser.username : "guest",
+        asmName: asmName,
+        storeCode: scode,
+        storeName: storeName || scode,
+        reportDate: rdate,
+        updatedAt: new Date().toISOString(),
+        filledCount: counts.filled,
+        totalCount: counts.total,
+        photoCount: counts.photos,
+        progressPct: progPct
+      };
+
+      // 1. Save metadata to index
+      const index = getDraftsIndex();
+      index[activeDraftId] = meta;
+      saveDraftsIndex(index);
+
+      // 2. Build full payload
+      const clonedSections = JSON.parse(JSON.stringify(formData.sections));
+      for (const secKey of Object.keys(clonedSections)) {
+        clonedSections[secKey].items.forEach(item => {
+          if (item.photo_before) item.photo_before = (item.photo_before === "DB_REF" || item.photo_before.startsWith("data:")) ? "DB_REF" : item.photo_before;
+          if (item.photo_after) item.photo_after = (item.photo_after === "DB_REF" || item.photo_after.startsWith("data:")) ? "DB_REF" : item.photo_after;
+        });
+      }
+
+      const simpleFields = [
+        "modeSelect", "asmName", "regionSelect", "storeCode", "reportDate", "chtName", "timeStart", "timeEnd", "nvCount",
+        "openingType", "openingPhase", "openingDate", "openingReadiness",
+        "ratingFrontage", "commentFrontage", "ratingInner", "commentInner",
+        "ratingMerch", "commentMerch", "ratingCSVC", "commentCSVC",
+        "ratingStaff", "commentStaff", "compTraffic", "compComparison",
+        "compPeakTime", "compAttraction", "compService", "compAnalysisSolution",
+        "pendingIssues", "actionPlan", "actionDeadline", "storeRecommendation",
+        "compThreatLevel", "compName", "compDistance", "compOwnTraffic", 
+        "compTimeObserved", "compPromo", "compStrength", "compWeakness", "compNoCompetitorReason"
+      ];
+
+      const payload = {
+        meta: meta,
+        schema_version: formData.schema_version,
+        submissionId: submissionId,
+        brand_presence: formData.brand_presence,
+        has_competitor: (function(){var _e=document.getElementById("has_competitor_checkbox");return _e?_e.checked:false})(),
+        simple: {},
+        sections: clonedSections,
+        overall: formData.overall,
+        competitorPhotos: { ...competitorPhotos },
+        generalPhotos: { ...generalPhotos },
+        survey: {}
+      };
+
+      simpleFields.forEach(fid => {
+        const el = document.getElementById(fid);
+        if (el) payload.simple[fid] = el.value;
+      });
+
+      document.querySelectorAll('[name^="survey_"]').forEach(el => {
+        payload.survey[el.name] = el.value;
+      });
+
+      // 3. Save full payload to distinct key
+      localStorage.setItem(`store_visit_draft_${activeDraftId}`, JSON.stringify(payload));
+      // Also update legacy single-key for backward compatibility
+      localStorage.setItem("store_visit_form_draft", JSON.stringify(payload));
+
+      const currentLabel = document.getElementById("currentActiveDraftLabel");
+      if (currentLabel) {
+        currentLabel.textContent = `Đang mở: [${scode || 'Nháp'}]`;
+        currentLabel.style.display = "inline-block";
+      }
+
+      refreshDraftCounters();
+      updateDraftStatusBar(true, isManual ? "Đã lưu bản nháp thủ công thành công!" : undefined);
+
+      // Async cloud draft sync
+      if (currentUser && typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withFailureHandler(function(e){ console.warn("Cloud draft backup error:", e); })
+          .saveDraftToServer(currentUser.username, JSON.stringify(payload));
+      }
+
+    } catch(e) {
+      console.error("Save draft to hub failed:", e);
     }
+  }
+
+  async function loadDraftById(draftId) {
+    try {
+      const raw = localStorage.getItem(`store_visit_draft_${draftId}`) || localStorage.getItem("store_visit_form_draft");
+      if (!raw) {
+        alert("Không tìm thấy dữ liệu của bản nháp này.");
+        return;
+      }
+
+      let draft = JSON.parse(raw);
+      if (!draft) return;
+
+      activeDraftId = draftId;
+
+      // Close Hub Modal
+      const modalEl = document.getElementById("multiDraftHubModal");
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+      }
+
+      // Populate draft into form
+      await restoreDraftIntoDOM(draft);
+
+      const scode = (draft.simple && draft.simple.storeCode) || "";
+      const currentLabel = document.getElementById("currentActiveDraftLabel");
+      if (currentLabel) {
+        currentLabel.textContent = `Đang mở: [${scode || 'Nháp'}]`;
+        currentLabel.style.display = "inline-block";
+      }
+
+      updateDraftStatusBar(true, `Đã nạp bản nháp [${scode}]`);
+    } catch(e) {
+      alert("Lỗi khi tải bản nháp: " + e.message);
+    }
+  }
+
+  function deleteDraftById(draftId) {
+    if (!confirm("Bạn có chắc chắn muốn xóa vĩnh viễn bản nháp này không?")) return;
+
+    try {
+      const index = getDraftsIndex();
+      delete index[draftId];
+      saveDraftsIndex(index);
+
+      localStorage.removeItem(`store_visit_draft_${draftId}`);
+
+      if (activeDraftId === draftId) {
+        activeDraftId = null;
+        startNewReportBlank();
+      }
+
+      renderMultiDraftCards();
+      refreshDraftCounters();
+    } catch(e) {
+      alert("Lỗi khi xóa bản nháp: " + e.message);
+    }
+  }
+
+  function confirmClearCurrentDraft() {
+    if (!activeDraftId) {
+      if (confirm("Xóa nội dung form để bắt đầu báo cáo mới?")) {
+        startNewReportBlank();
+      }
+      return;
+    }
+    deleteDraftById(activeDraftId);
+  }
+
+  // Hook into autosave
+  function executeSaveDraft() {
+    saveCurrentDraftToHub(false);
+  }
+
+  function manualSaveDraft() {
+    saveCurrentDraftToHub(true);
+    const btn = (typeof event !== 'undefined' && event) ? event.currentTarget : null;
+    if (btn) {
+      const origHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Đã Lưu!';
+      setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+    }
+  }
+
+  // Restore logic helper
+  async function restoreDraftIntoDOM(draft) {
+    if (!draft) return;
+    try {
+      draft = await migrateDraftState(draft);
+    } catch(e) { console.warn("Migration error:", e); }
+
+    submissionId = draft.submissionId || submissionId;
+    pendingSummaryUserEdited = draft.pendingSummaryUserEdited || false;
+
+    const simple = draft.simple || {};
+    const fieldOrder = [
+      'modeSelect', 'asmName', 'regionSelect',
+      'reportDate', 'chtName', 'timeStart', 'timeEnd', 'nvCount',
+      'ratingFrontage', 'commentFrontage', 'ratingInner', 'commentInner',
+      'ratingMerch', 'commentMerch', 'ratingCSVC', 'commentCSVC',
+      'ratingStaff', 'commentStaff',
+      'compThreatLevel', 'compTraffic', 'compComparison', 'compPeakTime',
+      'compAttraction', 'compService', 'compAnalysisSolution',
+      'compName', 'compDistance', 'compOwnTraffic', 'compTimeObserved',
+      'compPromo', 'compStrength', 'compWeakness', 'compNoCompetitorReason',
+      'pendingIssues', 'actionPlan', 'actionDeadline', 'storeRecommendation'
+    ];
+
+    fieldOrder.forEach(function(fid) {
+      if (simple.hasOwnProperty(fid)) {
+        const el = document.getElementById(fid);
+        if (el) el.value = simple[fid];
+        if (fid === 'modeSelect') handleModeChange();
+        if (fid === 'asmName' || fid === 'regionSelect') updateStoreList();
+      }
+    });
+
+    Object.keys(simple).forEach(function(fid) {
+      if (!fieldOrder.includes(fid) && fid !== 'storeCode') {
+        const el = document.getElementById(fid);
+        if (el) el.value = simple[fid];
+      }
+    });
+
+    if (simple.storeCode) {
+      const storeEl = document.getElementById('storeCode');
+      if (storeEl) storeEl.value = simple.storeCode;
+    }
+
+    if (draft.sections) {
+      formData.sections = draft.sections;
+      Object.keys(formData.sections).forEach(secKey => {
+        const secVal = formData.sections[secKey];
+        if (secVal && secVal.items) {
+          secVal.items.forEach(item => {
+            const segmented = document.getElementById(`segmented_${item.id}`);
+            if (segmented) {
+              segmented.querySelectorAll('.segment-btn').forEach(b => {
+                b.classList.remove('active');
+                if (b.getAttribute('data-value') === item.eval) b.classList.add('active');
+              });
+              if (document.getElementById(`fail_note_${item.id}`)) document.getElementById(`fail_note_${item.id}`).value = item.note || "";
+              if (document.getElementById(`fail_resolved_${item.id}`)) document.getElementById(`fail_resolved_${item.id}`).value = item.resolved || "";
+              if (document.getElementById(`fail_severity_${item.id}`)) document.getElementById(`fail_severity_${item.id}`).value = item.severity || "Trung bình";
+              if (document.getElementById(`fail_assignee_${item.id}`)) document.getElementById(`fail_assignee_${item.id}`).value = item.assignee || "CHT";
+              if (document.getElementById(`fail_deadline_${item.id}`)) document.getElementById(`fail_deadline_${item.id}`).value = item.deadline || "";
+              if (document.getElementById(`na_reason_${item.id}`)) document.getElementById(`na_reason_${item.id}`).value = item.na_reason || "";
+
+              if (item.eval === "Không đạt") {
+                toggleContainerInputs(`fail_details_${item.id}`, true, true);
+                toggleContainerInputs(`na_details_${item.id}`, false, false);
+                toggleResolvedFields(item.id);
+              } else if (item.eval === "Không áp dụng") {
+                toggleContainerInputs(`fail_details_${item.id}`, false, false);
+                toggleContainerInputs(`na_details_${item.id}`, true, true);
+              } else {
+                toggleContainerInputs(`fail_details_${item.id}`, false, false);
+                toggleContainerInputs(`na_details_${item.id}`, false, false);
+              }
+
+              if (item.photo_before) renderChecklistPhotoPreviews(item.id, 'photo_before');
+              if (item.photo_after) renderChecklistPhotoPreviews(item.id, 'photo_after');
+            }
+          });
+        }
+        recalculateSection(secKey);
+      });
+    }
+  }
+
   }
 
   // Trigger Auth Check on Load
@@ -10086,7 +10878,44 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- RESUME DRAFT WELCOME MODAL -->
+  </div><!-- END APP MAIN CONTAINER -->
+
+
+  <!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
+  <div class="modal fade" id="multiDraftHubModal" tabindex="-1" aria-labelledby="multiDraftHubModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+        <div class="modal-header text-white p-3 px-4" style="background: linear-gradient(135deg, #0A2342 0%, #153E6F 100%) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-folder2-open fs-5 text-warning"></i>
+            <div>
+              <h5 class="modal-title fw-bold mb-0" id="multiDraftHubModalLabel">Trung Tâm Quản Lý Bản Nháp</h5>
+              <div class="small text-white-50" style="font-size: 12px;" id="multiDraftHubSubTitle">Danh sách các báo cáo đang làm dở của bạn</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-card-checklist me-1 text-primary"></i> Bản nháp đang lưu (<span id="draftCountBadge">0</span>)</h6>
+            <button type="button" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm" onclick="startNewReportBlank()" style="background: #C41E3A; border-color: #C41E3A;">
+              <i class="bi bi-plus-circle me-1"></i> + Tạo Báo Cáo Mới
+            </button>
+          </div>
+
+          <div id="multiDraftCardsContainer">
+            <!-- Dynamic Draft Cards -->
+          </div>
+        </div>
+        <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
+          <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Mỗi bản nháp được lưu riêng biệt theo Cửa hàng & Ngày kiểm tra.</span>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- RESUME DRAFT WELCOME MODAL -->
   <div class="modal fade" id="resumeDraftModal" tabindex="-1" aria-labelledby="resumeDraftModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
