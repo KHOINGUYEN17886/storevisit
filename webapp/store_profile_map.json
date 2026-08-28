@@ -110,9 +110,9 @@
     "skip_survey": false
   },
   "TAKA": {
-    "brand": "AP-PIE",
+    "brand": "PIE",
     "storetype": "Mono-brand Store",
-    "has_ap": true,
+    "has_ap": false,
     "has_pie": true,
     "has_anamai": false,
     "has_bonjour": false,
@@ -2021,6 +2021,17 @@
     "has_bonjour": true,
     "is_ab_only": false,
     "has_guard": true,
+    "skip_survey": false
+  },
+  "LMARK81": {
+    "brand": "AP-PIE",
+    "storetype": "Concession",
+    "has_ap": true,
+    "has_pie": true,
+    "has_anamai": false,
+    "has_bonjour": false,
+    "is_ab_only": false,
+    "has_guard": false,
     "skip_survey": false
   }
 }

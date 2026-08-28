@@ -1,5 +1,4 @@
 {
-  "total_stores": 185,
   "asms": [
     "HN",
     "Hồ Thị Lâm",
@@ -22,2258 +21,408 @@
   ],
   "mapping_by_asm": {
     "Đinh Thị Cát Linh": [
-      {
-        "store_code": "SO1",
-        "store_name": "Số 1",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "HBT",
-        "store_name": "Hai Bà Trưng",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CAOTH",
-        "store_name": "Cao Thắng",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NTMK",
-        "store_name": "Nguyễn Thị Minh Khai",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NDC",
-        "store_name": "Nguyễn Đình Chiểu",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LVS",
-        "store_name": "Lê Văn Sỹ",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "185_3T2",
-        "store_name": "185 Đường 3T2",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "126_3T2",
-        "store_name": "126 Đường 3T2",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NVTROI",
-        "store_name": "Nguyễn Văn Trỗi",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PDP",
-        "store_name": "Phan Đình Phùng",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "GOVAP",
-        "store_name": "Gò Vấp",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LOTTEGV",
-        "store_name": "Lotte Mart Gò Vấp",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "901QT",
-        "store_name": "901 Quang Trung",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LQDINH",
-        "store_name": "Nguyên Hồng",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NGUYENOANH",
-        "store_name": "Nguyễn Oanh",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "AEONTP",
-        "store_name": "AEON Tân Phú",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LETRONGTAN",
-        "store_name": "Lê Trọng Tấn",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LMARK81",
-        "store_name": "Landmark 81",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      }
+      "SO1 - Số 1",
+      "HBT - Hai Bà Trưng",
+      "CAOTH - Cao Thắng",
+      "NTMK - Nguyễn Thị Minh Khai",
+      "NDC - Nguyễn Đình Chiểu",
+      "LVS - Lê Văn Sỹ",
+      "185_3T2 - 185 Đường 3T2",
+      "126_3T2 - 126 Đường 3T2",
+      "NVTROI - Nguyễn Văn Trỗi",
+      "PDP - Phan Đình Phùng",
+      "GOVAP - Gò Vấp",
+      "LOTTEGV - Lotte Mart Gò Vấp",
+      "901QT - 901 Quang Trung",
+      "LQDINH - Nguyên Hồng",
+      "NGUYENOANH - Nguyễn Oanh",
+      "AEONTP - AEON Tân Phú",
+      "LETRONGTAN - Lê Trọng Tấn",
+      "LMARK81 - Landmark 81"
     ],
     "Hồ Thị Lâm": [
-      {
-        "store_code": "HVPLAZA",
-        "store_name": "Hùng Vương Plaza",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VANHANH",
-        "store_name": "Vạn Hạnh Mall",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "SENSECITY",
-        "store_name": "Sense City",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VINCOMTD",
-        "store_name": "Vincom Grand Park",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VINCOMLVV",
-        "store_name": "Vincom Lê Văn Việt",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VINCOMQ2",
-        "store_name": "Vincom Thảo Điền",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      }
+      "HVPLAZA - Hùng Vương Plaza",
+      "VANHANH - Vạn Hạnh Mall",
+      "SENSECITY - Sense City",
+      "VINCOMTD - Vincom Grand Park",
+      "VINCOMLVV - Vincom Lê Văn Việt",
+      "VINCOMQ2 - Vincom Thảo Điền"
     ],
     "Đỗ Thị Hoa Tiên": [
-      {
-        "store_code": "DIAMOND",
-        "store_name": "Diamond Plaza",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LYTT",
-        "store_name": "Lý Tự Trọng",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NGA6",
-        "store_name": "03 Nguyễn Trãi",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NTQ1",
-        "store_name": "74 Nguyễn Trãi",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PTER",
-        "store_name": "Pasteur",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NGHUE",
-        "store_name": "Nguyễn Huệ",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VINCOM",
-        "store_name": "Vincom Q.1",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "TAKA",
-        "store_name": "Takashimaya",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "OIKHIEM",
-        "store_name": "Ông Ích Khiêm",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "AUCO",
-        "store_name": "Âu Cơ",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CHOA",
-        "store_name": "Cộng Hòa (Số 8)",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "TCHINH2",
-        "store_name": "Trường Chinh 2 - Q12",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NGANHTHU",
-        "store_name": "Nguyễn Ảnh Thủ",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LVKHUONG",
-        "store_name": "Lê Văn Khương - Q12",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PDL",
-        "store_name": "Phan Đăng Lưu",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PDL2",
-        "store_name": "Phan Đăng Lưu 2",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "AEONBT",
-        "store_name": "AEON Bình Tân",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CUCHI",
-        "store_name": "Củ Chi",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      }
+      "DIAMOND - Diamond Plaza",
+      "LYTT - Lý Tự Trọng",
+      "NGA6 - 03 Nguyễn Trãi",
+      "NTQ1 - 74 Nguyễn Trãi",
+      "PTER - Pasteur",
+      "NGHUE - Nguyễn Huệ",
+      "VINCOM - Vincom Q.1",
+      "TAKA - Takashimaya",
+      "OIKHIEM - Ông Ích Khiêm",
+      "AUCO - Âu Cơ",
+      "CHOA - Cộng Hòa (Số 8)",
+      "TCHINH2 - Trường Chinh 2 - Q12",
+      "NGANHTHU - Nguyễn Ảnh Thủ",
+      "LVKHUONG - Lê Văn Khương - Q12",
+      "PDL - Phan Đăng Lưu",
+      "PDL2 - Phan Đăng Lưu 2",
+      "AEONBT - AEON Bình Tân",
+      "CUCHI - Củ Chi"
     ],
     "Nguyễn Quốc Dũng": [
-      {
-        "store_code": "CMT8",
-        "store_name": "Cách Mạng Tháng 8",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CHOA3",
-        "store_name": "454 Cộng Hòa",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "TCHINH",
-        "store_name": "Trường Chinh",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LBBICH",
-        "store_name": "Lũy Bán Bích",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "QBINH",
-        "store_name": "Quảng Bình",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "KONTUM",
-        "store_name": "Kon Tum (Trần Hưng Đạo)",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "GIALAI",
-        "store_name": "Gia Lai",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "PTHIET",
-        "store_name": "Phan Thiết",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DAKLAK",
-        "store_name": "Daklak",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DAKLAK2",
-        "store_name": "Daklak - Nguyễn Tất Thành",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DAKLAK5",
-        "store_name": "Buôn Hồ",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DAKNONG",
-        "store_name": "ĐẮK NÔNG (Tôn Đức Thắng)",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DALAT",
-        "store_name": "Đà Lạt",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DALAT2",
-        "store_name": "Đà Lạt 2",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "BAOLOC",
-        "store_name": "Bảo Lộc",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      }
+      "CMT8 - Cách Mạng Tháng 8",
+      "CHOA3 - 454 Cộng Hòa",
+      "TCHINH - Trường Chinh",
+      "LBBICH - Lũy Bán Bích",
+      "QBINH - Quảng Bình",
+      "KONTUM - Kon Tum (Trần Hưng Đạo)",
+      "GIALAI - Gia Lai",
+      "PTHIET - Phan Thiết",
+      "DAKLAK - Daklak",
+      "DAKLAK2 - Daklak - Nguyễn Tất Thành",
+      "DAKLAK5 - Buôn Hồ",
+      "DAKNONG - ĐẮK NÔNG (Tôn Đức Thắng)",
+      "DALAT - Đà Lạt",
+      "DALAT2 - Đà Lạt 2",
+      "BAOLOC - Bảo Lộc"
     ],
     "Trần Thanh Dũng": [
-      {
-        "store_code": "KINHDV",
-        "store_name": "Kinh Dương Vương",
-        "asm": "Trần Thanh Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "HAUGIANG",
-        "store_name": "Hậu Giang - Q6",
-        "asm": "Trần Thanh Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "MYTHO",
-        "store_name": "Mỹ Tho",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "MYTHO2",
-        "store_name": "Mỹ Tho 2",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CAYLAY",
-        "store_name": "Cai Lậy",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "BENTRE",
-        "store_name": "Bến Tre",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "VINHLONG",
-        "store_name": "Vĩnh Long",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "VINHLONG2",
-        "store_name": "Vĩnh Long 2 - Phạm Thái Bường",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "TRAVINH",
-        "store_name": "Trà Vinh",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "APHAUGIANG",
-        "store_name": "An Phước Vị Thanh",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      }
+      "KINHDV - Kinh Dương Vương",
+      "HAUGIANG - Hậu Giang - Q6",
+      "MYTHO - Mỹ Tho",
+      "MYTHO2 - Mỹ Tho 2",
+      "CAYLAY - Cai Lậy",
+      "BENTRE - Bến Tre",
+      "VINHLONG - Vĩnh Long",
+      "VINHLONG2 - Vĩnh Long 2 - Phạm Thái Bường",
+      "TRAVINH - Trà Vinh",
+      "APHAUGIANG - An Phước Vị Thanh"
     ],
     "Nguyễn Đăng Khôi": [
-      {
-        "store_code": "PMHNDC",
-        "store_name": "Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PMHNLB",
-        "store_name": "Phú Mỹ Hưng 2 - Nguyễn Lương Bằng",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PMHNVL",
-        "store_name": "Phú Mỹ Hưng 3 - Nguyễn Văn Linh",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LOTTEQ7",
-        "store_name": "Lotte Mart Q7",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CREMALL",
-        "store_name": "Crescent Mall Q7",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NTT",
-        "store_name": "Nguyễn Thị Thập",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "KHANHHOI",
-        "store_name": "Khánh Hội",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "DBTRAC",
-        "store_name": "Dương Bá Trạc",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "BDUONG",
-        "store_name": "Bình Dương",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "DLBD",
-        "store_name": "Đại Lộ Bình Dương",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "FLDBDUONG",
-        "store_name": "FLD Nguyễn Đình Chiểu BD",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "AEONBD",
-        "store_name": "AEON Bình Dương",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "DIANBD",
-        "store_name": "Dĩ An - Bình Dương",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VTAU4",
-        "store_name": "Vũng Tàu 1 - Lê Hồng Phong",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VTAU2",
-        "store_name": "Vũng Tàu 2 - Ba Cu",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VTAU3004",
-        "store_name": "Vũng Tàu 3 - Đường 30-04",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "BARIA",
-        "store_name": "Bà Rịa (Nguyễn Hữu Thọ)",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      }
+      "PMHNDC - Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh",
+      "PMHNLB - Phú Mỹ Hưng 2 - Nguyễn Lương Bằng",
+      "PMHNVL - Phú Mỹ Hưng 3 - Nguyễn Văn Linh",
+      "LOTTEQ7 - Lotte Mart Q7",
+      "CREMALL - Crescent Mall Q7",
+      "NTT - Nguyễn Thị Thập",
+      "KHANHHOI - Khánh Hội",
+      "DBTRAC - Dương Bá Trạc",
+      "BDUONG - Bình Dương",
+      "DLBD - Đại Lộ Bình Dương",
+      "FLDBDUONG - FLD Nguyễn Đình Chiểu BD",
+      "AEONBD - AEON Bình Dương",
+      "DIANBD - Dĩ An - Bình Dương",
+      "VTAU4 - Vũng Tàu 1 - Lê Hồng Phong",
+      "VTAU2 - Vũng Tàu 2 - Ba Cu",
+      "VTAU3004 - Vũng Tàu 3 - Đường 30-04",
+      "BARIA - Bà Rịa (Nguyễn Hữu Thọ)"
     ],
     "Nguyễn Lâm Trung Tín": [
-      {
-        "store_code": "THUDUC",
-        "store_name": "Thủ Đức",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "HCM"
-      },
-      {
-        "store_code": "THUDUC2",
-        "store_name": "Thủ Đức 2",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "HCM"
-      },
-      {
-        "store_code": "BPHUOC",
-        "store_name": "Bình Phước",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BINHLONG",
-        "store_name": "Bình Long",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BCDN",
-        "store_name": "BigC Đồng Nai",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "VINCOMBH",
-        "store_name": "VinCom Biên Hòa",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BIENHOA",
-        "store_name": "Biên Hoà",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BHNAQUOC",
-        "store_name": "Biên Hòa - Nguyễn Ái Quốc",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "TAMHIEP",
-        "store_name": "Tam Hiệp",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "LONGKHANH",
-        "store_name": "Long Khánh",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "LONGTHANH",
-        "store_name": "Long Thành",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "TAYNINH",
-        "store_name": "Tây Ninh",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BENLUC",
-        "store_name": "Bến Lức",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "LONGAN",
-        "store_name": "Long An",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      }
+      "THUDUC - Thủ Đức",
+      "THUDUC2 - Thủ Đức 2",
+      "BPHUOC - Bình Phước",
+      "BINHLONG - Bình Long",
+      "BCDN - BigC Đồng Nai",
+      "VINCOMBH - VinCom Biên Hòa",
+      "BIENHOA - Biên Hoà",
+      "BHNAQUOC - Biên Hòa - Nguyễn Ái Quốc",
+      "TAMHIEP - Tam Hiệp",
+      "LONGKHANH - Long Khánh",
+      "LONGTHANH - Long Thành",
+      "TAYNINH - Tây Ninh",
+      "BENLUC - Bến Lức",
+      "LONGAN - Long An"
     ],
     "Ni": [
-      {
-        "store_code": "ONLINEWEB",
-        "store_name": "Cửa Hàng Online - Website",
-        "asm": "Ni",
-        "region": "HCM"
-      }
+      "ONLINEWEB - Cửa Hàng Online - Website"
     ],
     "Đoàn Thị Kim Hương": [
-      {
-        "store_code": "CAOLANH",
-        "store_name": "Cao Lãnh",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "HONGNGU",
-        "store_name": "Hồng Ngự",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "SADEC",
-        "store_name": "AN PHƯỚC SA ĐÉC",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "LXUYEN",
-        "store_name": "Long Xuyên 1 - Hai Bà Trưng",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "LONGXUYEN2",
-        "store_name": "Long xuyên 2",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "LONGXUYEN3",
-        "store_name": "Long Xuyên 3 - (Trần Hưng Đạo)",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CHAUDOC",
-        "store_name": "Châu Đốc - An Giang",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "RGIA",
-        "store_name": "Rạch Giá",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "RGIA2",
-        "store_name": "Rạch Giá 2",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "RACHGIA3",
-        "store_name": "Rạch Giá 3",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "HATIEN",
-        "store_name": "Hà Tiên",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CTHO",
-        "store_name": "Cần Thơ (NT)",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CTHO2",
-        "store_name": "Cần Thơ (LTT) - Mậu Thân",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CTHO3",
-        "store_name": "Cần Thơ (HB)",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CTHO6",
-        "store_name": "Cần Thơ (Nguyễn Văn Cừ)",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CANTHO3T2",
-        "store_name": "Cần Thơ 3T2",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "STR",
-        "store_name": "Sóc Trăng",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "STR2",
-        "store_name": "Sóc Trăng 2 - Trần Hưng Đạo",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "BACLIEU",
-        "store_name": "Bạc Liêu",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "BACLIEU2",
-        "store_name": "Bạc Liêu 2 - Trần Huỳnh",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CMAU",
-        "store_name": "Cà Mau",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CMAU2",
-        "store_name": "Cà Mau 2 - Nguyễn Tất Thành",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "FLDLTTON",
-        "store_name": "FLD Lý Thánh Tôn - Nha Trang",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Trung- Tây Nguyên"
-      }
+      "CAOLANH - Cao Lãnh",
+      "HONGNGU - Hồng Ngự",
+      "SADEC - AN PHƯỚC SA ĐÉC",
+      "LXUYEN - Long Xuyên 1 - Hai Bà Trưng",
+      "LONGXUYEN2 - Long xuyên 2",
+      "LONGXUYEN3 - Long Xuyên 3 - (Trần Hưng Đạo)",
+      "CHAUDOC - Châu Đốc - An Giang",
+      "RGIA - Rạch Giá",
+      "RGIA2 - Rạch Giá 2",
+      "RACHGIA3 - Rạch Giá 3",
+      "HATIEN - Hà Tiên",
+      "CTHO - Cần Thơ (NT)",
+      "CTHO2 - Cần Thơ (LTT) - Mậu Thân",
+      "CTHO3 - Cần Thơ (HB)",
+      "CTHO6 - Cần Thơ (Nguyễn Văn Cừ)",
+      "CANTHO3T2 - Cần Thơ 3T2",
+      "STR - Sóc Trăng",
+      "STR2 - Sóc Trăng 2 - Trần Hưng Đạo",
+      "BACLIEU - Bạc Liêu",
+      "BACLIEU2 - Bạc Liêu 2 - Trần Huỳnh",
+      "CMAU - Cà Mau",
+      "CMAU2 - Cà Mau 2 - Nguyễn Tất Thành",
+      "FLDLTTON - FLD Lý Thánh Tôn - Nha Trang"
     ],
     "Nguyễn Lê Quân": [
-      {
-        "store_code": "QUANGTRI",
-        "store_name": "QUẢNG TRỊ",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "BIGCHUE",
-        "store_name": "Aeon Huế",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "HUE2",
-        "store_name": "Huế 2 (Hùng Vương)",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN",
-        "store_name": "Đà Nẵng (Hoàng Diệu)",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN2",
-        "store_name": "Đà Nẵng 2 (Lê Duẩn)",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN3",
-        "store_name": "Đà Nẳng 3 - Nguyễn Văn Linh",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN4",
-        "store_name": "Vincom Đà Nẵng",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN5DBP",
-        "store_name": "Đà Nẵng 5 (Điện Biên Phủ )",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "TAMKY",
-        "store_name": "Tam Kỳ",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QNGAI",
-        "store_name": "Quảng Ngãi",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QUINHON2",
-        "store_name": "Quy Nhơn - Phan Bội Châu",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QUYNHON3",
-        "store_name": "Quy Nhơn 2 - Lý Thường Kiệt",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "NHT3",
-        "store_name": "Nha Trang 1 - Thái Nguyên",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "NHT2",
-        "store_name": "Nha Trang 2 - Lý Tự Trọng",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "CAMRANH",
-        "store_name": "Cam Ranh",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "PHANRANG2",
-        "store_name": "Phan Rang 2",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "PHUYEN",
-        "store_name": "Phú Yên",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QUYNHON",
-        "store_name": "Quy Nhơn - Trần Hưng Đạo",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      }
+      "QUANGTRI - QUẢNG TRỊ",
+      "BIGCHUE - Aeon Huế",
+      "HUE2 - Huế 2 (Hùng Vương)",
+      "DN - Đà Nẵng (Hoàng Diệu)",
+      "DN2 - Đà Nẵng 2 (Lê Duẩn)",
+      "DN3 - Đà Nẳng 3 - Nguyễn Văn Linh",
+      "DN4 - Vincom Đà Nẵng",
+      "DN5DBP - Đà Nẵng 5 (Điện Biên Phủ )",
+      "TAMKY - Tam Kỳ",
+      "QNGAI - Quảng Ngãi",
+      "QUINHON2 - Quy Nhơn - Phan Bội Châu",
+      "QUYNHON3 - Quy Nhơn 2 - Lý Thường Kiệt",
+      "NHT3 - Nha Trang 1 - Thái Nguyên",
+      "NHT2 - Nha Trang 2 - Lý Tự Trọng",
+      "CAMRANH - Cam Ranh",
+      "PHANRANG2 - Phan Rang 2",
+      "PHUYEN - Phú Yên",
+      "QUYNHON - Quy Nhơn - Trần Hưng Đạo"
     ],
     "HN": [
-      {
-        "store_code": "HN1",
-        "store_name": "Hà Nội 1 - Tower",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN2",
-        "store_name": "Hà Nội 2 - Trường Chinh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN3",
-        "store_name": "Hà Nội 3 - Trần Hưng Đạo",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN4",
-        "store_name": "Hà Nội 4 - Chùa Bộc",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN5",
-        "store_name": "Hà Nội 5 - Nguyễn Khánh Toàn",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN6",
-        "store_name": "Hà Nội 6 - Láng Hạ",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN8",
-        "store_name": "Hà Nội 8 - Đại Cồ Việt",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN10",
-        "store_name": "Hà Nội 10 - Hàng Bài",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN11",
-        "store_name": "Hà Nội 11 - Quang Trung",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN12",
-        "store_name": "Hà Nội 12 - Xã Đàn",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HTMAU",
-        "store_name": "Hà Nội 14 - Hồ Tùng Mậu",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN15",
-        "store_name": "Hà Nội 15 - Lạc Long Quân",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN16",
-        "store_name": "Hà Nội 16 - Thái Hà",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN17",
-        "store_name": "Hà Nội 17 - Trần Duy Hưng",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN18",
-        "store_name": "Hà Nội 18 - Lê Văn Lương",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN19",
-        "store_name": "Hà Nội 19 - Nguyễn Trãi",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN20",
-        "store_name": "Hà Nội 20 - Trần Phú",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN21",
-        "store_name": "Hà Nội 21 -Nguyễn Chí Thanh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN22",
-        "store_name": "Hà Nội 22 - Nguyễn Văn Cừ",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN23",
-        "store_name": "Hà Nội 23 - Trung Kính",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN24",
-        "store_name": "Hà Nội 24 - Hoàng Quốc Việt",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN25",
-        "store_name": "Hà Nội 25 - Vincom Ocean Park",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN26",
-        "store_name": "Hà Nội 26 - Mạc Thị Bưởi",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "CAUGIAYHN",
-        "store_name": "Hà Nội 27 - Cầu Giấy",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HNTN",
-        "store_name": "Thái Nguyên",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "TUYENQUANG",
-        "store_name": "Cửa Hàng Tuyên Quang",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HP",
-        "store_name": "Hải Phòng (HP1)",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HP3",
-        "store_name": "Hải Phòng 2",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HP4",
-        "store_name": "Hải Phòng 4",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "LACHTRAYHP",
-        "store_name": "Lạch Tray Hải Phòng",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "TBINH",
-        "store_name": "Vincom Thái Bình",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "QNINH",
-        "store_name": "Quảng Ninh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "THANHHOA",
-        "store_name": "Thanh Hóa",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "VINH1",
-        "store_name": "Vinh 1 (Nguyễn Văn Cừ)",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "VINH2",
-        "store_name": "Vinh 2 (Lê Lợi)",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HATINH",
-        "store_name": "Hà Tĩnh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "NINHBINH",
-        "store_name": "Ninh Bình",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HAGIANG",
-        "store_name": "Hà Giang",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "VIETTRI",
-        "store_name": "Việt Trì",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "BACNINH",
-        "store_name": "Bắc Ninh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "NAMDINH",
-        "store_name": "Nam Định",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "BACGIANG",
-        "store_name": "Bắc Giang",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "VINHYEN",
-        "store_name": "Vĩnh Yên",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "LAOCAI",
-        "store_name": "Lào Cai",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "YENBAI",
-        "store_name": "Yên Bái",
-        "asm": "HN",
-        "region": "HN"
-      }
+      "HN1 - Hà Nội 1 - Tower",
+      "HN2 - Hà Nội 2 - Trường Chinh",
+      "HN3 - Hà Nội 3 - Trần Hưng Đạo",
+      "HN4 - Hà Nội 4 - Chùa Bộc",
+      "HN5 - Hà Nội 5 - Nguyễn Khánh Toàn",
+      "HN6 - Hà Nội 6 - Láng Hạ",
+      "HN8 - Hà Nội 8 - Đại Cồ Việt",
+      "HN10 - Hà Nội 10 - Hàng Bài",
+      "HN11 - Hà Nội 11 - Quang Trung",
+      "HN12 - Hà Nội 12 - Xã Đàn",
+      "HTMAU - Hà Nội 14 - Hồ Tùng Mậu",
+      "HN15 - Hà Nội 15 - Lạc Long Quân",
+      "HN16 - Hà Nội 16 - Thái Hà",
+      "HN17 - Hà Nội 17 - Trần Duy Hưng",
+      "HN18 - Hà Nội 18 - Lê Văn Lương",
+      "HN19 - Hà Nội 19 - Nguyễn Trãi",
+      "HN20 - Hà Nội 20 - Trần Phú",
+      "HN21 - Hà Nội 21 -Nguyễn Chí Thanh",
+      "HN22 - Hà Nội 22 - Nguyễn Văn Cừ",
+      "HN23 - Hà Nội 23 - Trung Kính",
+      "HN24 - Hà Nội 24 - Hoàng Quốc Việt",
+      "HN25 - Hà Nội 25 - Vincom Ocean Park",
+      "HN26 - Hà Nội 26 - Mạc Thị Bưởi",
+      "CAUGIAYHN - Hà Nội 27 - Cầu Giấy",
+      "HNTN - Thái Nguyên",
+      "TUYENQUANG - Cửa Hàng Tuyên Quang",
+      "HP - Hải Phòng (HP1)",
+      "HP3 - Hải Phòng 2",
+      "HP4 - Hải Phòng 4",
+      "LACHTRAYHP - Lạch Tray Hải Phòng",
+      "TBINH - Vincom Thái Bình",
+      "QNINH - Quảng Ninh",
+      "THANHHOA - Thanh Hóa",
+      "VINH1 - Vinh 1 (Nguyễn Văn Cừ)",
+      "VINH2 - Vinh 2 (Lê Lợi)",
+      "HATINH - Hà Tĩnh",
+      "NINHBINH - Ninh Bình",
+      "HAGIANG - Hà Giang",
+      "VIETTRI - Việt Trì",
+      "BACNINH - Bắc Ninh",
+      "NAMDINH - Nam Định",
+      "BACGIANG - Bắc Giang",
+      "VINHYEN - Vĩnh Yên",
+      "LAOCAI - Lào Cai",
+      "YENBAI - Yên Bái"
     ]
   },
   "mapping_by_region": {
     "HCM": [
-      {
-        "store_code": "SO1",
-        "store_name": "Số 1",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "HVPLAZA",
-        "store_name": "Hùng Vương Plaza",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "DIAMOND",
-        "store_name": "Diamond Plaza",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "HBT",
-        "store_name": "Hai Bà Trưng",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LYTT",
-        "store_name": "Lý Tự Trọng",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NGA6",
-        "store_name": "03 Nguyễn Trãi",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NTQ1",
-        "store_name": "74 Nguyễn Trãi",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PTER",
-        "store_name": "Pasteur",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NGHUE",
-        "store_name": "Nguyễn Huệ",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VINCOM",
-        "store_name": "Vincom Q.1",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "TAKA",
-        "store_name": "Takashimaya",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CAOTH",
-        "store_name": "Cao Thắng",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NTMK",
-        "store_name": "Nguyễn Thị Minh Khai",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NDC",
-        "store_name": "Nguyễn Đình Chiểu",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LVS",
-        "store_name": "Lê Văn Sỹ",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "OIKHIEM",
-        "store_name": "Ông Ích Khiêm",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "AUCO",
-        "store_name": "Âu Cơ",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "185_3T2",
-        "store_name": "185 Đường 3T2",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "126_3T2",
-        "store_name": "126 Đường 3T2",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VANHANH",
-        "store_name": "Vạn Hạnh Mall",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CMT8",
-        "store_name": "Cách Mạng Tháng 8",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CHOA",
-        "store_name": "Cộng Hòa (Số 8)",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CHOA3",
-        "store_name": "454 Cộng Hòa",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "TCHINH",
-        "store_name": "Trường Chinh",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "TCHINH2",
-        "store_name": "Trường Chinh 2 - Q12",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NGANHTHU",
-        "store_name": "Nguyễn Ảnh Thủ",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LVKHUONG",
-        "store_name": "Lê Văn Khương - Q12",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NVTROI",
-        "store_name": "Nguyễn Văn Trỗi",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PDP",
-        "store_name": "Phan Đình Phùng",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PDL",
-        "store_name": "Phan Đăng Lưu",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PDL2",
-        "store_name": "Phan Đăng Lưu 2",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "GOVAP",
-        "store_name": "Gò Vấp",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LOTTEGV",
-        "store_name": "Lotte Mart Gò Vấp",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "901QT",
-        "store_name": "901 Quang Trung",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LQDINH",
-        "store_name": "Nguyên Hồng",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NGUYENOANH",
-        "store_name": "Nguyễn Oanh",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "AEONBT",
-        "store_name": "AEON Bình Tân",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "KINHDV",
-        "store_name": "Kinh Dương Vương",
-        "asm": "Trần Thanh Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "HAUGIANG",
-        "store_name": "Hậu Giang - Q6",
-        "asm": "Trần Thanh Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "AEONTP",
-        "store_name": "AEON Tân Phú",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LBBICH",
-        "store_name": "Lũy Bán Bích",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LETRONGTAN",
-        "store_name": "Lê Trọng Tấn",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PMHNDC",
-        "store_name": "Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PMHNLB",
-        "store_name": "Phú Mỹ Hưng 2 - Nguyễn Lương Bằng",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "PMHNVL",
-        "store_name": "Phú Mỹ Hưng 3 - Nguyễn Văn Linh",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LOTTEQ7",
-        "store_name": "Lotte Mart Q7",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CREMALL",
-        "store_name": "Crescent Mall Q7",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "NTT",
-        "store_name": "Nguyễn Thị Thập",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "KHANHHOI",
-        "store_name": "Khánh Hội",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "DBTRAC",
-        "store_name": "Dương Bá Trạc",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "THUDUC",
-        "store_name": "Thủ Đức",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "HCM"
-      },
-      {
-        "store_code": "THUDUC2",
-        "store_name": "Thủ Đức 2",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "HCM"
-      },
-      {
-        "store_code": "SENSECITY",
-        "store_name": "Sense City",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VINCOMTD",
-        "store_name": "Vincom Grand Park",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VINCOMLVV",
-        "store_name": "Vincom Lê Văn Việt",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VINCOMQ2",
-        "store_name": "Vincom Thảo Điền",
-        "asm": "Hồ Thị Lâm",
-        "region": "HCM"
-      },
-      {
-        "store_code": "CUCHI",
-        "store_name": "Củ Chi",
-        "asm": "Đỗ Thị Hoa Tiên",
-        "region": "HCM"
-      },
-      {
-        "store_code": "ONLINEWEB",
-        "store_name": "Cửa Hàng Online - Website",
-        "asm": "Ni",
-        "region": "HCM"
-      },
-      {
-        "store_code": "BDUONG",
-        "store_name": "Bình Dương",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "DLBD",
-        "store_name": "Đại Lộ Bình Dương",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "FLDBDUONG",
-        "store_name": "FLD Nguyễn Đình Chiểu BD",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "AEONBD",
-        "store_name": "AEON Bình Dương",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "DIANBD",
-        "store_name": "Dĩ An - Bình Dương",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VTAU4",
-        "store_name": "Vũng Tàu 1 - Lê Hồng Phong",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VTAU2",
-        "store_name": "Vũng Tàu 2 - Ba Cu",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "VTAU3004",
-        "store_name": "Vũng Tàu 3 - Đường 30-04",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "BARIA",
-        "store_name": "Bà Rịa (Nguyễn Hữu Thọ)",
-        "asm": "Nguyễn Đăng Khôi",
-        "region": "HCM"
-      },
-      {
-        "store_code": "LMARK81",
-        "store_name": "Landmark 81",
-        "asm": "Đinh Thị Cát Linh",
-        "region": "HCM"
-      }
+      "SO1 - Số 1",
+      "HVPLAZA - Hùng Vương Plaza",
+      "DIAMOND - Diamond Plaza",
+      "HBT - Hai Bà Trưng",
+      "LYTT - Lý Tự Trọng",
+      "NGA6 - 03 Nguyễn Trãi",
+      "NTQ1 - 74 Nguyễn Trãi",
+      "PTER - Pasteur",
+      "NGHUE - Nguyễn Huệ",
+      "VINCOM - Vincom Q.1",
+      "TAKA - Takashimaya",
+      "CAOTH - Cao Thắng",
+      "NTMK - Nguyễn Thị Minh Khai",
+      "NDC - Nguyễn Đình Chiểu",
+      "LVS - Lê Văn Sỹ",
+      "OIKHIEM - Ông Ích Khiêm",
+      "AUCO - Âu Cơ",
+      "185_3T2 - 185 Đường 3T2",
+      "126_3T2 - 126 Đường 3T2",
+      "VANHANH - Vạn Hạnh Mall",
+      "CMT8 - Cách Mạng Tháng 8",
+      "CHOA - Cộng Hòa (Số 8)",
+      "CHOA3 - 454 Cộng Hòa",
+      "TCHINH - Trường Chinh",
+      "TCHINH2 - Trường Chinh 2 - Q12",
+      "NGANHTHU - Nguyễn Ảnh Thủ",
+      "LVKHUONG - Lê Văn Khương - Q12",
+      "NVTROI - Nguyễn Văn Trỗi",
+      "PDP - Phan Đình Phùng",
+      "PDL - Phan Đăng Lưu",
+      "PDL2 - Phan Đăng Lưu 2",
+      "GOVAP - Gò Vấp",
+      "LOTTEGV - Lotte Mart Gò Vấp",
+      "901QT - 901 Quang Trung",
+      "LQDINH - Nguyên Hồng",
+      "NGUYENOANH - Nguyễn Oanh",
+      "AEONBT - AEON Bình Tân",
+      "KINHDV - Kinh Dương Vương",
+      "HAUGIANG - Hậu Giang - Q6",
+      "AEONTP - AEON Tân Phú",
+      "LBBICH - Lũy Bán Bích",
+      "LETRONGTAN - Lê Trọng Tấn",
+      "PMHNDC - Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh",
+      "PMHNLB - Phú Mỹ Hưng 2 - Nguyễn Lương Bằng",
+      "PMHNVL - Phú Mỹ Hưng 3 - Nguyễn Văn Linh",
+      "LOTTEQ7 - Lotte Mart Q7",
+      "CREMALL - Crescent Mall Q7",
+      "NTT - Nguyễn Thị Thập",
+      "KHANHHOI - Khánh Hội",
+      "DBTRAC - Dương Bá Trạc",
+      "THUDUC - Thủ Đức",
+      "THUDUC2 - Thủ Đức 2",
+      "SENSECITY - Sense City",
+      "VINCOMTD - Vincom Grand Park",
+      "VINCOMLVV - Vincom Lê Văn Việt",
+      "VINCOMQ2 - Vincom Thảo Điền",
+      "CUCHI - Củ Chi",
+      "ONLINEWEB - Cửa Hàng Online - Website",
+      "BDUONG - Bình Dương",
+      "DLBD - Đại Lộ Bình Dương",
+      "FLDBDUONG - FLD Nguyễn Đình Chiểu BD",
+      "AEONBD - AEON Bình Dương",
+      "DIANBD - Dĩ An - Bình Dương",
+      "VTAU4 - Vũng Tàu 1 - Lê Hồng Phong",
+      "VTAU2 - Vũng Tàu 2 - Ba Cu",
+      "VTAU3004 - Vũng Tàu 3 - Đường 30-04",
+      "BARIA - Bà Rịa (Nguyễn Hữu Thọ)",
+      "LMARK81 - Landmark 81"
     ],
     "Miền Đông": [
-      {
-        "store_code": "BPHUOC",
-        "store_name": "Bình Phước",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BINHLONG",
-        "store_name": "Bình Long",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BCDN",
-        "store_name": "BigC Đồng Nai",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "VINCOMBH",
-        "store_name": "VinCom Biên Hòa",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BIENHOA",
-        "store_name": "Biên Hoà",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BHNAQUOC",
-        "store_name": "Biên Hòa - Nguyễn Ái Quốc",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "TAMHIEP",
-        "store_name": "Tam Hiệp",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "LONGKHANH",
-        "store_name": "Long Khánh",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "LONGTHANH",
-        "store_name": "Long Thành",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "TAYNINH",
-        "store_name": "Tây Ninh",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "BENLUC",
-        "store_name": "Bến Lức",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      },
-      {
-        "store_code": "LONGAN",
-        "store_name": "Long An",
-        "asm": "Nguyễn Lâm Trung Tín",
-        "region": "Miền Đông"
-      }
+      "BPHUOC - Bình Phước",
+      "BINHLONG - Bình Long",
+      "BCDN - BigC Đồng Nai",
+      "VINCOMBH - VinCom Biên Hòa",
+      "BIENHOA - Biên Hoà",
+      "BHNAQUOC - Biên Hòa - Nguyễn Ái Quốc",
+      "TAMHIEP - Tam Hiệp",
+      "LONGKHANH - Long Khánh",
+      "LONGTHANH - Long Thành",
+      "TAYNINH - Tây Ninh",
+      "BENLUC - Bến Lức",
+      "LONGAN - Long An"
     ],
     "Miền Tây": [
-      {
-        "store_code": "MYTHO",
-        "store_name": "Mỹ Tho",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "MYTHO2",
-        "store_name": "Mỹ Tho 2",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CAYLAY",
-        "store_name": "Cai Lậy",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CAOLANH",
-        "store_name": "Cao Lãnh",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "HONGNGU",
-        "store_name": "Hồng Ngự",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "SADEC",
-        "store_name": "AN PHƯỚC SA ĐÉC",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "LXUYEN",
-        "store_name": "Long Xuyên 1 - Hai Bà Trưng",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "LONGXUYEN2",
-        "store_name": "Long xuyên 2",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "LONGXUYEN3",
-        "store_name": "Long Xuyên 3 - (Trần Hưng Đạo)",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CHAUDOC",
-        "store_name": "Châu Đốc - An Giang",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "RGIA",
-        "store_name": "Rạch Giá",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "RGIA2",
-        "store_name": "Rạch Giá 2",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "RACHGIA3",
-        "store_name": "Rạch Giá 3",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "HATIEN",
-        "store_name": "Hà Tiên",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "BENTRE",
-        "store_name": "Bến Tre",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "VINHLONG",
-        "store_name": "Vĩnh Long",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "VINHLONG2",
-        "store_name": "Vĩnh Long 2 - Phạm Thái Bường",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "TRAVINH",
-        "store_name": "Trà Vinh",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CTHO",
-        "store_name": "Cần Thơ (NT)",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CTHO2",
-        "store_name": "Cần Thơ (LTT) - Mậu Thân",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CTHO3",
-        "store_name": "Cần Thơ (HB)",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CTHO6",
-        "store_name": "Cần Thơ (Nguyễn Văn Cừ)",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CANTHO3T2",
-        "store_name": "Cần Thơ 3T2",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "APHAUGIANG",
-        "store_name": "An Phước Vị Thanh",
-        "asm": "Trần Thanh Dũng",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "STR",
-        "store_name": "Sóc Trăng",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "STR2",
-        "store_name": "Sóc Trăng 2 - Trần Hưng Đạo",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "BACLIEU",
-        "store_name": "Bạc Liêu",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "BACLIEU2",
-        "store_name": "Bạc Liêu 2 - Trần Huỳnh",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CMAU",
-        "store_name": "Cà Mau",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      },
-      {
-        "store_code": "CMAU2",
-        "store_name": "Cà Mau 2 - Nguyễn Tất Thành",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Tây"
-      }
+      "MYTHO - Mỹ Tho",
+      "MYTHO2 - Mỹ Tho 2",
+      "CAYLAY - Cai Lậy",
+      "CAOLANH - Cao Lãnh",
+      "HONGNGU - Hồng Ngự",
+      "SADEC - AN PHƯỚC SA ĐÉC",
+      "LXUYEN - Long Xuyên 1 - Hai Bà Trưng",
+      "LONGXUYEN2 - Long xuyên 2",
+      "LONGXUYEN3 - Long Xuyên 3 - (Trần Hưng Đạo)",
+      "CHAUDOC - Châu Đốc - An Giang",
+      "RGIA - Rạch Giá",
+      "RGIA2 - Rạch Giá 2",
+      "RACHGIA3 - Rạch Giá 3",
+      "HATIEN - Hà Tiên",
+      "BENTRE - Bến Tre",
+      "VINHLONG - Vĩnh Long",
+      "VINHLONG2 - Vĩnh Long 2 - Phạm Thái Bường",
+      "TRAVINH - Trà Vinh",
+      "CTHO - Cần Thơ (NT)",
+      "CTHO2 - Cần Thơ (LTT) - Mậu Thân",
+      "CTHO3 - Cần Thơ (HB)",
+      "CTHO6 - Cần Thơ (Nguyễn Văn Cừ)",
+      "CANTHO3T2 - Cần Thơ 3T2",
+      "APHAUGIANG - An Phước Vị Thanh",
+      "STR - Sóc Trăng",
+      "STR2 - Sóc Trăng 2 - Trần Hưng Đạo",
+      "BACLIEU - Bạc Liêu",
+      "BACLIEU2 - Bạc Liêu 2 - Trần Huỳnh",
+      "CMAU - Cà Mau",
+      "CMAU2 - Cà Mau 2 - Nguyễn Tất Thành"
     ],
     "Miền Trung- Tây Nguyên": [
-      {
-        "store_code": "QBINH",
-        "store_name": "Quảng Bình",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QUANGTRI",
-        "store_name": "QUẢNG TRỊ",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "BIGCHUE",
-        "store_name": "Aeon Huế",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "HUE2",
-        "store_name": "Huế 2 (Hùng Vương)",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN",
-        "store_name": "Đà Nẵng (Hoàng Diệu)",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN2",
-        "store_name": "Đà Nẵng 2 (Lê Duẩn)",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN3",
-        "store_name": "Đà Nẳng 3 - Nguyễn Văn Linh",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN4",
-        "store_name": "Vincom Đà Nẵng",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DN5DBP",
-        "store_name": "Đà Nẵng 5 (Điện Biên Phủ )",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "TAMKY",
-        "store_name": "Tam Kỳ",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QNGAI",
-        "store_name": "Quảng Ngãi",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "KONTUM",
-        "store_name": "Kon Tum (Trần Hưng Đạo)",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QUINHON2",
-        "store_name": "Quy Nhơn - Phan Bội Châu",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QUYNHON3",
-        "store_name": "Quy Nhơn 2 - Lý Thường Kiệt",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "GIALAI",
-        "store_name": "Gia Lai",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "NHT3",
-        "store_name": "Nha Trang 1 - Thái Nguyên",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "NHT2",
-        "store_name": "Nha Trang 2 - Lý Tự Trọng",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "FLDLTTON",
-        "store_name": "FLD Lý Thánh Tôn - Nha Trang",
-        "asm": "Đoàn Thị Kim Hương",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "CAMRANH",
-        "store_name": "Cam Ranh",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "PHANRANG2",
-        "store_name": "Phan Rang 2",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "PTHIET",
-        "store_name": "Phan Thiết",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "PHUYEN",
-        "store_name": "Phú Yên",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DAKLAK",
-        "store_name": "Daklak",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DAKLAK2",
-        "store_name": "Daklak - Nguyễn Tất Thành",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DAKLAK5",
-        "store_name": "Buôn Hồ",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DAKNONG",
-        "store_name": "ĐẮK NÔNG (Tôn Đức Thắng)",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DALAT",
-        "store_name": "Đà Lạt",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "DALAT2",
-        "store_name": "Đà Lạt 2",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "BAOLOC",
-        "store_name": "Bảo Lộc",
-        "asm": "Nguyễn Quốc Dũng",
-        "region": "Miền Trung- Tây Nguyên"
-      },
-      {
-        "store_code": "QUYNHON",
-        "store_name": "Quy Nhơn - Trần Hưng Đạo",
-        "asm": "Nguyễn Lê Quân",
-        "region": "Miền Trung- Tây Nguyên"
-      }
+      "QBINH - Quảng Bình",
+      "QUANGTRI - QUẢNG TRỊ",
+      "BIGCHUE - Aeon Huế",
+      "HUE2 - Huế 2 (Hùng Vương)",
+      "DN - Đà Nẵng (Hoàng Diệu)",
+      "DN2 - Đà Nẵng 2 (Lê Duẩn)",
+      "DN3 - Đà Nẳng 3 - Nguyễn Văn Linh",
+      "DN4 - Vincom Đà Nẵng",
+      "DN5DBP - Đà Nẵng 5 (Điện Biên Phủ )",
+      "TAMKY - Tam Kỳ",
+      "QNGAI - Quảng Ngãi",
+      "KONTUM - Kon Tum (Trần Hưng Đạo)",
+      "QUINHON2 - Quy Nhơn - Phan Bội Châu",
+      "QUYNHON3 - Quy Nhơn 2 - Lý Thường Kiệt",
+      "GIALAI - Gia Lai",
+      "NHT3 - Nha Trang 1 - Thái Nguyên",
+      "NHT2 - Nha Trang 2 - Lý Tự Trọng",
+      "FLDLTTON - FLD Lý Thánh Tôn - Nha Trang",
+      "CAMRANH - Cam Ranh",
+      "PHANRANG2 - Phan Rang 2",
+      "PTHIET - Phan Thiết",
+      "PHUYEN - Phú Yên",
+      "DAKLAK - Daklak",
+      "DAKLAK2 - Daklak - Nguyễn Tất Thành",
+      "DAKLAK5 - Buôn Hồ",
+      "DAKNONG - ĐẮK NÔNG (Tôn Đức Thắng)",
+      "DALAT - Đà Lạt",
+      "DALAT2 - Đà Lạt 2",
+      "BAOLOC - Bảo Lộc",
+      "QUYNHON - Quy Nhơn - Trần Hưng Đạo"
     ],
     "HN": [
-      {
-        "store_code": "HN1",
-        "store_name": "Hà Nội 1 - Tower",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN2",
-        "store_name": "Hà Nội 2 - Trường Chinh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN3",
-        "store_name": "Hà Nội 3 - Trần Hưng Đạo",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN4",
-        "store_name": "Hà Nội 4 - Chùa Bộc",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN5",
-        "store_name": "Hà Nội 5 - Nguyễn Khánh Toàn",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN6",
-        "store_name": "Hà Nội 6 - Láng Hạ",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN8",
-        "store_name": "Hà Nội 8 - Đại Cồ Việt",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN10",
-        "store_name": "Hà Nội 10 - Hàng Bài",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN11",
-        "store_name": "Hà Nội 11 - Quang Trung",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN12",
-        "store_name": "Hà Nội 12 - Xã Đàn",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HTMAU",
-        "store_name": "Hà Nội 14 - Hồ Tùng Mậu",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN15",
-        "store_name": "Hà Nội 15 - Lạc Long Quân",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN16",
-        "store_name": "Hà Nội 16 - Thái Hà",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN17",
-        "store_name": "Hà Nội 17 - Trần Duy Hưng",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN18",
-        "store_name": "Hà Nội 18 - Lê Văn Lương",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN19",
-        "store_name": "Hà Nội 19 - Nguyễn Trãi",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN20",
-        "store_name": "Hà Nội 20 - Trần Phú",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN21",
-        "store_name": "Hà Nội 21 -Nguyễn Chí Thanh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN22",
-        "store_name": "Hà Nội 22 - Nguyễn Văn Cừ",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN23",
-        "store_name": "Hà Nội 23 - Trung Kính",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN24",
-        "store_name": "Hà Nội 24 - Hoàng Quốc Việt",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN25",
-        "store_name": "Hà Nội 25 - Vincom Ocean Park",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HN26",
-        "store_name": "Hà Nội 26 - Mạc Thị Bưởi",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "CAUGIAYHN",
-        "store_name": "Hà Nội 27 - Cầu Giấy",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HNTN",
-        "store_name": "Thái Nguyên",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "TUYENQUANG",
-        "store_name": "Cửa Hàng Tuyên Quang",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HP",
-        "store_name": "Hải Phòng (HP1)",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HP3",
-        "store_name": "Hải Phòng 2",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HP4",
-        "store_name": "Hải Phòng 4",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "LACHTRAYHP",
-        "store_name": "Lạch Tray Hải Phòng",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "TBINH",
-        "store_name": "Vincom Thái Bình",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "QNINH",
-        "store_name": "Quảng Ninh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "THANHHOA",
-        "store_name": "Thanh Hóa",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "VINH1",
-        "store_name": "Vinh 1 (Nguyễn Văn Cừ)",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "VINH2",
-        "store_name": "Vinh 2 (Lê Lợi)",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HATINH",
-        "store_name": "Hà Tĩnh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "NINHBINH",
-        "store_name": "Ninh Bình",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "HAGIANG",
-        "store_name": "Hà Giang",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "VIETTRI",
-        "store_name": "Việt Trì",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "BACNINH",
-        "store_name": "Bắc Ninh",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "NAMDINH",
-        "store_name": "Nam Định",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "BACGIANG",
-        "store_name": "Bắc Giang",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "VINHYEN",
-        "store_name": "Vĩnh Yên",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "LAOCAI",
-        "store_name": "Lào Cai",
-        "asm": "HN",
-        "region": "HN"
-      },
-      {
-        "store_code": "YENBAI",
-        "store_name": "Yên Bái",
-        "asm": "HN",
-        "region": "HN"
-      }
+      "HN1 - Hà Nội 1 - Tower",
+      "HN2 - Hà Nội 2 - Trường Chinh",
+      "HN3 - Hà Nội 3 - Trần Hưng Đạo",
+      "HN4 - Hà Nội 4 - Chùa Bộc",
+      "HN5 - Hà Nội 5 - Nguyễn Khánh Toàn",
+      "HN6 - Hà Nội 6 - Láng Hạ",
+      "HN8 - Hà Nội 8 - Đại Cồ Việt",
+      "HN10 - Hà Nội 10 - Hàng Bài",
+      "HN11 - Hà Nội 11 - Quang Trung",
+      "HN12 - Hà Nội 12 - Xã Đàn",
+      "HTMAU - Hà Nội 14 - Hồ Tùng Mậu",
+      "HN15 - Hà Nội 15 - Lạc Long Quân",
+      "HN16 - Hà Nội 16 - Thái Hà",
+      "HN17 - Hà Nội 17 - Trần Duy Hưng",
+      "HN18 - Hà Nội 18 - Lê Văn Lương",
+      "HN19 - Hà Nội 19 - Nguyễn Trãi",
+      "HN20 - Hà Nội 20 - Trần Phú",
+      "HN21 - Hà Nội 21 -Nguyễn Chí Thanh",
+      "HN22 - Hà Nội 22 - Nguyễn Văn Cừ",
+      "HN23 - Hà Nội 23 - Trung Kính",
+      "HN24 - Hà Nội 24 - Hoàng Quốc Việt",
+      "HN25 - Hà Nội 25 - Vincom Ocean Park",
+      "HN26 - Hà Nội 26 - Mạc Thị Bưởi",
+      "CAUGIAYHN - Hà Nội 27 - Cầu Giấy",
+      "HNTN - Thái Nguyên",
+      "TUYENQUANG - Cửa Hàng Tuyên Quang",
+      "HP - Hải Phòng (HP1)",
+      "HP3 - Hải Phòng 2",
+      "HP4 - Hải Phòng 4",
+      "LACHTRAYHP - Lạch Tray Hải Phòng",
+      "TBINH - Vincom Thái Bình",
+      "QNINH - Quảng Ninh",
+      "THANHHOA - Thanh Hóa",
+      "VINH1 - Vinh 1 (Nguyễn Văn Cừ)",
+      "VINH2 - Vinh 2 (Lê Lợi)",
+      "HATINH - Hà Tĩnh",
+      "NINHBINH - Ninh Bình",
+      "HAGIANG - Hà Giang",
+      "VIETTRI - Việt Trì",
+      "BACNINH - Bắc Ninh",
+      "NAMDINH - Nam Định",
+      "BACGIANG - Bắc Giang",
+      "VINHYEN - Vĩnh Yên",
+      "LAOCAI - Lào Cai",
+      "YENBAI - Yên Bái"
     ]
   }
 }

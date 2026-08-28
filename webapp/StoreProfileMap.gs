@@ -1,4 +1,4 @@
-// AUTO-GENERATED bởi build_store_profile_map.py — KHÔNG sửa tay.
+// AUTO-GENERATED bởi sync_stores_info_to_webapp.py — KHÔNG sửa tay.
 // Nguồn: StoresInfo.xlsx (cột BRAND, STORECODE, STORETYPE).
 var STORE_PROFILE_MAP = {
   "SO1": {
@@ -112,9 +112,9 @@ var STORE_PROFILE_MAP = {
     "skip_survey": false
   },
   "TAKA": {
-    "brand": "AP-PIE",
+    "brand": "PIE",
     "storetype": "Mono-brand Store",
-    "has_ap": true,
+    "has_ap": false,
     "has_pie": true,
     "has_anamai": false,
     "has_bonjour": false,
@@ -2023,6 +2023,17 @@ var STORE_PROFILE_MAP = {
     "has_bonjour": true,
     "is_ab_only": false,
     "has_guard": true,
+    "skip_survey": false
+  },
+  "LMARK81": {
+    "brand": "AP-PIE",
+    "storetype": "Concession",
+    "has_ap": true,
+    "has_pie": true,
+    "has_anamai": false,
+    "has_bonjour": false,
+    "is_ab_only": false,
+    "has_guard": false,
     "skip_survey": false
   }
 };

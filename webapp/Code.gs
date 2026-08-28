@@ -275,22 +275,431 @@ function _buildFallbackStoreData() {
 // Source: DimStore_Final.xlsx filtered CHG + Level3 + exclusion lists applied.
 // DO NOT edit manually; run build_store_data_map.py to regenerate.
 var STORE_DATA_MAP = {
+  "asms": [
+    "HN",
+    "Hồ Thị Lâm",
+    "Nguyễn Lâm Trung Tín",
+    "Nguyễn Lê Quân",
+    "Nguyễn Quốc Dũng",
+    "Nguyễn Đăng Khôi",
+    "Ni",
+    "Trần Thanh Dũng",
+    "Đinh Thị Cát Linh",
+    "Đoàn Thị Kim Hương",
+    "Đỗ Thị Hoa Tiên"
+  ],
+  "regions": [
+    "HCM",
+    "HN",
+    "Miền Trung- Tây Nguyên",
+    "Miền Tây",
+    "Miền Đông"
+  ],
   "mapping_by_asm": {
-      "Tiên": ["AEONBT - AEON Bình Tân", "AUCO - Âu Cơ", "CHOA - Cộng Hòa (Số 8)", "CUCHI - Củ Chi", "DIAMOND - Diamond Plaza", "LVKHUONG - Lê Văn Khương - Q12", "LYTT - Lý Tự Trọng", "NGA6 - 03 Nguyễn Trãi", "NGANHTHU - Nguyễn Ảnh Thủ", "NGHUE - Nguyễn Huệ", "NTQ1 - 74 Nguyễn Trãi", "OIKHIEM - Ông Ích Khiêm", "PDL - Phan Đăng Lưu", "PDL2 - Phan Đăng Lưu 2", "PTER - Pasteur", "TAKA - Takashimaya", "TCHINH2 - Trường Chinh 2 - Q12", "VINCOM - Vincom Q.1"],
-      "Tín": ["BCDN - BigC Đồng Nai", "BENLUC - Bến Lức", "BHNAQUOC - Biên Hòa - Nguyễn Ái Quốc", "BIENHOA - Biên Hoà", "BINHLONG - Bình Long", "BPHUOC - Bình Phước", "LONGAN - Long An", "LONGKHANH - Long Khánh", "LONGTHANH - Long Thành", "TAMHIEP - Tam Hiệp", "TAYNINH - Tây Ninh", "THUDUC - Thủ Đức", "THUDUC2 - Thủ Đức 2", "VINCOMBH - VinCom Biên Hòa"],
-      "Dũng": ["BAOLOC - Bảo Lộc", "CHOA3 - 454 Cộng Hòa", "CMT8 - Cách Mạng Tháng 8", "DAKLAK - Daklak", "DAKLAK2 - Daklak - Nguyễn Tất Thành", "DAKLAK5 - Buôn Hồ", "DAKNONG - ĐẮK NÔNG (Tôn Đức Thắng)", "DALAT - Đà Lạt", "DALAT2 - Đà Lạt 2", "GIALAI - Gia Lai", "KONTUM - Kon Tum (Trần Hưng Đạo)", "LBBICH - Lũy Bán Bích", "PTHIET - Phan Thiết", "QBINH - Quảng Bình", "TCHINH - Trường Chinh"],
-      "Linh": ["126_3T2 - 126 Đường 3T2", "185_3T2 - 185 Đường 3T2", "901QT - 901 Quang Trung", "AEONTP - AEON Tân Phú", "CAOTH - Cao Thắng", "GOVAP - Gò Vấp", "HBT - Hai Bà Trưng", "LETRONGTAN - Lê Trọng Tấn", "LOTTEGV - Lotte Mart Gò Vấp", "LQDINH - Nguyên Hồng", "LVS - Lê Văn Sỹ", "NDC - Nguyễn Đình Chiểu", "NGUYENOANH - Nguyễn Oanh", "NTMK - Nguyễn Thị Minh Khai", "NVTROI - Nguyễn Văn Trỗi", "PDP - Phan Đình Phùng", "SO1 - Số 1"],
-      "Quân": ["BIGCHUE - Aeon Huế", "CAMRANH - Cam Ranh", "DN - Đà Nẵng (Hoàng Diệu)", "DN2 - Đà Nẵng 2 (Lê Duẩn)", "DN3 - Đà Nẵng 3 - Nguyễn Văn Linh", "DN4 - Vincom Đà Nẵng", "DN5DBP - Đà Nẵng 5 (Điện Biên Phủ )", "HUE2 - Huế 2 (Hùng Vương)", "NHT2 - Nha Trang 2 - Lý Tự Trọng", "NHT3 - Nha Trang 1 - Thái Nguyên", "PHANRANG2 - Phan Rang 2", "PHUYEN - Phú Yên", "QNGAI - Quảng Ngãi", "QUANGTRI - QUẢNG TRỊ", "QUINHON2 - Quy Nhơn - Phan Bội Châu", "QUYNHON - Quy Nhơn - Trần Hưng Đạo", "QUYNHON3 - Quy Nhơn 2 - Lý Thường Kiệt", "TAMKY - Tam Kỳ"],
-      "Hương": ["BACLIEU - Bạc Liêu", "BACLIEU2 - Bạc Liêu 2 - Trần Huỳnh", "BENTRE - Bến Tre", "CANTHO3T2 - Cần Thơ 3T2", "CMAU - Cà Mau", "CMAU2 - Cà Mau 2 - Nguyễn Tất Thành", "CTHO - Cần Thơ (NT)", "CTHO2 - Cần Thơ (LTT) - Mậu Thân", "CTHO3 - Cần Thơ (HB)", "CTHO6 - Cần Thơ (Nguyễn Văn Cừ)", "HAUGIANG - Hậu Giang - Q6", "KINHDV - Kinh Dương Vương", "STR - Sóc Trăng", "STR2 - Sóc Trăng 2 - Trần Hưng Đạo", "TRAVINH - Trà Vinh", "VINHLONG - Vĩnh Long", "VINHLONG2 - Vĩnh Long 2 - Phạm Thái Bường"],
-      "Nhi": ["APHAUGIANG - An Phước Vị Thanh", "CAOLANH - Cao Lãnh", "CAYLAY - Cai Lậy", "CHAUDOC - Châu Đốc - An Giang", "FLDLTTON - FLD Lý Thánh Tôn - Nha Trang", "HATIEN - Hà Tiên", "HONGNGU - Hồng Ngự", "LONGXUYEN2 - Long xuyên 2", "LONGXUYEN3 - Long Xuyên 3 - (Trần Hưng Đạo)", "LXUYEN - Long Xuyên 1 - Hai Bà Trưng", "MYTHO - Mỹ Tho", "MYTHO2 - Mỹ Tho 2", "RACHGIA3 - Rạch Giá 3", "RGIA - Rạch Giá", "RGIA2 - Rạch Giá 2", "SADEC - AN PHƯỚC SA ĐÉC"],
-      "Khôi": ["AEONBD - AEON Bình Dương", "BARIA - Bà Rịa (Nguyễn Hữu Thọ)", "BDUONG - Bình Dương", "CREMALL - Crescent Mall Q7", "DBTRAC - Dương Bá Trạc", "DIANBD - Dĩ An - Bình Dương", "DLBD - Đại Lộ Bình Dương", "FLDBDUONG - FLD Nguyễn Đình Chiểu BD", "KHANHHOI - Khánh Hội", "LOTTEQ7 - Lotte Mart Q7", "NTT - Nguyễn Thị Thập", "PMHNDC - Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh", "PMHNLB - Phú Mỹ Hưng 2 - Nguyễn Lương Bằng", "PMHNVL - Phú Mỹ Hưng 3 - Nguyễn Văn Linh", "VTAU2 - Vũng Tàu 2 - Ba Cu", "VTAU3004 - Vũng Tàu 3 - Đường 30-04", "VTAU4 - Vũng Tàu 1 - Lê Hồng Phong"],
-      "Lâm": ["HVPLAZA - Hùng Vương Plaza", "SENSECITY - Sense City", "VANHANH - Vạn Hạnh Mall", "VINCOMLVV - Vincom Lê Văn Việt", "VINCOMQ2 - Vincom Thảo Điền", "VINCOMTD - Vincom Grand Park"]
+    "Đinh Thị Cát Linh": [
+      "SO1 - Số 1",
+      "HBT - Hai Bà Trưng",
+      "CAOTH - Cao Thắng",
+      "NTMK - Nguyễn Thị Minh Khai",
+      "NDC - Nguyễn Đình Chiểu",
+      "LVS - Lê Văn Sỹ",
+      "185_3T2 - 185 Đường 3T2",
+      "126_3T2 - 126 Đường 3T2",
+      "NVTROI - Nguyễn Văn Trỗi",
+      "PDP - Phan Đình Phùng",
+      "GOVAP - Gò Vấp",
+      "LOTTEGV - Lotte Mart Gò Vấp",
+      "901QT - 901 Quang Trung",
+      "LQDINH - Nguyên Hồng",
+      "NGUYENOANH - Nguyễn Oanh",
+      "AEONTP - AEON Tân Phú",
+      "LETRONGTAN - Lê Trọng Tấn",
+      "LMARK81 - Landmark 81"
+    ],
+    "Hồ Thị Lâm": [
+      "HVPLAZA - Hùng Vương Plaza",
+      "VANHANH - Vạn Hạnh Mall",
+      "SENSECITY - Sense City",
+      "VINCOMTD - Vincom Grand Park",
+      "VINCOMLVV - Vincom Lê Văn Việt",
+      "VINCOMQ2 - Vincom Thảo Điền"
+    ],
+    "Đỗ Thị Hoa Tiên": [
+      "DIAMOND - Diamond Plaza",
+      "LYTT - Lý Tự Trọng",
+      "NGA6 - 03 Nguyễn Trãi",
+      "NTQ1 - 74 Nguyễn Trãi",
+      "PTER - Pasteur",
+      "NGHUE - Nguyễn Huệ",
+      "VINCOM - Vincom Q.1",
+      "TAKA - Takashimaya",
+      "OIKHIEM - Ông Ích Khiêm",
+      "AUCO - Âu Cơ",
+      "CHOA - Cộng Hòa (Số 8)",
+      "TCHINH2 - Trường Chinh 2 - Q12",
+      "NGANHTHU - Nguyễn Ảnh Thủ",
+      "LVKHUONG - Lê Văn Khương - Q12",
+      "PDL - Phan Đăng Lưu",
+      "PDL2 - Phan Đăng Lưu 2",
+      "AEONBT - AEON Bình Tân",
+      "CUCHI - Củ Chi"
+    ],
+    "Nguyễn Quốc Dũng": [
+      "CMT8 - Cách Mạng Tháng 8",
+      "CHOA3 - 454 Cộng Hòa",
+      "TCHINH - Trường Chinh",
+      "LBBICH - Lũy Bán Bích",
+      "QBINH - Quảng Bình",
+      "KONTUM - Kon Tum (Trần Hưng Đạo)",
+      "GIALAI - Gia Lai",
+      "PTHIET - Phan Thiết",
+      "DAKLAK - Daklak",
+      "DAKLAK2 - Daklak - Nguyễn Tất Thành",
+      "DAKLAK5 - Buôn Hồ",
+      "DAKNONG - ĐẮK NÔNG (Tôn Đức Thắng)",
+      "DALAT - Đà Lạt",
+      "DALAT2 - Đà Lạt 2",
+      "BAOLOC - Bảo Lộc"
+    ],
+    "Trần Thanh Dũng": [
+      "KINHDV - Kinh Dương Vương",
+      "HAUGIANG - Hậu Giang - Q6",
+      "MYTHO - Mỹ Tho",
+      "MYTHO2 - Mỹ Tho 2",
+      "CAYLAY - Cai Lậy",
+      "BENTRE - Bến Tre",
+      "VINHLONG - Vĩnh Long",
+      "VINHLONG2 - Vĩnh Long 2 - Phạm Thái Bường",
+      "TRAVINH - Trà Vinh",
+      "APHAUGIANG - An Phước Vị Thanh"
+    ],
+    "Nguyễn Đăng Khôi": [
+      "PMHNDC - Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh",
+      "PMHNLB - Phú Mỹ Hưng 2 - Nguyễn Lương Bằng",
+      "PMHNVL - Phú Mỹ Hưng 3 - Nguyễn Văn Linh",
+      "LOTTEQ7 - Lotte Mart Q7",
+      "CREMALL - Crescent Mall Q7",
+      "NTT - Nguyễn Thị Thập",
+      "KHANHHOI - Khánh Hội",
+      "DBTRAC - Dương Bá Trạc",
+      "BDUONG - Bình Dương",
+      "DLBD - Đại Lộ Bình Dương",
+      "FLDBDUONG - FLD Nguyễn Đình Chiểu BD",
+      "AEONBD - AEON Bình Dương",
+      "DIANBD - Dĩ An - Bình Dương",
+      "VTAU4 - Vũng Tàu 1 - Lê Hồng Phong",
+      "VTAU2 - Vũng Tàu 2 - Ba Cu",
+      "VTAU3004 - Vũng Tàu 3 - Đường 30-04",
+      "BARIA - Bà Rịa (Nguyễn Hữu Thọ)"
+    ],
+    "Nguyễn Lâm Trung Tín": [
+      "THUDUC - Thủ Đức",
+      "THUDUC2 - Thủ Đức 2",
+      "BPHUOC - Bình Phước",
+      "BINHLONG - Bình Long",
+      "BCDN - BigC Đồng Nai",
+      "VINCOMBH - VinCom Biên Hòa",
+      "BIENHOA - Biên Hoà",
+      "BHNAQUOC - Biên Hòa - Nguyễn Ái Quốc",
+      "TAMHIEP - Tam Hiệp",
+      "LONGKHANH - Long Khánh",
+      "LONGTHANH - Long Thành",
+      "TAYNINH - Tây Ninh",
+      "BENLUC - Bến Lức",
+      "LONGAN - Long An"
+    ],
+    "Ni": [
+      "ONLINEWEB - Cửa Hàng Online - Website"
+    ],
+    "Đoàn Thị Kim Hương": [
+      "CAOLANH - Cao Lãnh",
+      "HONGNGU - Hồng Ngự",
+      "SADEC - AN PHƯỚC SA ĐÉC",
+      "LXUYEN - Long Xuyên 1 - Hai Bà Trưng",
+      "LONGXUYEN2 - Long xuyên 2",
+      "LONGXUYEN3 - Long Xuyên 3 - (Trần Hưng Đạo)",
+      "CHAUDOC - Châu Đốc - An Giang",
+      "RGIA - Rạch Giá",
+      "RGIA2 - Rạch Giá 2",
+      "RACHGIA3 - Rạch Giá 3",
+      "HATIEN - Hà Tiên",
+      "CTHO - Cần Thơ (NT)",
+      "CTHO2 - Cần Thơ (LTT) - Mậu Thân",
+      "CTHO3 - Cần Thơ (HB)",
+      "CTHO6 - Cần Thơ (Nguyễn Văn Cừ)",
+      "CANTHO3T2 - Cần Thơ 3T2",
+      "STR - Sóc Trăng",
+      "STR2 - Sóc Trăng 2 - Trần Hưng Đạo",
+      "BACLIEU - Bạc Liêu",
+      "BACLIEU2 - Bạc Liêu 2 - Trần Huỳnh",
+      "CMAU - Cà Mau",
+      "CMAU2 - Cà Mau 2 - Nguyễn Tất Thành",
+      "FLDLTTON - FLD Lý Thánh Tôn - Nha Trang"
+    ],
+    "Nguyễn Lê Quân": [
+      "QUANGTRI - QUẢNG TRỊ",
+      "BIGCHUE - Aeon Huế",
+      "HUE2 - Huế 2 (Hùng Vương)",
+      "DN - Đà Nẵng (Hoàng Diệu)",
+      "DN2 - Đà Nẵng 2 (Lê Duẩn)",
+      "DN3 - Đà Nẳng 3 - Nguyễn Văn Linh",
+      "DN4 - Vincom Đà Nẵng",
+      "DN5DBP - Đà Nẵng 5 (Điện Biên Phủ )",
+      "TAMKY - Tam Kỳ",
+      "QNGAI - Quảng Ngãi",
+      "QUINHON2 - Quy Nhơn - Phan Bội Châu",
+      "QUYNHON3 - Quy Nhơn 2 - Lý Thường Kiệt",
+      "NHT3 - Nha Trang 1 - Thái Nguyên",
+      "NHT2 - Nha Trang 2 - Lý Tự Trọng",
+      "CAMRANH - Cam Ranh",
+      "PHANRANG2 - Phan Rang 2",
+      "PHUYEN - Phú Yên",
+      "QUYNHON - Quy Nhơn - Trần Hưng Đạo"
+    ],
+    "HN": [
+      "HN1 - Hà Nội 1 - Tower",
+      "HN2 - Hà Nội 2 - Trường Chinh",
+      "HN3 - Hà Nội 3 - Trần Hưng Đạo",
+      "HN4 - Hà Nội 4 - Chùa Bộc",
+      "HN5 - Hà Nội 5 - Nguyễn Khánh Toàn",
+      "HN6 - Hà Nội 6 - Láng Hạ",
+      "HN8 - Hà Nội 8 - Đại Cồ Việt",
+      "HN10 - Hà Nội 10 - Hàng Bài",
+      "HN11 - Hà Nội 11 - Quang Trung",
+      "HN12 - Hà Nội 12 - Xã Đàn",
+      "HTMAU - Hà Nội 14 - Hồ Tùng Mậu",
+      "HN15 - Hà Nội 15 - Lạc Long Quân",
+      "HN16 - Hà Nội 16 - Thái Hà",
+      "HN17 - Hà Nội 17 - Trần Duy Hưng",
+      "HN18 - Hà Nội 18 - Lê Văn Lương",
+      "HN19 - Hà Nội 19 - Nguyễn Trãi",
+      "HN20 - Hà Nội 20 - Trần Phú",
+      "HN21 - Hà Nội 21 -Nguyễn Chí Thanh",
+      "HN22 - Hà Nội 22 - Nguyễn Văn Cừ",
+      "HN23 - Hà Nội 23 - Trung Kính",
+      "HN24 - Hà Nội 24 - Hoàng Quốc Việt",
+      "HN25 - Hà Nội 25 - Vincom Ocean Park",
+      "HN26 - Hà Nội 26 - Mạc Thị Bưởi",
+      "CAUGIAYHN - Hà Nội 27 - Cầu Giấy",
+      "HNTN - Thái Nguyên",
+      "TUYENQUANG - Cửa Hàng Tuyên Quang",
+      "HP - Hải Phòng (HP1)",
+      "HP3 - Hải Phòng 2",
+      "HP4 - Hải Phòng 4",
+      "LACHTRAYHP - Lạch Tray Hải Phòng",
+      "TBINH - Vincom Thái Bình",
+      "QNINH - Quảng Ninh",
+      "THANHHOA - Thanh Hóa",
+      "VINH1 - Vinh 1 (Nguyễn Văn Cừ)",
+      "VINH2 - Vinh 2 (Lê Lợi)",
+      "HATINH - Hà Tĩnh",
+      "NINHBINH - Ninh Bình",
+      "HAGIANG - Hà Giang",
+      "VIETTRI - Việt Trì",
+      "BACNINH - Bắc Ninh",
+      "NAMDINH - Nam Định",
+      "BACGIANG - Bắc Giang",
+      "VINHYEN - Vĩnh Yên",
+      "LAOCAI - Lào Cai",
+      "YENBAI - Yên Bái"
+    ]
   },
   "mapping_by_region": {
-      "HCM": ["126_3T2 - 126 Đường 3T2", "185_3T2 - 185 Đường 3T2", "901QT - 901 Quang Trung", "AEONBT - AEON Bình Tân", "AEONTP - AEON Tân Phú", "AUCO - Âu Cơ", "CAOTH - Cao Thắng", "CHOA - Cộng Hòa (Số 8)", "CHOA3 - 454 Cộng Hòa", "CMT8 - Cách Mạng Tháng 8", "CREMALL - Crescent Mall Q7", "CUCHI - Củ Chi", "DBTRAC - Dương Bá Trạc", "DIAMOND - Diamond Plaza", "GOVAP - Gò Vấp", "HAUGIANG - Hậu Giang - Q6", "HBT - Hai Bà Trưng", "HVPLAZA - Hùng Vương Plaza", "KHANHHOI - Khánh Hội", "KINHDV - Kinh Dương Vương", "LBBICH - Lũy Bán Bích", "LETRONGTAN - Lê Trọng Tấn", "LOTTEGV - Lotte Mart Gò Vấp", "LOTTEQ7 - Lotte Mart Q7", "LQDINH - Nguyên Hồng", "LVKHUONG - Lê Văn Khương - Q12", "LVS - Lê Văn Sỹ", "LYTT - Lý Tự Trọng", "NDC - Nguyễn Đình Chiểu", "NGA6 - 03 Nguyễn Trãi", "NGANHTHU - Nguyễn Ảnh Thủ", "NGHUE - Nguyễn Huệ", "NGUYENOANH - Nguyễn Oanh", "NTMK - Nguyễn Thị Minh Khai", "NTQ1 - 74 Nguyễn Trãi", "NTT - Nguyễn Thị Thập", "NVTROI - Nguyễn Văn Trỗi", "OIKHIEM - Ông Ích Khiêm", "PDL - Phan Đăng Lưu", "PDL2 - Phan Đăng Lưu 2", "PDP - Phan Đình Phùng", "PMHNDC - Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh", "PMHNLB - Phú Mỹ Hưng 2 - Nguyễn Lương Bằng", "PMHNVL - Phú Mỹ Hưng 3 - Nguyễn Văn Linh", "PTER - Pasteur", "SENSECITY - Sense City", "SO1 - Số 1", "TAKA - Takashimaya", "TCHINH - Trường Chinh", "TCHINH2 - Trường Chinh 2 - Q12", "THUDUC - Thủ Đức", "THUDUC2 - Thủ Đức 2", "VANHANH - Vạn Hạnh Mall", "VINCOM - Vincom Q.1", "VINCOMLVV - Vincom Lê Văn Việt", "VINCOMQ2 - Vincom Thảo Điền", "VINCOMTD - Vincom Grand Park"],
-      "Miền Trung- Tây Nguyên": ["BAOLOC - Bảo Lộc", "BIGCHUE - Aeon Huế", "CAMRANH - Cam Ranh", "DAKLAK - Daklak", "DAKLAK2 - Daklak - Nguyễn Tất Thành", "DAKLAK5 - Buôn Hồ", "DAKNONG - ĐẮK NÔNG (Tôn Đức Thắng)", "DALAT - Đà Lạt", "DALAT2 - Đà Lạt 2", "DN - Đà Nẵng (Hoàng Diệu)", "DN2 - Đà Nẵng 2 (Lê Duẩn)", "DN3 - Đà Nẵng 3 - Nguyễn Văn Linh", "DN4 - Vincom Đà Nẵng", "DN5DBP - Đà Nẵng 5 (Điện Biên Phủ )", "FLDLTTON - FLD Lý Thánh Tôn - Nha Trang", "GIALAI - Gia Lai", "HUE2 - Huế 2 (Hùng Vương)", "KONTUM - Kon Tum (Trần Hưng Đạo)", "NHT2 - Nha Trang 2 - Lý Tự Trọng", "NHT3 - Nha Trang 1 - Thái Nguyên", "PHANRANG2 - Phan Rang 2", "PHUYEN - Phú Yên", "PTHIET - Phan Thiết", "QBINH - Quảng Bình", "QNGAI - Quảng Ngãi", "QUANGTRI - QUẢNG TRỊ", "QUINHON2 - Quy Nhơn - Phan Bội Châu", "QUYNHON - Quy Nhơn - Trần Hưng Đạo", "QUYNHON3 - Quy Nhơn 2 - Lý Thường Kiệt", "TAMKY - Tam Kỳ"],
-      "Miền Tây": ["APHAUGIANG - An Phước Vị Thanh", "BACLIEU - Bạc Liêu", "BACLIEU2 - Bạc Liêu 2 - Trần Huỳnh", "BENLUC - Bến Lức", "BENTRE - Bến Tre", "CANTHO3T2 - Cần Thơ 3T2", "CAOLANH - Cao Lãnh", "CAYLAY - Cai Lậy", "CHAUDOC - Châu Đốc - An Giang", "CMAU - Cà Mau", "CMAU2 - Cà Mau 2 - Nguyễn Tất Thành", "CTHO - Cần Thơ (NT)", "CTHO2 - Cần Thơ (LTT) - Mậu Thân", "CTHO3 - Cần Thơ (HB)", "CTHO6 - Cần Thơ (Nguyễn Văn Cừ)", "HATIEN - Hà Tiên", "HONGNGU - Hồng Ngự", "LONGAN - Long An", "LONGXUYEN2 - Long xuyên 2", "LONGXUYEN3 - Long Xuyên 3 - (Trần Hưng Đạo)", "LXUYEN - Long Xuyên 1 - Hai Bà Trưng", "MYTHO - Mỹ Tho", "MYTHO2 - Mỹ Tho 2", "RACHGIA3 - Rạch Giá 3", "RGIA - Rạch Giá", "RGIA2 - Rạch Giá 2", "SADEC - AN PHƯỚC SA ĐÉC", "STR - Sóc Trăng", "STR2 - Sóc Trăng 2 - Trần Hưng Đạo", "TRAVINH - Trà Vinh", "VINHLONG - Vĩnh Long", "VINHLONG2 - Vĩnh Long 2 - Phạm Thái Bường"],
-      "Miền Đông": ["AEONBD - AEON Bình Dương", "BARIA - Bà Rịa (Nguyễn Hữu Thọ)", "BCDN - BigC Đồng Nai", "BDUONG - Bình Dương", "BHNAQUOC - Biên Hòa - Nguyễn Ái Quốc", "BIENHOA - Biên Hoà", "BINHLONG - Bình Long", "BPHUOC - Bình Phước", "DIANBD - Dĩ An - Bình Dương", "DLBD - Đại Lộ Bình Dương", "FLDBDUONG - FLD Nguyễn Đình Chiểu BD", "LONGKHANH - Long Khánh", "LONGTHANH - Long Thành", "TAMHIEP - Tam Hiệp", "TAYNINH - Tây Ninh", "VINCOMBH - VinCom Biên Hòa", "VTAU2 - Vũng Tàu 2 - Ba Cu", "VTAU3004 - Vũng Tàu 3 - Đường 30-04", "VTAU4 - Vũng Tàu 1 - Lê Hồng Phong"]
+    "HCM": [
+      "SO1 - Số 1",
+      "HVPLAZA - Hùng Vương Plaza",
+      "DIAMOND - Diamond Plaza",
+      "HBT - Hai Bà Trưng",
+      "LYTT - Lý Tự Trọng",
+      "NGA6 - 03 Nguyễn Trãi",
+      "NTQ1 - 74 Nguyễn Trãi",
+      "PTER - Pasteur",
+      "NGHUE - Nguyễn Huệ",
+      "VINCOM - Vincom Q.1",
+      "TAKA - Takashimaya",
+      "CAOTH - Cao Thắng",
+      "NTMK - Nguyễn Thị Minh Khai",
+      "NDC - Nguyễn Đình Chiểu",
+      "LVS - Lê Văn Sỹ",
+      "OIKHIEM - Ông Ích Khiêm",
+      "AUCO - Âu Cơ",
+      "185_3T2 - 185 Đường 3T2",
+      "126_3T2 - 126 Đường 3T2",
+      "VANHANH - Vạn Hạnh Mall",
+      "CMT8 - Cách Mạng Tháng 8",
+      "CHOA - Cộng Hòa (Số 8)",
+      "CHOA3 - 454 Cộng Hòa",
+      "TCHINH - Trường Chinh",
+      "TCHINH2 - Trường Chinh 2 - Q12",
+      "NGANHTHU - Nguyễn Ảnh Thủ",
+      "LVKHUONG - Lê Văn Khương - Q12",
+      "NVTROI - Nguyễn Văn Trỗi",
+      "PDP - Phan Đình Phùng",
+      "PDL - Phan Đăng Lưu",
+      "PDL2 - Phan Đăng Lưu 2",
+      "GOVAP - Gò Vấp",
+      "LOTTEGV - Lotte Mart Gò Vấp",
+      "901QT - 901 Quang Trung",
+      "LQDINH - Nguyên Hồng",
+      "NGUYENOANH - Nguyễn Oanh",
+      "AEONBT - AEON Bình Tân",
+      "KINHDV - Kinh Dương Vương",
+      "HAUGIANG - Hậu Giang - Q6",
+      "AEONTP - AEON Tân Phú",
+      "LBBICH - Lũy Bán Bích",
+      "LETRONGTAN - Lê Trọng Tấn",
+      "PMHNDC - Phú Mỹ Hưng 1 - Nguyễn Đức Cảnh",
+      "PMHNLB - Phú Mỹ Hưng 2 - Nguyễn Lương Bằng",
+      "PMHNVL - Phú Mỹ Hưng 3 - Nguyễn Văn Linh",
+      "LOTTEQ7 - Lotte Mart Q7",
+      "CREMALL - Crescent Mall Q7",
+      "NTT - Nguyễn Thị Thập",
+      "KHANHHOI - Khánh Hội",
+      "DBTRAC - Dương Bá Trạc",
+      "THUDUC - Thủ Đức",
+      "THUDUC2 - Thủ Đức 2",
+      "SENSECITY - Sense City",
+      "VINCOMTD - Vincom Grand Park",
+      "VINCOMLVV - Vincom Lê Văn Việt",
+      "VINCOMQ2 - Vincom Thảo Điền",
+      "CUCHI - Củ Chi",
+      "ONLINEWEB - Cửa Hàng Online - Website",
+      "BDUONG - Bình Dương",
+      "DLBD - Đại Lộ Bình Dương",
+      "FLDBDUONG - FLD Nguyễn Đình Chiểu BD",
+      "AEONBD - AEON Bình Dương",
+      "DIANBD - Dĩ An - Bình Dương",
+      "VTAU4 - Vũng Tàu 1 - Lê Hồng Phong",
+      "VTAU2 - Vũng Tàu 2 - Ba Cu",
+      "VTAU3004 - Vũng Tàu 3 - Đường 30-04",
+      "BARIA - Bà Rịa (Nguyễn Hữu Thọ)",
+      "LMARK81 - Landmark 81"
+    ],
+    "Miền Đông": [
+      "BPHUOC - Bình Phước",
+      "BINHLONG - Bình Long",
+      "BCDN - BigC Đồng Nai",
+      "VINCOMBH - VinCom Biên Hòa",
+      "BIENHOA - Biên Hoà",
+      "BHNAQUOC - Biên Hòa - Nguyễn Ái Quốc",
+      "TAMHIEP - Tam Hiệp",
+      "LONGKHANH - Long Khánh",
+      "LONGTHANH - Long Thành",
+      "TAYNINH - Tây Ninh",
+      "BENLUC - Bến Lức",
+      "LONGAN - Long An"
+    ],
+    "Miền Tây": [
+      "MYTHO - Mỹ Tho",
+      "MYTHO2 - Mỹ Tho 2",
+      "CAYLAY - Cai Lậy",
+      "CAOLANH - Cao Lãnh",
+      "HONGNGU - Hồng Ngự",
+      "SADEC - AN PHƯỚC SA ĐÉC",
+      "LXUYEN - Long Xuyên 1 - Hai Bà Trưng",
+      "LONGXUYEN2 - Long xuyên 2",
+      "LONGXUYEN3 - Long Xuyên 3 - (Trần Hưng Đạo)",
+      "CHAUDOC - Châu Đốc - An Giang",
+      "RGIA - Rạch Giá",
+      "RGIA2 - Rạch Giá 2",
+      "RACHGIA3 - Rạch Giá 3",
+      "HATIEN - Hà Tiên",
+      "BENTRE - Bến Tre",
+      "VINHLONG - Vĩnh Long",
+      "VINHLONG2 - Vĩnh Long 2 - Phạm Thái Bường",
+      "TRAVINH - Trà Vinh",
+      "CTHO - Cần Thơ (NT)",
+      "CTHO2 - Cần Thơ (LTT) - Mậu Thân",
+      "CTHO3 - Cần Thơ (HB)",
+      "CTHO6 - Cần Thơ (Nguyễn Văn Cừ)",
+      "CANTHO3T2 - Cần Thơ 3T2",
+      "APHAUGIANG - An Phước Vị Thanh",
+      "STR - Sóc Trăng",
+      "STR2 - Sóc Trăng 2 - Trần Hưng Đạo",
+      "BACLIEU - Bạc Liêu",
+      "BACLIEU2 - Bạc Liêu 2 - Trần Huỳnh",
+      "CMAU - Cà Mau",
+      "CMAU2 - Cà Mau 2 - Nguyễn Tất Thành"
+    ],
+    "Miền Trung- Tây Nguyên": [
+      "QBINH - Quảng Bình",
+      "QUANGTRI - QUẢNG TRỊ",
+      "BIGCHUE - Aeon Huế",
+      "HUE2 - Huế 2 (Hùng Vương)",
+      "DN - Đà Nẵng (Hoàng Diệu)",
+      "DN2 - Đà Nẵng 2 (Lê Duẩn)",
+      "DN3 - Đà Nẳng 3 - Nguyễn Văn Linh",
+      "DN4 - Vincom Đà Nẵng",
+      "DN5DBP - Đà Nẵng 5 (Điện Biên Phủ )",
+      "TAMKY - Tam Kỳ",
+      "QNGAI - Quảng Ngãi",
+      "KONTUM - Kon Tum (Trần Hưng Đạo)",
+      "QUINHON2 - Quy Nhơn - Phan Bội Châu",
+      "QUYNHON3 - Quy Nhơn 2 - Lý Thường Kiệt",
+      "GIALAI - Gia Lai",
+      "NHT3 - Nha Trang 1 - Thái Nguyên",
+      "NHT2 - Nha Trang 2 - Lý Tự Trọng",
+      "FLDLTTON - FLD Lý Thánh Tôn - Nha Trang",
+      "CAMRANH - Cam Ranh",
+      "PHANRANG2 - Phan Rang 2",
+      "PTHIET - Phan Thiết",
+      "PHUYEN - Phú Yên",
+      "DAKLAK - Daklak",
+      "DAKLAK2 - Daklak - Nguyễn Tất Thành",
+      "DAKLAK5 - Buôn Hồ",
+      "DAKNONG - ĐẮK NÔNG (Tôn Đức Thắng)",
+      "DALAT - Đà Lạt",
+      "DALAT2 - Đà Lạt 2",
+      "BAOLOC - Bảo Lộc",
+      "QUYNHON - Quy Nhơn - Trần Hưng Đạo"
+    ],
+    "HN": [
+      "HN1 - Hà Nội 1 - Tower",
+      "HN2 - Hà Nội 2 - Trường Chinh",
+      "HN3 - Hà Nội 3 - Trần Hưng Đạo",
+      "HN4 - Hà Nội 4 - Chùa Bộc",
+      "HN5 - Hà Nội 5 - Nguyễn Khánh Toàn",
+      "HN6 - Hà Nội 6 - Láng Hạ",
+      "HN8 - Hà Nội 8 - Đại Cồ Việt",
+      "HN10 - Hà Nội 10 - Hàng Bài",
+      "HN11 - Hà Nội 11 - Quang Trung",
+      "HN12 - Hà Nội 12 - Xã Đàn",
+      "HTMAU - Hà Nội 14 - Hồ Tùng Mậu",
+      "HN15 - Hà Nội 15 - Lạc Long Quân",
+      "HN16 - Hà Nội 16 - Thái Hà",
+      "HN17 - Hà Nội 17 - Trần Duy Hưng",
+      "HN18 - Hà Nội 18 - Lê Văn Lương",
+      "HN19 - Hà Nội 19 - Nguyễn Trãi",
+      "HN20 - Hà Nội 20 - Trần Phú",
+      "HN21 - Hà Nội 21 -Nguyễn Chí Thanh",
+      "HN22 - Hà Nội 22 - Nguyễn Văn Cừ",
+      "HN23 - Hà Nội 23 - Trung Kính",
+      "HN24 - Hà Nội 24 - Hoàng Quốc Việt",
+      "HN25 - Hà Nội 25 - Vincom Ocean Park",
+      "HN26 - Hà Nội 26 - Mạc Thị Bưởi",
+      "CAUGIAYHN - Hà Nội 27 - Cầu Giấy",
+      "HNTN - Thái Nguyên",
+      "TUYENQUANG - Cửa Hàng Tuyên Quang",
+      "HP - Hải Phòng (HP1)",
+      "HP3 - Hải Phòng 2",
+      "HP4 - Hải Phòng 4",
+      "LACHTRAYHP - Lạch Tray Hải Phòng",
+      "TBINH - Vincom Thái Bình",
+      "QNINH - Quảng Ninh",
+      "THANHHOA - Thanh Hóa",
+      "VINH1 - Vinh 1 (Nguyễn Văn Cừ)",
+      "VINH2 - Vinh 2 (Lê Lợi)",
+      "HATINH - Hà Tĩnh",
+      "NINHBINH - Ninh Bình",
+      "HAGIANG - Hà Giang",
+      "VIETTRI - Việt Trì",
+      "BACNINH - Bắc Ninh",
+      "NAMDINH - Nam Định",
+      "BACGIANG - Bắc Giang",
+      "VINHYEN - Vĩnh Yên",
+      "LAOCAI - Lào Cai",
+      "YENBAI - Yên Bái"
+    ]
   }
 };
 
@@ -2956,19 +3365,20 @@ function initASMUsersSheet() {
       sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
       
       var nowIso = new Date().toISOString();
-      // 10 Official ASM Accounts Seeded from StoresInfo.xlsx (184 stores total)
-      sheet.appendRow(["khoi", "khoi6868", "ASM Khôi", "master", "ALL", "ALL", "Active", nowIso]);
-      sheet.appendRow(["dung", "dung2026", "ASM Dũng", "asm", "HCM, Miền Trung- Tây Nguyên", "CMT8, CHOA3, TCHINH, LBBICH, QBINH, KONTUM, GIALAI, PTHIET, DAKLAK, DAKLAK2, DAKLAK5, DAKNONG, DALAT, DALAT2, BAOLOC", "Active", nowIso]);
+      // 11 Official ASM Accounts Seeded from StoresInfo.xlsx (185 stores total)
+      sheet.appendRow(["khoi", "khoi6868", "ASM Nguyễn Đăng Khôi", "master", "HCM", "PMHNDC, PMHNLB, PMHNVL, LOTTEQ7, CREMALL, NTT, KHANHHOI, DBTRAC, BDUONG, DLBD, FLDBDUONG, AEONBD, DIANBD, VTAU4, VTAU2, VTAU3004, BARIA", "Active", nowIso]);
+      sheet.appendRow(["dung", "dung2026", "ASM Nguyễn Quốc Dũng", "asm", "HCM, Miền Trung- Tây Nguyên", "CMT8, CHOA3, TCHINH, LBBICH, QBINH, KONTUM, GIALAI, PTHIET, DAKLAK, DAKLAK2, DAKLAK5, DAKNONG, DALAT, DALAT2, BAOLOC", "Active", nowIso]);
+      sheet.appendRow(["ttdung", "dung2026", "ASM Trần Thanh Dũng", "asm", "HCM, Miền Tây", "KINHDV, HAUGIANG, MYTHO, MYTHO2, CAYLAY, BENTRE, VINHLONG, VINHLONG2, TRAVINH, APHAUGIANG", "Active", nowIso]);
+      sheet.appendRow(["huong", "huong2026", "ASM Đoàn Thị Kim Hương", "asm", "Miền Tây, Miền Trung- Tây Nguyên", "CAOLANH, HONGNGU, SADEC, LXUYEN, LONGXUYEN2, LONGXUYEN3, CHAUDOC, RGIA, RGIA2, RACHGIA3, HATIEN, CTHO, CTHO2, CTHO3, CTHO6, CANTHO3T2, STR, STR2, BACLIEU, BACLIEU2, CMAU, CMAU2, FLDLTTON", "Active", nowIso]);
+      sheet.appendRow(["linh", "linh2026", "ASM Đinh Thị Cát Linh", "asm", "HCM", "SO1, HBT, CAOTH, NTMK, NDC, LVS, 185_3T2, 126_3T2, NVTROI, PDP, GOVAP, LOTTEGV, 901QT, LQDINH, NGUYENOANH, AEONTP, LETRONGTAN, LMARK81", "Active", nowIso]);
+      sheet.appendRow(["tien", "tien2026", "ASM Đỗ Thị Hoa Tiên", "asm", "HCM", "DIAMOND, LYTT, NGA6, NTQ1, PTER, NGHUE, VINCOM, TAKA, OIKHIEM, AUCO, CHOA, TCHINH2, NGANHTHU, LVKHUONG, PDL, PDL2, AEONBT, CUCHI", "Active", nowIso]);
+      sheet.appendRow(["tin", "tin2026", "ASM Nguyễn Lâm Trung Tín", "asm", "HCM, Miền Đông", "THUDUC, THUDUC2, BPHUOC, BINHLONG, BCDN, VINCOMBH, BIENHOA, BHNAQUOC, TAMHIEP, LONGKHANH, LONGTHANH, TAYNINH, BENLUC, LONGAN", "Active", nowIso]);
+      sheet.appendRow(["quan", "quan2026", "ASM Nguyễn Lê Quân", "asm", "Miền Trung- Tây Nguyên", "QUANGTRI, BIGCHUE, HUE2, DN, DN2, DN3, DN4, DN5DBP, TAMKY, QNGAI, QUINHON2, QUYNHON3, NHT3, NHT2, CAMRANH, PHANRANG2, PHUYEN, QUYNHON", "Active", nowIso]);
+      sheet.appendRow(["lam", "lam2026", "ASM Hồ Thị Lâm", "asm", "HCM", "HVPLAZA, VANHANH, SENSECITY, VINCOMTD, VINCOMLVV, VINCOMQ2", "Active", nowIso]);
       sheet.appendRow(["hn", "hn2026", "ASM Hà Nội", "asm", "HN", "HN1, HN2, HN3, HN4, HN5, HN6, HN8, HN10, HN11, HN12, HTMAU, HN15, HN16, HN17, HN18, HN19, HN20, HN21, HN22, HN23, HN24, HN25, HN26, CAUGIAYHN, HNTN, TUYENQUANG, HP, HP3, HP4, LACHTRAYHP, TBINH, QNINH, THANHHOA, VINH1, VINH2, HATINH, NINHBINH, HAGIANG, VIETTRI, BACNINH, NAMDINH, BACGIANG, VINHYEN, LAOCAI, YENBAI", "Active", nowIso]);
-      sheet.appendRow(["huong", "huong2026", "ASM Hương", "asm", "HCM, Miền Trung- Tây Nguyên, Miền Tây", "KINHDV, HAUGIANG, MYTHO, MYTHO2, CAYLAY, CAOLANH, HONGNGU, SADEC, LXUYEN, LONGXUYEN2, LONGXUYEN3, CHAUDOC, RGIA, RGIA2, RACHGIA3, HATIEN, BENTRE, VINHLONG, VINHLONG2, TRAVINH, CTHO, CTHO2, CTHO3, CTHO6, CANTHO3T2, APHAUGIANG, STR, STR2, BACLIEU, BACLIEU2, CMAU, CMAU2, FLDLTTON", "Active", nowIso]);
-      sheet.appendRow(["linh", "linh2026", "ASM Linh", "asm", "HCM", "SO1, HBT, CAOTH, NTMK, NDC, LVS, 185_3T2, 126_3T2, NVTROI, PDP, GOVAP, LOTTEGV, 901QT, LQDINH, NGUYENOANH, AEONTP, LETRONGTAN", "Active", nowIso]);
-      sheet.appendRow(["lam", "lam2026", "ASM Lâm", "asm", "HCM", "HVPLAZA, VANHANH, SENSECITY, VINCOMTD, VINCOMLVV, VINCOMQ2", "Active", nowIso]);
-      sheet.appendRow(["tien", "tien2026", "ASM Tiên", "asm", "HCM", "DIAMOND, LYTT, NGA6, NTQ1, PTER, NGHUE, VINCOM, TAKA, OIKHIEM, AUCO, CHOA, TCHINH2, NGANHTHU, LVKHUONG, PDL, PDL2, AEONBT, CUCHI", "Active", nowIso]);
-      sheet.appendRow(["tin", "tin2026", "ASM Tín", "asm", "HCM, Miền Đông", "THUDUC, THUDUC2, BPHUOC, BINHLONG, BCDN, VINCOMBH, BIENHOA, BHNAQUOC, TAMHIEP, LONGKHANH, LONGTHANH, TAYNINH, BENLUC, LONGAN", "Active", nowIso]);
-      sheet.appendRow(["quan", "quan2026", "ASM Quân", "asm", "Miền Trung- Tây Nguyên", "QUANGTRI, BIGCHUE, HUE2, DN, DN2, DN3, DN4, DN5DBP, TAMKY, QNGAI, QUINHON2, QUYNHON3, NHT3, NHT2, CAMRANH, PHANRANG2, PHUYEN, QUYNHON", "Active", nowIso]);
       sheet.appendRow(["ni", "ni2026", "ASM Ni", "asm", "HCM", "ONLINEWEB", "Active", nowIso]);
-      sheet.appendRow(["khoind", "khoi6868", "ASM Khôi", "master", "ALL", "ALL", "Active", nowIso]);
-      Logger.log("✅ Đã khởi tạo sheet " + USER_SHEET_NAME + " với 10 tài khoản ASM chính thức (184 cửa hàng).");
+      sheet.appendRow(["khoind", "khoi6868", "ASM Nguyễn Đăng Khôi", "master", "HCM", "PMHNDC, PMHNLB, PMHNVL, LOTTEQ7, CREMALL, NTT, KHANHHOI, DBTRAC, BDUONG, DLBD, FLDBDUONG, AEONBD, DIANBD, VTAU4, VTAU2, VTAU3004, BARIA", "Active", nowIso]);
+      Logger.log("✅ Đã khởi tạo sheet " + USER_SHEET_NAME + " với 11 tài khoản ASM chính thức (185 cửa hàng).");
     }
     return sheet;
   } catch(e) {
@@ -3000,18 +3410,44 @@ function loginUser(username, password) {
     var regIdx = headers.indexOf("region");
     var sIdx = headers.indexOf("stores");
     
-    var searchUser = String(username).trim().toLowerCase();
+    function removeAccents(str) {
+      return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    }
+    
+    var searchUser = removeAccents(username);
     var searchPass = String(password).trim();
+    
+    // Multi-Alias Mapping for 11 ASMs
+    var ALIAS_MAP = {
+      "khoi": "khoi", "khoind": "khoi", "dangkhoi": "khoi", "nguyendangkhoi": "khoi",
+      "dung": "dung", "quocdung": "dung", "nguyenquocdung": "dung", "dungnq": "dung",
+      "ttdung": "ttdung", "dungtt": "ttdung", "thanhdung": "ttdung", "tranthanhdung": "ttdung",
+      "huong": "huong", "kimhuong": "huong", "doanthikimhuong": "huong",
+      "linh": "linh", "catlinh": "linh", "dinhthicatlinh": "linh",
+      "tien": "tien", "hoatien": "tien", "dothihoatien": "tien",
+      "tin": "tin", "trungtin": "tin", "nguyenlamtrungtin": "tin",
+      "quan": "quan", "lequan": "quan", "nguyenlequan": "quan",
+      "lam": "lam", "thilam": "lam", "hothilam": "lam",
+      "hn": "hn", "hanoi": "hn", "asmhn": "hn", "asmhanoi": "hn",
+      "ni": "ni", "onlineweb": "ni", "asmni": "ni"
+    };
+    
+    var canonicalTarget = ALIAS_MAP[searchUser] || searchUser;
     
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
-      var uVal = String(row[uIdx]).trim().toLowerCase();
+      var rawUser = String(row[uIdx] || '').trim();
+      var uVal = removeAccents(rawUser);
       var pVal = String(row[pIdx]).trim();
+      var fVal = removeAccents(row[nIdx] || '');
       
-      if (uVal === searchUser) {
+      // Match by exact username, canonical alias, or full name
+      if (uVal === searchUser || uVal === canonicalTarget || fVal === searchUser || (searchUser.length >= 4 && fVal.indexOf(searchUser) >= 0)) {
         if (pVal === searchPass) {
           var userObj = {
-            username: String(row[uIdx]).trim(),
+            username: rawUser,
             fullName: String(row[nIdx] || row[uIdx]).trim(),
             role: String(row[rIdx] || "asm").trim().toLowerCase(),
             region: String(row[regIdx] || "").trim(),
