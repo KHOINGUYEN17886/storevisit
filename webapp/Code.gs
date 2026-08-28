@@ -3917,22 +3917,59 @@ function syncASMUsersFromStoresInfo(requesterUsername, storeDataList) {
                 .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     }
     
+    var STANDARD_UNAMES = {
+      "nguyendangkhoi": "khoi",
+      "khoi": "khoi",
+      "khoind": "khoind",
+      "nguyenquocdung": "dung",
+      "dung": "dung",
+      "tranthanhdung": "ttdung",
+      "ttdung": "ttdung",
+      "doanthikimhuong": "huong",
+      "huong": "huong",
+      "dinhthicatlinh": "linh",
+      "linh": "linh",
+      "dothihoatien": "tien",
+      "tien": "tien",
+      "nguyenlamtrungtin": "tin",
+      "tin": "tin",
+      "nguyenlequan": "quan",
+      "quan": "quan",
+      "hothilam": "lam",
+      "lam": "lam",
+      "hn": "hn",
+      "hanoi": "hn",
+      "ni": "ni"
+    };
+    
+    var DEFAULT_PASSWORDS = {
+      "khoi": "khoi6868",
+      "khoind": "khoi6868",
+      "dung": "dung2026",
+      "ttdung": "dung2026",
+      "huong": "huong2026",
+      "linh": "linh2026",
+      "tien": "tien2026",
+      "tin": "tin2026",
+      "quan": "quan2026",
+      "lam": "lam2026",
+      "hn": "hn2026",
+      "ni": "ni2026"
+    };
+
     var syncedASMCount = 0;
     var asmKeys = Object.keys(asmMap);
     
     for (var k = 0; k < asmKeys.length; k++) {
       var asmName = asmKeys[k];
       var asmObj = asmMap[asmName];
-      var uname = removeAccents(asmName);
+      var rawUname = removeAccents(asmName);
+      var uname = STANDARD_UNAMES[rawUname] || rawUname;
       if (!uname) uname = "asm_" + k;
       
       var fullName = "ASM " + asmName;
       var role = (uname === "khoi" || uname === "khoind") ? "master" : "asm";
       var regionStr = asmObj.regions.join(", ");
-      // Fix 29-07: Master (Khôi) VẪN có danh sách cửa hàng riêng thật theo StoresInfo.xlsx —
-      // trước đây ép "ALL" khiến Khôi không được tính % coverage như các ASM khác dù có
-      // đi kiểm tra cửa hàng của mình. Giữ role="master" (không đổi quyền quản trị) nhưng
-      // dùng danh sách cửa hàng thật để _getAsmRoster_() có thể tính coverage cho Khôi.
       var storesStr = asmObj.stores.join(", ");
       
       if (existingRows[uname]) {
@@ -3944,7 +3981,7 @@ function syncASMUsersFromStoresInfo(requesterUsername, storeDataList) {
         sheet.getRange(rowNum, sIdx + 1).setValue(storesStr);
       } else {
         // Create new row
-        var defaultPass = (uname === "khoi") ? "khoi123" : "123456";
+        var defaultPass = DEFAULT_PASSWORDS[uname] || "123456";
         var newRow = [];
         newRow[uIdx] = uname;
         newRow[pIdx] = defaultPass;

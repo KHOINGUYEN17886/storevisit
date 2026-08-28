@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 sync_stores_info_to_webapp.py
 =============================
 Đọc C:\All_Report\1_Mapping\StoresInfo.xlsx (Sheet "Danh bạ CH") và tự động đồng bộ:
