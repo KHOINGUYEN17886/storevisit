@@ -102,26 +102,20 @@ var VALID_RATINGS = [
   "Không áp dụng"
 ];
 
+var DATA_VERSION = "2026.08.28_V11_185";
 var STORE_MAPPING_SHEET = "StoreMapping";
-// Sheet 'StoreMapping' must have header: StoreCode | StoreName | Region | ASM
-// Upload store_mapping_clean.csv to this sheet. Do NOT include Department/Level.
-// The CSV is already pre-filtered (CHG + Level3 + non-operational excluded).
 
-// NON_STORE_ASM: blocklist for Code.gs dynamic reads (if StoreMapping sheet
-// contains raw DimStore data WITH Department & Level columns).
-// If sheet has clean CSV (4 cols only), this list still runs as a safety net.
+// NON_STORE_ASM: blocklist for Code.gs dynamic reads (only non-operational entities)
 var NON_STORE_ASM = [
   'Closed', 'Event', 'BGD', 'CSKH', 'GiftCard',
   'KDTT', 'KĦ Phân phối', 'KH Phân phối', 'Marketing', 'TLNB',
-  'HN',                // Virtual Hà Nội stores not yet operational
   'Thắng', 'Thắng (TT)' // Online/KDTT managers, not field ASMs
 ];
 
 // NON_STORE_REGION: blocklist for non-geographical region values.
 var NON_STORE_REGION = [
   'Closed', 'Event', 'BGD', 'CSKH', 'GiftCard',
-  'KDTT', 'KH Phân phối', 'Marketing', 'TLNB',
-  'HN'                 // HN as Region = HN stores not yet opened
+  'KDTT', 'KH Phân phối', 'Marketing', 'TLNB'
 ];
 
 /**
@@ -144,12 +138,13 @@ var NON_STORE_REGION = [
 function getStoreData() {
   try {
     var cache = CacheService.getScriptCache();
-    var cached = cache.get("store_data_json");
+    var cached = cache.get("store_data_json_" + DATA_VERSION);
     if (cached) {
       var cachedObj = JSON.parse(cached);
-      // Đính hồ sơ cửa hàng (brand/storetype/has_guard) — KHÔNG cache để tránh vượt 100KB.
-      cachedObj.profiles = (typeof STORE_PROFILE_MAP !== "undefined") ? STORE_PROFILE_MAP : {};
-      return cachedObj;
+      if (cachedObj && cachedObj.asms && cachedObj.asms.length >= 11) {
+        cachedObj.profiles = (typeof STORE_PROFILE_MAP !== "undefined") ? STORE_PROFILE_MAP : {};
+        return cachedObj;
+      }
     }
   } catch(e) {
     console.warn("Cache read error: " + e.toString());
@@ -160,7 +155,8 @@ function getStoreData() {
     var sheet = ss.getSheetByName(STORE_MAPPING_SHEET);
     
     if (!sheet || sheet.getLastRow() < 2) {
-      console.warn('getStoreData: Sheet "' + STORE_MAPPING_SHEET + '" not found or empty. Using fallback.');
+      console.warn('getStoreData: Sheet "' + STORE_MAPPING_SHEET + '" not found or empty. Syncing from master STORE_DATA_MAP.');
+      syncStoreMappingSheetFromMaster();
       return _buildFallbackStoreData();
     }
     
@@ -170,12 +166,12 @@ function getStoreData() {
     var iName   = header.indexOf('StoreName');
     var iRegion = header.indexOf('Region');
     var iAsm    = header.indexOf('ASM');
-    // Optional columns (only present if sheet has raw DimStore data)
     var iDept   = header.indexOf('Department');
     var iLevel  = header.indexOf('Level');
     
     if (iCode < 0 || iName < 0 || iRegion < 0 || iAsm < 0) {
-      console.warn('getStoreData: Missing required columns in StoreMapping sheet. Using fallback.');
+      console.warn('getStoreData: Missing required columns in StoreMapping sheet. Using fallback and syncing.');
+      syncStoreMappingSheetFromMaster();
       return _buildFallbackStoreData();
     }
     
@@ -183,6 +179,7 @@ function getStoreData() {
     var mapping_by_region = {};
     var asmSet    = {};
     var regionSet = {};
+    var totalStoreCount = 0;
     
     for (var i = 1; i < data.length; i++) {
       var row    = data[i];
@@ -193,14 +190,12 @@ function getStoreData() {
       
       if (!scode || !sname || !region || !asm) continue;
       
-      // If raw DimStore data (has Department + Level columns): apply CHG/Level3 filter
       if (iDept >= 0 && iLevel >= 0) {
         var dept = String(row[iDept] || '').trim().toUpperCase();
         var lvl  = String(row[iLevel] || '').trim();
         if (dept !== 'CHG' || (lvl !== '3' && lvl !== '3.0')) continue;
       }
       
-      // Always exclude non-operational / virtual ASMs and Regions
       if (NON_STORE_ASM.indexOf(asm) >= 0) continue;
       if (NON_STORE_REGION.indexOf(region) >= 0) continue;
       
@@ -209,7 +204,6 @@ function getStoreData() {
       if (!mapping_by_asm[asm])    mapping_by_asm[asm]    = [];
       if (!mapping_by_region[region]) mapping_by_region[region] = [];
       
-      // Avoid duplicates
       if (mapping_by_asm[asm].indexOf(label) < 0)
         mapping_by_asm[asm].push(label);
       if (mapping_by_region[region].indexOf(label) < 0)
@@ -217,22 +211,24 @@ function getStoreData() {
       
       asmSet[asm]       = true;
       regionSet[region] = true;
+      totalStoreCount++;
     }
     
-    // Sort stores within each ASM/Region
     Object.keys(mapping_by_asm).forEach(function(k)    { mapping_by_asm[k].sort(); });
     Object.keys(mapping_by_region).forEach(function(k) { mapping_by_region[k].sort(); });
     
     var finalAsms = Object.keys(asmSet).sort();
     var finalRegions = Object.keys(regionSet).sort();
     
-    // BẮT BỆNH: Nếu sheet có nhưng data bị filter sạch, ép dùng fallback
-    if (finalAsms.length === 0) {
-      console.warn("Sheet StoreMapping tồn tại nhưng filter không trả về cửa hàng nào. Kích hoạt Fallback map.");
+    // BẮT BỆNH: Nếu dữ liệu sheet cũ (thiếu 11 ASM hoặc thiếu 185 cửa hàng hoặc có tên cũ 'Nhi')
+    if (finalAsms.length < 11 || totalStoreCount < 185 || finalAsms.indexOf("Nhi") >= 0 || finalAsms.indexOf("HN") === -1) {
+      console.warn("Sheet StoreMapping chứa dữ liệu cũ (" + finalAsms.length + " ASMs, " + totalStoreCount + " CH). Tự động cập nhật StoreMapping từ master.");
+      syncStoreMappingSheetFromMaster();
       return _buildFallbackStoreData();
     }
     
     var result = {
+      version:          DATA_VERSION,
       asms:             finalAsms,
       regions:          finalRegions,
       mapping_by_asm:   mapping_by_asm,
@@ -242,12 +238,11 @@ function getStoreData() {
 
     try {
       var cache = CacheService.getScriptCache();
-      cache.put("store_data_json", JSON.stringify(result), 3600);
+      cache.put("store_data_json_" + DATA_VERSION, JSON.stringify(result), 3600);
     } catch(e) {
       console.warn("Cache write error: " + e.toString());
     }
 
-    // Đính profiles SAU khi cache (không đưa vào blob cache).
     result.profiles = (typeof STORE_PROFILE_MAP !== "undefined") ? STORE_PROFILE_MAP : {};
     return result;
 
@@ -257,17 +252,76 @@ function getStoreData() {
   }
 }
 
-/** Internal: build the old hardcoded data as an emergency fallback */
+/**
+ * Tự động đồng bộ và làm mới tab StoreMapping trên Google Sheets chuẩn 100% theo StoresInfo.xlsx
+ */
+function syncStoreMappingSheetFromMaster() {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(STORE_MAPPING_SHEET);
+    if (!sheet) {
+      sheet = ss.insertSheet(STORE_MAPPING_SHEET);
+    } else {
+      sheet.clearContents();
+    }
+    
+    var headers = ["StoreCode", "StoreName", "Region", "ASM"];
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
+    
+    var rowsToAppend = [];
+    var asmKeys = Object.keys(STORE_DATA_MAP.mapping_by_asm);
+    
+    for (var a = 0; a < asmKeys.length; a++) {
+      var asmName = asmKeys[a];
+      var storeList = STORE_DATA_MAP.mapping_by_asm[asmName] || [];
+      for (var s = 0; s < storeList.length; s++) {
+        var label = storeList[s]; // "NGA6 - 03 Nguyễn Trãi"
+        var parts = label.split(" - ");
+        var scode = parts[0].trim();
+        var sname = parts.slice(1).join(" - ").trim();
+        
+        // Find region for this store
+        var storeRegion = "HCM";
+        var regKeys = Object.keys(STORE_DATA_MAP.mapping_by_region);
+        for (var r = 0; r < regKeys.length; r++) {
+          var regList = STORE_DATA_MAP.mapping_by_region[regKeys[r]] || [];
+          if (regList.indexOf(label) >= 0) {
+            storeRegion = regKeys[r];
+            break;
+          }
+        }
+        rowsToAppend.push([scode, sname, storeRegion, asmName]);
+      }
+    }
+    
+    if (rowsToAppend.length > 0) {
+      sheet.getRange(2, 1, rowsToAppend.length, 4).setValues(rowsToAppend);
+      Logger.log("✅ Đã ghi thành công " + rowsToAppend.length + " cửa hàng vào sheet " + STORE_MAPPING_SHEET);
+    }
+    
+    // Invalidate Cache
+    var cache = CacheService.getScriptCache();
+    cache.remove("store_data_json");
+    cache.remove("store_data_json_" + DATA_VERSION);
+    
+    return { success: true, count: rowsToAppend.length };
+  } catch(e) {
+    Logger.log("Lỗi syncStoreMappingSheetFromMaster: " + e.toString());
+    return { success: false, error: e.toString() };
+  }
+}
+
+/** Internal: build fallback data directly from STORE_DATA_MAP */
 function _buildFallbackStoreData() {
-  var asms    = Object.keys(STORE_DATA_MAP.mapping_by_asm);
-  var regions = Object.keys(STORE_DATA_MAP.mapping_by_region);
   return {
-    asms:             asms,
-    regions:          regions,
+    version:          DATA_VERSION,
+    asms:             STORE_DATA_MAP.asms,
+    regions:          STORE_DATA_MAP.regions,
     mapping_by_asm:   STORE_DATA_MAP.mapping_by_asm,
     mapping_by_region: STORE_DATA_MAP.mapping_by_region,
     profiles:         (typeof STORE_PROFILE_MAP !== "undefined") ? STORE_PROFILE_MAP : {},
-    source:           'fallback'
+    source:           'master_fallback'
   };
 }
 
@@ -4032,6 +4086,72 @@ function makeAllStorePhotosPublic() {
       updatedFileCount: count,
       message: "Đã chuyển quyền xem công khai (Anyone with link) cho " + count + " file ảnh trên Google Drive thành công!"
     };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+/**
+ * Lưu bản nháp lên Google Sheets (Cloud Draft Backup) để chống mất khi đổi máy
+ */
+function saveDraftToServer(username, draftJsonStr) {
+  try {
+    if (!username || !draftJsonStr) return { success: false, error: "Thiếu dữ liệu bản nháp." };
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName("Draft_StoreVisits");
+    if (!sheet) {
+      sheet = ss.insertSheet("Draft_StoreVisits");
+      var headers = ["username", "store_code", "asm_name", "report_date", "updated_at", "draft_json"];
+      sheet.appendRow(headers);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
+    }
+    
+    var draftObj = JSON.parse(draftJsonStr);
+    var scode = (draftObj.simple && draftObj.simple.storeCode) ? draftObj.simple.storeCode : "";
+    var asm = (draftObj.simple && draftObj.simple.asmName) ? draftObj.simple.asmName : "";
+    var rdate = (draftObj.simple && draftObj.simple.reportDate) ? draftObj.simple.reportDate : "";
+    var nowIso = new Date().toISOString();
+    
+    var data = sheet.getDataRange().getValues();
+    var uIdx = 0;
+    var foundRow = -1;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][uIdx]).trim().toLowerCase() === String(username).trim().toLowerCase()) {
+        foundRow = i + 1;
+        break;
+      }
+    }
+    
+    if (foundRow > 0) {
+      sheet.getRange(foundRow, 2, 1, 5).setValues([[scode, asm, rdate, nowIso, draftJsonStr]]);
+    } else {
+      sheet.appendRow([username, scode, asm, rdate, nowIso, draftJsonStr]);
+    }
+    return { success: true, updated_at: nowIso };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+/**
+ * Tải bản nháp từ Google Sheets (Cloud Draft)
+ */
+function loadDraftFromServer(username) {
+  try {
+    if (!username) return { success: false, error: "Thiếu username." };
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName("Draft_StoreVisits");
+    if (!sheet) return { success: false, error: "Chưa có bản nháp nào trên server." };
+    
+    var data = sheet.getDataRange().getValues();
+    var uIdx = 0;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][uIdx]).trim().toLowerCase() === String(username).trim().toLowerCase()) {
+        var draftJson = data[i][5];
+        return { success: true, draftJson: draftJson, updated_at: data[i][4] };
+      }
+    }
+    return { success: false, error: "Không tìm thấy bản nháp cho user này." };
   } catch(e) {
     return { success: false, error: e.toString() };
   }
