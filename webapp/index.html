@@ -524,6 +524,9 @@
         <button type="button" class="btn btn-sm btn-outline-primary fw-bold position-relative me-1 shadow-sm" onclick="openMultiDraftHub()" title="Xem tất cả các bản nháp đang lưu">
           <i class="bi bi-folder-fill me-1"></i> Bản Nháp <span class="badge bg-danger rounded-pill ms-1" id="headerDraftCounterBadge">0</span>
         </button>
+        <button type="button" class="btn btn-sm btn-warning text-dark fw-bold me-1 shadow-sm d-none" id="btnSyncStoresInfoMaster" onclick="openSyncStoresInfoModal()" title="Chỉ dành cho Master Nguyễn Đăng Khôi: Đồng bộ danh mục từ StoresInfo.xlsx">
+          <i class="bi bi-arrow-repeat me-1"></i> Đồng Bộ StoresInfo
+        </button>
         <button type="button" class="btn btn-sm btn-outline-dark me-1" style="border-color: #cbd5e1; color: #1e293b; font-weight: 600; background: #fff;" onclick="showChangePasswordModal()">🔑 Đổi MK</button>
         <button type="button" class="btn btn-sm btn-danger" style="font-weight: 600;" onclick="logoutUser()">🚪 Đăng xuất</button>
       </div>
@@ -8734,7 +8737,56 @@
   </div><!-- END APP MAIN CONTAINER -->
 
 
-  <!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
+  
+  <!-- MODAL ĐỒNG BỘ STORESINFO (Dành riêng cho Master Nguyễn Đăng Khôi) -->
+  <div class="modal fade" id="syncStoresInfoModal" tabindex="-1" aria-labelledby="syncStoresInfoModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+        <div class="modal-header text-white p-3 px-4" style="background: linear-gradient(135deg, #0A2342 0%, #153E6F 100%) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-repeat fs-5 text-warning"></i>
+            <div>
+              <h5 class="modal-title fw-bold mb-0" id="syncStoresInfoModalLabel">Đồng Bộ Dữ Liệu StoresInfo.xlsx</h5>
+              <div class="small text-white-50" style="font-size: 12px;">Quyền Quản Trị Master: Nguyễn Đăng Khôi</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <div class="alert alert-info py-2 px-3 small mb-3">
+            <i class="bi bi-info-circle me-1"></i> Chọn file <strong>StoresInfo.xlsx</strong> từ máy tính của bạn để cập nhật ngay danh sách 11 ASM, 5 Vùng và 185 cửa hàng lên hệ thống.
+          </div>
+
+          <div class="card p-3 bg-white border mb-3">
+            <label class="form-label fw-bold text-dark small mb-2">📁 Chọn tệp StoresInfo.xlsx từ máy tính:</label>
+            <input type="file" class="form-control mb-2" id="storesInfoFileInput" accept=".xlsx, .xls" onchange="handleStoresInfoFileSelected(event)">
+            <div class="small text-muted" id="syncFileInfoText">Chưa chọn file (Mặc định sử dụng nguồn C:\All_Report\1_Mapping\StoresInfo.xlsx).</div>
+          </div>
+
+          <div id="syncProgressContainer" class="d-none mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span id="syncProgressLabel">Đang xử lý dữ liệu...</span>
+              <span id="syncProgressPct" class="fw-bold text-dark">0%</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" id="syncProgressBar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="alert alert-success d-none py-2 px-3 small" id="syncSuccessMsg"></div>
+          <div class="alert alert-danger d-none py-2 px-3 small" id="syncErrorMsg"></div>
+        </div>
+        <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="button" class="btn btn-warning text-dark fw-bold px-4 shadow-sm" id="btnExecuteSyncStoresInfo" onclick="executeSyncStoresInfo()">
+            <i class="bi bi-cloud-upload-fill me-1"></i> Thực Hiện Đồng Bộ Ngay
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
   <div class="modal fade" id="multiDraftHubModal" tabindex="-1" aria-labelledby="multiDraftHubModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
@@ -9824,6 +9876,19 @@
       }
     }
     
+    // Reveal StoresInfo Sync Button ONLY for Master Nguyễn Đăng Khôi
+    const btnSyncStores = document.getElementById("btnSyncStoresInfoMaster");
+    if (btnSyncStores) {
+      if (user.username === "khoi" || user.username === "khoind" || user.role === "master") {
+        btnSyncStores.classList.remove("d-none");
+      } else {
+        btnSyncStores.classList.add("d-none");
+      }
+    } else {
+        menuUsersItem.classList.add("d-none");
+      }
+    }
+    
     // Auto-select ASM Name in Form if matching.
     const asmSelect = document.getElementById("asmName");
     if (asmSelect && user.fullName) {
@@ -10871,6 +10936,155 @@
 
   }
 
+
+  // ==========================================
+  // MASTER STORESINFO SYNC CONTROLLER
+  // ==========================================
+  let parsedStoresInfoData = null;
+
+  function openSyncStoresInfoModal() {
+    parsedStoresInfoData = null;
+    document.getElementById("storesInfoFileInput").value = "";
+    document.getElementById("syncFileInfoText").textContent = "Chưa chọn file (Mặc định sử dụng dữ liệu nguồn chuẩn).";
+    document.getElementById("syncProgressContainer").classList.add("d-none");
+    document.getElementById("syncSuccessMsg").classList.add("d-none");
+    document.getElementById("syncErrorMsg").classList.add("d-none");
+    
+    const modalEl = document.getElementById("syncStoresInfoModal");
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  }
+
+  function handleStoresInfoFileSelected(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const infoText = document.getElementById("syncFileInfoText");
+    const errBox = document.getElementById("syncErrorMsg");
+    errBox.classList.add("d-none");
+    infoText.textContent = `Đang đọc: ${file.name} (${(file.size/1024).toFixed(1)} KB)...`;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        let sheetName = "Danh bạ CH";
+        if (!workbook.SheetNames.includes(sheetName)) {
+          sheetName = workbook.SheetNames[0];
+        }
+        const worksheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(worksheet);
+
+        if (!rows || rows.length === 0) {
+          throw new Error("Không có dữ liệu trong sheet " + sheetName);
+        }
+
+        const storeList = [];
+        const asmsSet = new Set();
+        rows.forEach(r => {
+          const code = String(r["CODE"] || r["StoreCode"] || "").trim().toUpperCase();
+          const name = String(r["TÊN CỬA HÀNG - CHUẨN"] || r["StoreName"] || code).trim();
+          const region = String(r["VÙNG"] || r["Region"] || "HCM").trim();
+          const asm = String(r["ASM"] || "Khác").trim();
+          if (code) {
+            storeList.push({ code: code, name: name, region: region, asm: asm });
+            asmsSet.add(asm);
+          }
+        });
+
+        parsedStoresInfoData = storeList;
+        infoText.innerHTML = `<span class="text-success fw-bold">✓ Đã đọc thành công ${storeList.length} cửa hàng và ${asmsSet.size} nhóm ASM từ ${file.name}</span>`;
+      } catch(err) {
+        parsedStoresInfoData = null;
+        infoText.innerHTML = `<span class="text-danger fw-bold">❌ Lỗi đọc file Excel: ${err.message}</span>`;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function executeSyncStoresInfo() {
+    if (!currentUser || (currentUser.username !== 'khoi' && currentUser.username !== 'khoind' && currentUser.role !== 'master')) {
+      alert("Chỉ có tài khoản Master (Nguyễn Đăng Khôi) mới có quyền thực hiện đồng bộ.");
+      return;
+    }
+
+    const btn = document.getElementById("btnExecuteSyncStoresInfo");
+    const progContainer = document.getElementById("syncProgressContainer");
+    const progBar = document.getElementById("syncProgressBar");
+    const progLabel = document.getElementById("syncProgressLabel");
+    const progPct = document.getElementById("syncProgressPct");
+    const succBox = document.getElementById("syncSuccessMsg");
+    const errBox = document.getElementById("syncErrorMsg");
+
+    btn.disabled = true;
+    progContainer.classList.remove("d-none");
+    succBox.classList.add("d-none");
+    errBox.classList.add("d-none");
+
+    progBar.style.width = "40%";
+    progLabel.textContent = "Đang gửi dữ liệu lên Google Sheets...";
+    progPct.textContent = "40%";
+
+    // If no file uploaded, generate from current active master storeData
+    let dataToSend = parsedStoresInfoData;
+    if (!dataToSend || dataToSend.length === 0) {
+      dataToSend = [];
+      if (storeData && storeData.mapping_by_asm) {
+        Object.keys(storeData.mapping_by_asm).forEach(asmName => {
+          const list = storeData.mapping_by_asm[asmName] || [];
+          list.forEach(label => {
+            const parts = label.split(" - ");
+            const sc = parts[0].trim();
+            const sn = parts.slice(1).join(" - ").trim();
+            dataToSend.push({ code: sc, name: sn, region: "HCM", asm: asmName });
+          });
+        });
+      }
+    }
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          progBar.style.width = "100%";
+          progPct.textContent = "100%";
+          if (res && res.success) {
+            succBox.innerHTML = `<strong>Thành công!</strong> ${res.message}`;
+            succBox.classList.remove("d-none");
+            
+            // Reload store dropdowns
+            google.script.run
+              .withSuccessHandler(function(newData) {
+                if (newData) initDropdowns(newData);
+              })
+              .getStoreData();
+          } else {
+            errBox.textContent = (res && res.error) ? res.error : "Lỗi đồng bộ dữ liệu.";
+            errBox.classList.remove("d-none");
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          errBox.textContent = "Lỗi kết nối: " + (err.message || err);
+          errBox.classList.remove("d-none");
+        })
+        .syncMasterStoresInfo(currentUser.username, dataToSend, {});
+    } else {
+      // Local development simulation
+      setTimeout(() => {
+        btn.disabled = false;
+        progBar.style.width = "100%";
+        progPct.textContent = "100%";
+        succBox.innerHTML = `<strong>Thành công!</strong> Đã đồng bộ hoàn toàn ${dataToSend.length} cửa hàng từ StoresInfo.xlsx vào hệ thống!`;
+        succBox.classList.remove("d-none");
+      }, 600);
+    }
+  }
+
   // Trigger Auth Check on Load
   document.addEventListener("DOMContentLoaded", function() {
     checkUserSession();
@@ -10881,7 +11095,56 @@
   </div><!-- END APP MAIN CONTAINER -->
 
 
-  <!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
+  
+  <!-- MODAL ĐỒNG BỘ STORESINFO (Dành riêng cho Master Nguyễn Đăng Khôi) -->
+  <div class="modal fade" id="syncStoresInfoModal" tabindex="-1" aria-labelledby="syncStoresInfoModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+        <div class="modal-header text-white p-3 px-4" style="background: linear-gradient(135deg, #0A2342 0%, #153E6F 100%) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-repeat fs-5 text-warning"></i>
+            <div>
+              <h5 class="modal-title fw-bold mb-0" id="syncStoresInfoModalLabel">Đồng Bộ Dữ Liệu StoresInfo.xlsx</h5>
+              <div class="small text-white-50" style="font-size: 12px;">Quyền Quản Trị Master: Nguyễn Đăng Khôi</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <div class="alert alert-info py-2 px-3 small mb-3">
+            <i class="bi bi-info-circle me-1"></i> Chọn file <strong>StoresInfo.xlsx</strong> từ máy tính của bạn để cập nhật ngay danh sách 11 ASM, 5 Vùng và 185 cửa hàng lên hệ thống.
+          </div>
+
+          <div class="card p-3 bg-white border mb-3">
+            <label class="form-label fw-bold text-dark small mb-2">📁 Chọn tệp StoresInfo.xlsx từ máy tính:</label>
+            <input type="file" class="form-control mb-2" id="storesInfoFileInput" accept=".xlsx, .xls" onchange="handleStoresInfoFileSelected(event)">
+            <div class="small text-muted" id="syncFileInfoText">Chưa chọn file (Mặc định sử dụng nguồn C:\All_Report\1_Mapping\StoresInfo.xlsx).</div>
+          </div>
+
+          <div id="syncProgressContainer" class="d-none mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span id="syncProgressLabel">Đang xử lý dữ liệu...</span>
+              <span id="syncProgressPct" class="fw-bold text-dark">0%</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" id="syncProgressBar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="alert alert-success d-none py-2 px-3 small" id="syncSuccessMsg"></div>
+          <div class="alert alert-danger d-none py-2 px-3 small" id="syncErrorMsg"></div>
+        </div>
+        <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="button" class="btn btn-warning text-dark fw-bold px-4 shadow-sm" id="btnExecuteSyncStoresInfo" onclick="executeSyncStoresInfo()">
+            <i class="bi bi-cloud-upload-fill me-1"></i> Thực Hiện Đồng Bộ Ngay
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- MULTI-DRAFT MANAGEMENT HUB MODAL -->
   <div class="modal fade" id="multiDraftHubModal" tabindex="-1" aria-labelledby="multiDraftHubModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">

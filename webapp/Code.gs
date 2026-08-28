@@ -4156,3 +4156,83 @@ function loadDraftFromServer(username) {
     return { success: false, error: e.toString() };
   }
 }
+
+/**
+ * Đồng bộ toàn diện dữ liệu từ StoresInfo.xlsx vào Google Sheets (Chỉ dành cho Master Nguyễn Đăng Khôi)
+ */
+function syncMasterStoresInfo(requesterUsername, storeDataList, profilesMap) {
+  try {
+    var reqUser = String(requesterUsername || '').trim().toLowerCase();
+    if (reqUser !== "khoi" && reqUser !== "khoind" && !isUserAdminOrMaster(requesterUsername)) {
+      return { success: false, error: "Chỉ có tài khoản Master (Nguyễn Đăng Khôi) mới có quyền thực hiện đồng bộ StoresInfo." };
+    }
+    
+    if (!storeDataList || !Array.isArray(storeDataList) || storeDataList.length === 0) {
+      return { success: false, error: "Dữ liệu danh sách cửa hàng không hợp lệ." };
+    }
+    
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // 1. Cập nhật sheet StoreMapping
+    var mapSheet = ss.getSheetByName(STORE_MAPPING_SHEET);
+    if (!mapSheet) {
+      mapSheet = ss.insertSheet(STORE_MAPPING_SHEET);
+    } else {
+      mapSheet.clearContents();
+    }
+    
+    var headers = ["StoreCode", "StoreName", "Region", "ASM"];
+    mapSheet.appendRow(headers);
+    mapSheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
+    
+    var mapRows = [];
+    var asmMap = {};
+    
+    for (var i = 0; i < storeDataList.length; i++) {
+      var item = storeDataList[i];
+      if (!item || !item.code) continue;
+      var scode = String(item.code).trim().toUpperCase();
+      var sname = String(item.name || scode).trim();
+      var region = String(item.region || "HCM").trim();
+      var asm = String(item.asm || "Khác").trim();
+      
+      mapRows.push([scode, sname, region, asm]);
+      
+      if (!asmMap[asm]) {
+        asmMap[asm] = { regions: [], stores: [] };
+      }
+      if (region && asmMap[asm].regions.indexOf(region) === -1) {
+        asmMap[asm].regions.push(region);
+      }
+      if (asmMap[asm].stores.indexOf(scode) === -1) {
+        asmMap[asm].stores.push(scode);
+      }
+    }
+    
+    if (mapRows.length > 0) {
+      mapSheet.getRange(2, 1, mapRows.length, 4).setValues(mapRows);
+    }
+    
+    // 2. Cập nhật sheet ASM_Users
+    var userSheet = initASMUsersSheet();
+    if (userSheet) {
+      syncASMUsersFromStoresInfo(requesterUsername, storeDataList);
+    }
+    
+    // 3. Xóa cache
+    try {
+      var cache = CacheService.getScriptCache();
+      cache.remove("store_data_json");
+      cache.remove("store_data_json_" + DATA_VERSION);
+    } catch(eCache) {}
+    
+    return {
+      success: true,
+      storeCount: mapRows.length,
+      asmCount: Object.keys(asmMap).length,
+      message: "✅ Đã đồng bộ thành công " + mapRows.length + " cửa hàng và " + Object.keys(asmMap).length + " nhóm ASM từ StoresInfo.xlsx vào Google Sheets!"
+    };
+  } catch(e) {
+    return { success: false, error: "Lỗi đồng bộ master: " + e.toString() };
+  }
+}

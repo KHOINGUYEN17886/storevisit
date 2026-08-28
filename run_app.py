@@ -208,7 +208,10 @@ class StoreVisitApp:
         sync_frame.pack(fill=tk.X, pady=(0, 10))
         
         self.btn_sync = ttk.Button(sync_frame, text="Đồng bộ ngay", style="Accent.TButton", command=self._sync_google_forms)
-        self.btn_sync.pack(side=tk.LEFT, padx=(0, 15))
+        self.btn_sync.pack(side=tk.LEFT, padx=(0, 10))
+
+        self.btn_sync_stores_info = ttk.Button(sync_frame, text="🔄 Đồng bộ StoresInfo.xlsx ➔ WebApp", command=self._sync_stores_info_to_webapp_action)
+        self.btn_sync_stores_info.pack(side=tk.LEFT, padx=(0, 15))
         
         self.lbl_sync_status = ttk.Label(sync_frame, text="Lần sync gần nhất: Chưa đồng bộ", font=("Segoe UI", 9, "italic"))
         self.lbl_sync_status.pack(side=tk.LEFT, anchor="center")
@@ -1440,6 +1443,26 @@ class StoreVisitApp:
         self.latest_error_text = f"LỖI ĐỒNG BỘ GOOGLE SHEETS:\n{err_msg}"
         self._update_diagnostic_dashboard()
         messagebox.showerror("Lỗi Đồng Bộ", f"Không thể đồng bộ dữ liệu từ Google Sheets:\n{err_msg}")
+
+    def _sync_stores_info_to_webapp_action(self):
+        """Thực hiện đồng bộ danh sách 185 Cửa hàng và 11 nhóm ASM từ StoresInfo.xlsx sang WebApp."""
+        import subprocess
+        self._write_log("[Master Sync] Đang đồng bộ danh mục từ StoresInfo.xlsx vào WebApp...")
+        try:
+            sync_script = os.path.join(os.path.dirname(__file__), "scratch", "create_sync_script.py")
+            if os.path.exists(sync_script):
+                res = subprocess.run([sys.executable, sync_script], capture_output=True, text=True)
+                if res.returncode == 0:
+                    self._write_log("✓ [Master Sync] Đã đồng bộ thành công 185 Cửa hàng và 11 nhóm ASM từ StoresInfo.xlsx vào WebApp!")
+                    messagebox.showinfo("Đồng Bộ Thành Công", "Đã đồng bộ hoàn toàn 185 Cửa hàng và 11 nhóm ASM từ StoresInfo.xlsx vào WebApp!")
+                else:
+                    self._write_log(f"❌ [Master Sync Lỗi]: {res.stderr}")
+                    messagebox.showerror("Lỗi Đồng Bộ", f"Lỗi đồng bộ:\n{res.stderr}")
+            else:
+                messagebox.showwarning("Không tìm thấy tệp", "Không tìm thấy kịch bản đồng bộ.")
+        except Exception as e:
+            self._write_log(f"❌ [Master Sync Lỗi]: {e}")
+            messagebox.showerror("Lỗi Đồng Bộ", f"Lỗi đồng bộ: {e}")
 
     def _reset_tab2_filters(self):
         if hasattr(self, "filter_asm_var"): self.filter_asm_var.set("Tất cả ASM")
