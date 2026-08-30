@@ -1270,10 +1270,44 @@ function processForm(formObject) {
     // Fetch dynamic store mapping for validation
     var dynamicStoreData = getStoreData();
     
+    // Map legacy or short ASM names to canonical 11 official ASMs
+    var ASM_CANONICAL_MAP = {
+      "Dũng": "Nguyễn Quốc Dũng",
+      "Nguyễn Quốc Dũng": "Nguyễn Quốc Dũng",
+      "Trần Thanh Dũng": "Trần Thanh Dũng",
+      "Hương": "Đoàn Thị Kim Hương",
+      "Đoàn Thị Kim Hương": "Đoàn Thị Kim Hương",
+      "Khôi": "Nguyễn Đăng Khôi",
+      "Nguyễn Đăng Khôi": "Nguyễn Đăng Khôi",
+      "Linh": "Đinh Thị Cát Linh",
+      "Đinh Thị Cát Linh": "Đinh Thị Cát Linh",
+      "Lâm": "Hồ Thị Lâm",
+      "Hồ Thị Lâm": "Hồ Thị Lâm",
+      "Nhi": "Ni",
+      "Ni": "Ni",
+      "Quân": "Nguyễn Lê Quân",
+      "Nguyễn Lê Quân": "Nguyễn Lê Quân",
+      "Tiên": "Đỗ Thị Hoa Tiên",
+      "Đỗ Thị Hoa Tiên": "Đỗ Thị Hoa Tiên",
+      "Tín": "Nguyễn Lâm Trung Tín",
+      "Nguyễn Lâm Trung Tín": "Nguyễn Lâm Trung Tín",
+      "HN": "HN",
+      "Hà Nội": "HN"
+    };
+
+    var rawAsm = String(formObject.asmName || "").replace(/^(ASM|QLKD)\s+/i, "").trim();
+    var canonicalAsm = ASM_CANONICAL_MAP[rawAsm] || rawAsm;
+    if (canonicalAsm) {
+      formObject.asmName = canonicalAsm;
+    }
+    
     // Validate ASM Name
     if (!isDraftFlag) {
-      if (!formObject.asmName || !dynamicStoreData.asms.includes(formObject.asmName)) {
-        throw new Error("Tên ASM không hợp lệ hoặc không có trong danh sách.");
+      var isValidAsm = dynamicStoreData.asms.some(function(a) {
+        return a === canonicalAsm || a === rawAsm || (ASM_CANONICAL_MAP[a] && ASM_CANONICAL_MAP[a] === canonicalAsm);
+      });
+      if (!isValidAsm) {
+        throw new Error("Tên ASM không hợp lệ hoặc không có trong danh sách: " + formObject.asmName);
       }
     }
     
@@ -1289,15 +1323,30 @@ function processForm(formObject) {
       if (!formObject.storeCode) {
         throw new Error("Thiếu mã cửa hàng.");
       }
+      var targetStoreCode = String(formObject.storeCode).trim().toUpperCase();
+      
+      function checkStoreMatch(storeList, targetCode) {
+        if (!storeList || !Array.isArray(storeList)) return false;
+        return storeList.some(function(label) {
+          var sc = String(label).split(" - ")[0].trim().toUpperCase();
+          return sc === targetCode || String(label).trim().toUpperCase() === targetCode;
+        });
+      }
+
       if (formObject.modeSelect === "own") {
-        var storesForAsm = dynamicStoreData.mapping_by_asm[formObject.asmName] || [];
-        if (!storesForAsm.includes(formObject.storeCode)) {
-          throw new Error("Cửa hàng " + formObject.storeCode + " không thuộc quyền quản lý của ASM " + formObject.asmName);
+        var storesForAsm = dynamicStoreData.mapping_by_asm[canonicalAsm] || dynamicStoreData.mapping_by_asm[rawAsm] || [];
+        if (rawAsm === "Dũng" || formObject.asmName === "Dũng") {
+          var dung1 = dynamicStoreData.mapping_by_asm["Nguyễn Quốc Dũng"] || [];
+          var dung2 = dynamicStoreData.mapping_by_asm["Trần Thanh Dũng"] || [];
+          storesForAsm = dung1.concat(dung2);
+        }
+        if (!checkStoreMatch(storesForAsm, targetStoreCode)) {
+          throw new Error("Cửa hàng " + targetStoreCode + " không thuộc quyền quản lý của ASM " + formObject.asmName);
         }
       } else if (formObject.modeSelect === "cross" || formObject.modeSelect === "opening") {
         var storesForRegion = dynamicStoreData.mapping_by_region[formObject.regionSelect] || [];
-        if (!storesForRegion.includes(formObject.storeCode)) {
-          throw new Error("Cửa hàng " + formObject.storeCode + " không thuộc khu vực " + formObject.regionSelect);
+        if (!checkStoreMatch(storesForRegion, targetStoreCode)) {
+          throw new Error("Cửa hàng " + targetStoreCode + " không thuộc khu vực " + formObject.regionSelect);
         }
       }
     }
