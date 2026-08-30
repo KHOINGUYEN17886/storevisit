@@ -10173,6 +10173,160 @@
 
 
   
+  
+  // ==========================================
+  // ENTERPRISE DRAFT STATUS BAR & COUNT HELPERS
+  // ==========================================
+  let lastSavedDraftTime = null;
+
+  function countFilledDraftItems() {
+    let filledCount = 0;
+    let totalItems = 0;
+    let photoCount = 0;
+
+    if (formData && formData.sections) {
+      Object.keys(formData.sections).forEach(secKey => {
+        const sec = formData.sections[secKey];
+        if (sec && Array.isArray(sec.items)) {
+          sec.items.forEach(it => {
+            totalItems++;
+            if (it.eval && it.eval !== "Chưa kiểm tra") filledCount++;
+            if (it.photo_before) photoCount++;
+            if (it.photo_after) photoCount++;
+          });
+        }
+      });
+    }
+
+    if (typeof generalPhotos === "object" && generalPhotos) {
+      Object.keys(generalPhotos).forEach(k => {
+        if (!k.endsWith("_na") && !k.endsWith("_na_reason") && generalPhotos[k]) {
+          photoCount++;
+        }
+      });
+    }
+
+    return { filled: filledCount, total: totalItems || 52, photos: photoCount };
+  }
+
+  function updateDraftStatusBar(isSaved, customMsg) {
+    const badge = document.getElementById("draftStatusBadge");
+    const text = document.getElementById("draftStatusText");
+    const progBadge = document.getElementById("draftProgressBadge");
+
+    const counts = countFilledDraftItems();
+
+    if (progBadge) {
+      progBadge.textContent = `Tiến độ: ${counts.filled}/${counts.total} mục | 📷 ${counts.photos} ảnh`;
+      progBadge.style.display = "inline-block";
+    }
+
+    if (isSaved) {
+      lastSavedDraftTime = new Date();
+      const timeStr = lastSavedDraftTime.toLocaleTimeString("vi-VN");
+      if (badge) {
+        badge.className = "badge bg-success";
+        badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Đã Lưu';
+      }
+      if (text) {
+        text.textContent = customMsg || `Đã lưu nháp lúc ${timeStr}`;
+      }
+    } else {
+      if (badge) {
+        badge.className = "badge bg-warning text-dark";
+        badge.innerHTML = '<i class="bi bi-pencil-fill"></i> Đang Nhập...';
+      }
+      if (text) {
+        text.textContent = customMsg || "Có thay đổi chưa lưu";
+      }
+    }
+  }
+
+  function manualSaveDraft() {
+    try {
+      saveCurrentDraftToHub(true);
+      updateDraftStatusBar(true, "Đã lưu thủ công thành công!");
+      
+      const btn = (typeof event !== 'undefined' && event) ? event.currentTarget : null;
+      if (btn) {
+        const origHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Đã Lưu!';
+        setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+      }
+    } catch(e) {
+      console.warn("Manual save draft warning:", e);
+    }
+  }
+
+  function confirmClearDraft() {
+    if (confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa toàn bộ bản nháp hiện tại để làm lại từ đầu không? Toàn bộ ảnh và câu trả lời chưa gửi sẽ bị xóa.")) {
+      localStorage.removeItem("store_visit_form_draft");
+      PhotoDB.clear();
+      submissionId = generateUuid();
+      window.location.reload();
+    }
+  }
+
+  function showDraftDetailsModal() {
+    const raw = localStorage.getItem("store_visit_form_draft");
+    const body = document.getElementById("draftDetailsBody");
+    if (!body) return;
+
+    if (!raw) {
+      body.innerHTML = '<div class="alert alert-warning mb-0">Hiện tại không có bản nháp nào được lưu trên thiết bị này.</div>';
+    } else {
+      try {
+        const d = JSON.parse(raw);
+        const counts = countFilledDraftItems();
+        const scode = (d.simple && d.simple.storeCode) || "Chưa chọn";
+        const asm = (d.simple && d.simple.asmName) || "Chưa chọn";
+        const rdate = (d.simple && d.simple.reportDate) || "Chưa chọn";
+        const subId = d.submissionId || "N/A";
+        const savedTime = lastSavedDraftTime ? lastSavedDraftTime.toLocaleString("vi-VN") : "Gần đây";
+
+        body.innerHTML = `
+          <div class="list-group list-group-flush small">
+            <div class="list-group-item d-flex justify-content-between"><strong>Cửa hàng:</strong> <span class="text-primary fw-bold">${scode}</span></div>
+            <div class="list-group-item d-flex justify-content-between"><strong>ASM Phụ trách:</strong> <span>${asm}</span></div>
+            <div class="list-group-item d-flex justify-content-between"><strong>Ngày kiểm tra:</strong> <span>${rdate}</span></div>
+            <div class="list-group-item d-flex justify-content-between"><strong>Tiến độ Checklist:</strong> <span class="badge bg-info text-dark">${counts.filled}/${counts.total} mục</span></div>
+            <div class="list-group-item d-flex justify-content-between"><strong>Ảnh đã chụp/tải:</strong> <span class="badge bg-secondary">${counts.photos} ảnh</span></div>
+            <div class="list-group-item d-flex justify-content-between"><strong>Thời điểm lưu:</strong> <span>${savedTime}</span></div>
+            <div class="list-group-item d-flex justify-content-between text-muted"><strong>Mã phiên (ID):</strong> <code>${subId.substring(0, 12)}...</code></div>
+          </div>
+        `;
+      } catch(e) {
+        body.innerHTML = `<div class="alert alert-danger">Lỗi đọc dữ liệu nháp: ${e.message}</div>`;
+      }
+    }
+
+    const modalEl = document.getElementById('draftDetailsModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  }
+
+  function checkAndPromptResumeDraft() {
+    const userDrafts = getDraftsForCurrentUser();
+    if (userDrafts && userDrafts.length > 0) {
+      openMultiDraftHub();
+    }
+  }
+
+  function resumeDraftConfirmed() {
+    const modalEl = document.getElementById("resumeDraftModal");
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+    }
+    updateDraftStatusBar(true, "Đã khôi phục toàn bộ bản nháp");
+  }
+
+  function discardDraftAndStartNew() {
+    startNewReportBlank();
+  }
+
   // =======================================================
   // ENTERPRISE MULTI-DRAFT MANAGEMENT & AUTH GATEKEEPER ENGINE
   // =======================================================
