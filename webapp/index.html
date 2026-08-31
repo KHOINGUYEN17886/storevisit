@@ -496,6 +496,183 @@
       border-color: #6E1E1E !important;
       box-shadow: 0 4px 10px rgba(110, 30, 30, 0.3) !important;
     }
+
+    /* ========================================================================= */
+    /* TOP 0.1% ENTERPRISE MOBILE RESPONSIVE DESIGN SYSTEM (<= 768px & <= 480px) */
+    /* ========================================================================= */
+    @media (max-width: 768px) {
+      html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+      }
+      .container, .container-fluid {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        max-width: 100% !important;
+      }
+      .app-header {
+        padding: 8px 0 !important;
+      }
+      .brand-badge {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 16px !important;
+      }
+      .brand-title {
+        font-size: 14.5px !important;
+        line-height: 1.2 !important;
+      }
+      .brand-subtitle {
+        font-size: 10px !important;
+        display: none !important; /* Hide subtitle on mobile to give room for buttons */
+      }
+      .app-header .btn {
+        padding: 4px 8px !important;
+        font-size: 11.5px !important;
+      }
+      .app-header .btn-text-label {
+        display: none !important; /* Icon-first on mobile */
+      }
+      
+      /* Sticky Draft Status Bar */
+      #draftStatusBar {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+      }
+      
+      /* Operational Profile Selector */
+      .inspection-profile-selector {
+        flex-direction: column !important;
+        gap: 6px !important;
+      }
+      .inspection-profile-selector .segment-btn {
+        width: 100% !important;
+        padding: 10px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+        justify-content: center !important;
+      }
+      
+      /* Executive Diagnostic Layer (5 Pillars) */
+      .diag-metrics-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+      .diag-metric-card {
+        padding: 8px 10px !important;
+      }
+      .diag-metric-val {
+        font-size: 1.15rem !important;
+      }
+      .diag-metric-title {
+        font-size: 10.5px !important;
+        word-break: break-word !important;
+      }
+      .diag-metric-sub {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+      }
+      
+      /* Red Alert 5 Pillars Cards */
+      .pillar-card-header {
+        padding: 10px !important;
+        font-size: 13px !important;
+      }
+      .pillar-card-body {
+        padding: 10px !important;
+      }
+      
+      /* Checklist Items */
+      .checklist-card {
+        margin-bottom: 10px !important;
+        padding: 10px !important;
+      }
+      .checklist-item-title {
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+      }
+      .checklist-segmented-group {
+        display: flex !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+      }
+      .checklist-segmented-group .segment-btn {
+        flex: 1 1 0 !important;
+        min-height: 38px !important;
+        padding: 6px 2px !important;
+        font-size: 12px !important;
+        text-align: center !important;
+        justify-content: center !important;
+      }
+      .defect-box {
+        padding: 10px !important;
+        margin-top: 8px !important;
+      }
+      
+      /* Quick Pulse Grid */
+      .quick-pulse-grid {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+      }
+      .quick-pulse-item {
+        padding: 10px !important;
+      }
+      
+      /* Nav Tabs container */
+      .nav-tabs-container {
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 4px !important;
+      }
+      .nav-tabs-container .nav-link {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+      }
+      
+      /* Modals on Mobile */
+      .modal-dialog {
+        margin: 8px !important;
+        max-width: calc(100% - 16px) !important;
+      }
+      .modal-header {
+        padding: 12px 14px !important;
+      }
+      .modal-title {
+        font-size: 15px !important;
+      }
+      .modal-body {
+        padding: 12px !important;
+        max-height: 75vh !important;
+      }
+      .modal-footer {
+        padding: 10px 12px !important;
+        flex-direction: column-reverse !important;
+        gap: 8px !important;
+      }
+      .modal-footer .btn {
+        width: 100% !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .diag-metrics-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+      }
+      .brand-title {
+        font-size: 13.5px !important;
+      }
+      .btn-sm {
+        font-size: 11px !important;
+        padding: 4px 6px !important;
+      }
+    }
+
 </style>
   <script src="store_manifest_ssot.js"></script>
 </head>
@@ -1340,6 +1517,8 @@
 
 <!-- WRAPPER CHÍNH CỦA TOÀN BỘ APP (Chỉ hiển thị khi đã xác thực thành công) -->
 <div id="appMainContainer" class="d-none">
+  <div id="cloudDraftNotifyBanner" class="container d-none pt-2"></div>
+
 
 <div class="app-header">
   <div class="container">
@@ -3991,13 +4170,19 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-3 p-md-4 bg-light" style="max-height: 70vh; overflow-y: auto;">
-          <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded-3 border shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded-3 border shadow-sm flex-wrap gap-2">
             <div class="small text-muted">
               Đang có <span id="draftCountBadge" class="badge bg-danger rounded-pill fw-bold">0</span> bản nháp được lưu.
+              <span id="draftCloudSyncBadge" class="badge bg-success fw-normal ms-1"><i class="bi bi-cloud-check-fill me-1"></i> Cloud Synced</span>
             </div>
-            <button type="button" class="btn btn-primary btn-sm px-3 fw-bold shadow-sm" onclick="startNewReportBlank()" style="background: #0A2342; border-color: #0A2342;">
-              <i class="bi bi-plus-lg me-1"></i> Bắt Đầu Báo Cáo Mới
-            </button>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-primary btn-sm px-3 fw-bold" id="btnManualCloudPull" onclick="syncDraftsFromCloudManual()">
+                <i class="bi bi-cloud-arrow-down-fill me-1"></i> Tải Bản Nháp Từ Cloud
+              </button>
+              <button type="button" class="btn btn-primary btn-sm px-3 fw-bold shadow-sm" onclick="startNewReportBlank()" style="background: #0A2342; border-color: #0A2342;">
+                <i class="bi bi-plus-lg me-1"></i> Tạo Báo Cáo Mới
+              </button>
+            </div>
           </div>
           
           <div id="multiDraftCardsContainer">
@@ -12169,8 +12354,11 @@ function submitTargetRescueVisit() {
     if (portal) portal.classList.add("d-none");
     if (mainApp) mainApp.classList.remove("d-none");
 
-    applyUserSession(user);
+        applyUserSession(user);
     refreshDraftCounters();
+    if (typeof checkCloudDraftOnStartup === 'function') {
+      checkCloudDraftOnStartup(user);
+    }
 
     // Drafts available in status bar & header button
   }

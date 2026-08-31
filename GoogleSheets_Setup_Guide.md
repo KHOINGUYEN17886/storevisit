@@ -1,77 +1,67 @@
-# Hướng dẫn thiết kế Google Form & Google Sheet đồng bộ với Python (StoreVisit)
+# Hướng Dẫn Cấu Hình Bảng Tính Google Sheets (StoreVisit Enterprise Hub)
 
-Để Python có thể đọc và đồng bộ hóa tự động dữ liệu từ điện thoại của ASM gửi lên thông qua Google Forms, bạn cần thiết kế Google Form với các câu hỏi và cấu trúc cột trong Google Sheet theo đúng quy chuẩn dưới đây.
-
----
-
-## 1. Cơ chế ánh xạ thông minh của Python (Fuzzy Matching)
-
-Mã nguồn Python trong [google_sheets_reader.py](file:///c:/All_Report/8_RETAIL_COMMANDER/StoreVisit/data/google_sheets_reader.py) sử dụng thuật toán **khớp từ khóa mờ (Fuzzy Keyword Matching)**. 
-* Tức là tiêu đề cột trong Google Sheets **không cần chính xác 100%** so với tên biến, mà chỉ cần **chứa từ khóa chính**.
-* Ví dụ: Cột có tiêu đề `"Chọn Mã cửa hàng bạn đến kiểm tra"` vẫn sẽ được nhận diện là cột `store_code` vì chứa cụm từ khóa `"Mã cửa hàng"`.
+Tài liệu này quy chuẩn cấu trúc toàn diện các tab trong Google Spreadsheet trung tâm (`SPREADSHEET_ID`), phục vụ đồng bộ dữ liệu 2 chiều giữa WebApp (Vercel/GAS), Google Drive và Python Desktop Command Center.
 
 ---
 
-## 2. Bảng quy chuẩn câu hỏi & tiêu đề cột
+## 1. CẤU TRÚC CÁC TAB CHÍNH (WORKSHEETS ARCHITECTURE)
 
-Hãy thiết lập các câu hỏi trên Google Form (hoặc tiêu đề cột trong Google Sheets) theo bảng sau để Python nhận diện chính xác nhất:
+| Tên Tab (Worksheet) | Mục Đích Sử Dụng | Quyền Ghi / Đọc |
+| :--- | :--- | :--- |
+| **`Form Responses 1`** | Lưu trữ toàn bộ các phiếu kiểm tra hiện trường gửi từ WebApp | WebApp (Ghi), Python (Đọc & Ghi `Status=done`) |
+| **`Draft_StoreVisits`** | Lưu trữ bộ nhớ đệm bản nháp đám mây (Cloud Draft Sync) đa thiết bị | WebApp (Đọc & Ghi theo `key_id`) |
+| **`Issues_Register`** | Sổ đăng ký theo dõi và quản lý vòng đời khắc phục lỗi (CAPA) | WebApp & Python |
+| **`StoreMapping`** | Danh bạ chuẩn 185 Cửa hàng & 11 ASM phân quyền | Master Sync từ `StoresInfo.xlsx` |
+| **`Users`** | Bảng tài khoản, mật khẩu băm, vai trò và phân quyền vùng | Hệ thống xác thực WebApp |
 
-| Biến hệ thống | Từ khóa nhận diện trong tiêu đề (Chỉ cần chứa một trong các cụm này) | Kiểu dữ liệu phù hợp trên Google Form | Ghi chú & Ví dụ giá trị |
+---
+
+## 2. QUY CHUẨN CẤU TRÚC TAB `Draft_StoreVisits` (CLOUD DRAFT SYNC)
+
+Để hỗ trợ tính năng đồng bộ bản nháp 2 chiều giữa Điện thoại và Máy tính (PC $\leftrightarrow$ Mobile), tab `Draft_StoreVisits` được thiết lập với 7 cột chuẩn:
+
+| Cột | Tên Tiêu Đề | Kiểu Dữ Liệu | Mô Tả & Ví Dụ |
+| :---: | :--- | :--- | :--- |
+| **A** | `key_id` | Text (Unique Key) | Khóa định danh bản nháp: `{username}::{store_code}` (ví dụ: `khoi::so1`, `tien::diamond`) |
+| **B** | `username` | Text | Tên đăng nhập của người tạo nháp (ví dụ: `khoi`, `tien`) |
+| **C** | `store_code` | Text | Mã cửa hàng đang khảo sát (ví dụ: `SO1`, `NTT`) |
+| **D** | `asm_name` | Text | Tên ASM phụ trách (ví dụ: `Nguyễn Đăng Khôi`) |
+| **E** | `report_date` | Text / Date | Ngày kiểm tra (ví dụ: `2026-08-31`) |
+| **F** | `updated_at` | Text (ISO 8601) | Timestamp lần lưu gần nhất (ví dụ: `2026-08-31T16:15:02.123Z`) |
+| **G** | `draft_json` | Long Text (JSON) | Chuỗi JSON chứa toàn bộ dữ liệu form khảo sát đã điền |
+
+---
+
+## 3. QUY CHUẨN CẤU TRÚC TAB `Form Responses 1` (SUBMISSION DATA)
+
+Dữ liệu gửi từ 3 chế độ kiểm tra (`full_audit`, `quick_pulse`, `target_rescue`) đều được chuẩn hóa ghi nhận vào tab này:
+
+| Tên Cột Chuẩn | Từ Khóa Nhận Diện (Fuzzy Keyword) | Kiểu Dữ Liệu | Ghi Chú |
 | :--- | :--- | :--- | :--- |
-| **Mã cửa hàng** | `Mã cửa hàng`, `Ma cua hang`, `Store Code` | **Dropdown (Trình đơn thả xuống)** | Bắt buộc chọn đúng mã viết hoa, ví dụ: `VINCOM`, `CMT8`, `NTT`. |
-| **Ngày kiểm tra** | `Ngày kiểm tra`, `Ngay kiem tra`, `Date` | **Date (Ngày)** | Định dạng chuẩn: `DD/MM/YYYY`. |
-| **QLKD / ASM** | `QLKD/ASM`, `ASM`, `Người kiểm tra`, `Nguoi kiem tra` | **Short Text hoặc Dropdown** | Tên của ASM đi kiểm tra, ví dụ: `Nguyễn Văn Nam`. |
-| **Cửa hàng trưởng** | `Tên CHT`, `Ten CHT`, `Cửa hàng trưởng` | **Short Text** | Họ tên CHT có mặt hôm đó. |
-| **Giờ bắt đầu** | `Giờ bắt đầu`, `Gio bat dau`, `Time start` | **Time (Thời gian)** | Định dạng: `HH:MM`, ví dụ: `09:00`. |
-| **Giờ kết thúc** | `Giờ kết thúc`, `Gio ket thuc`, `Time end` | **Time (Thời gian)** | Định dạng: `HH:MM`, ví dụ: `11:30`. |
-| **Nhân viên có mặt** | `Số NV`, `So NV`, `Nhân viên có mặt` | **Number (Số nguyên)** | Số lượng nhân viên trực ca lúc kiểm tra. |
-| **Đánh giá mặt tiền** | `Đánh giá mặt tiền`, `Danh gia mat tien`, `Exterior rating` | **Multiple Choice (Trắc nghiệm)** | Chọn một trong: `Tốt`, `Đạt`, `Chưa đạt`. |
-| **Nhận xét mặt tiền** | `Nhận xét mặt tiền`, `Nhan xet mat tien`, `Exterior comments` | **Paragraph (Đoạn văn)** | Ghi chú lỗi nếu có, ví dụ: `Bảng hiệu bám bụi bẩn`. |
-| **Đánh giá hàng hóa** | `Đánh giá hàng hóa`, `Danh gia hang hoa`, `Merchandise rating` | **Multiple Choice (Trắc nghiệm)** | Chọn một trong: `Tốt`, `Đạt`, `Chưa đạt`. |
-| **Nhận xét hàng hóa** | `Nhận xét hàng hóa`, `Nhan xet hang hoa`, `Merchandise comments` | **Paragraph (Đoạn văn)** | Nhận xét cách trưng bày, gấp ủi... |
-| **Đánh giá nhân sự** | `Đánh giá nhân sự`, `Danh gia nhan su`, `Staff rating` | **Multiple Choice (Trắc nghiệm)** | Chọn một trong: `Tốt`, `Đạt`, `Chưa đạt`. |
-| **Nhận xét nhân sự** | `Nhận xét nhân sự`, `Nhan xet nhan su`, `Staff comments` | **Paragraph (Đoạn văn)** | Nhận xét thái độ phục vụ, đồng phục... |
-| **Đánh giá CSVC** | `Đánh giá CSVC`, `Danh gia csvc`, `CSVC rating` | **Multiple Choice (Trắc nghiệm)** | Chọn một trong: `Tốt`, `Đạt`, `Chưa đạt`. |
-| **Nhận xét CSVC** | `Nhận xét CSVC`, `Nhan xet csvc`, `CSVC comments` | **Paragraph (Đoạn văn)** | Nhận xét điều hòa, đèn, POS, điện nước... |
-| **Vấn đề tồn đọng** | `Vấn đề tồn đọng`, `Van de ton dong`, `Issues` | **Paragraph (Đoạn văn)** | Vấn đề cần CHT khắc phục gấp. |
-| **Kế hoạch khắc phục** | `Kế hoạch khắc phục`, `Ke hoach khac phuc`, `Action plan` | **Paragraph (Đoạn văn)** | Hướng giải quyết lỗi đã thảo luận với CHT. |
-| **Thời hạn xử lý** | `Thời hạn xử lý`, `Thoi han xu ly`, `Deadline` | **Date hoặc Short Text** | Thời hạn tối đa cho CHT. |
+| **Timestamp** | `Timestamp`, `Dấu thời gian` | Date Time | Thời điểm gửi báo cáo |
+| **Mã gửi (Submission ID)** | `submission_id`, `Mã gửi` | Text (UUID) | Khóa duy nhất của mỗi lượt gửi |
+| **Chế độ kiểm tra** | `inspection_profile`, `Chế độ` | Text | `full_audit`, `quick_pulse`, `target_rescue` |
+| **Mã cửa hàng** | `store_code`, `Mã cửa hàng` | Text | Mã viết hoa (ví dụ: `SO1`, `NTT`, `CMT8`) |
+| **Ngày kiểm tra** | `report_date`, `Ngày kiểm tra` | Date | `YYYY-MM-DD` |
+| **QLKD / ASM** | `asm_name`, `ASM` | Text | Tên người kiểm tra |
+| **Đánh giá mặt tiền** | `rating_frontage` | Text | `Đạt` / `Không đạt` |
+| **Đánh giá không gian trong**| `rating_inner` | Text | `Đạt` / `Không đạt` |
+| **Đánh giá trưng bày AP** | `rating_merch_ap` | Text | `Đạt` / `Không đạt` / `Không áp dụng` |
+| **Đánh giá trưng bày PIE** | `rating_merch_pie` | Text | `Đạt` / `Không đạt` / `Không áp dụng` |
+| **Đánh giá nhân sự** | `rating_staff` | Text | `Đạt` / `Không đạt` |
+| **Đánh giá CSVC & PCCC** | `rating_csvc` | Text | `Đạt` / `Không đạt` |
+| **Khảo sát đối thủ** | `survey_competitor` | Text (JSON) | Thông tin giá, CTKM, sản phẩm đối thủ |
+| **Kế hoạch hành động** | `action_plan` | Text | Cam kết khắc phục của CHT/ASM |
+| **Hạn chót khắc phục** | `action_deadline` | Date | Hạn chót xử lý lỗi |
+| **Checklist Chi Tiết** | `checklist_json` | Long Text (JSON) | Toàn bộ 65 tiêu chí chi tiết kèm link ảnh Drive |
+| **Trạng Thái Xử Lý** | `Status` | Text | `done` (khi Python đã sinh xong báo cáo) |
 
 ---
 
-## 3. Cấu hình các câu hỏi tải lên hình ảnh (Photos Upload)
+## 4. QUY TRÌNH KIỂM TRA ĐỒNG BỘ PYTHON
 
-Google Forms hỗ trợ tính năng **File Upload** trực tiếp vào Google Drive. Khi người dùng tải ảnh lên, Google Sheets tự động lưu link liên kết đến ảnh dạng:
-`https://drive.google.com/open?id=xxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-
-Để Python có thể tự động tải ảnh này về và chèn vào slide:
-1. **Tiêu đề câu hỏi tải ảnh** cần chứa một trong các cụm từ khóa sau:
-   * **Ảnh mặt tiền** (Frontage slide): `Ảnh mặt tiền`, `Anh mat tien`, `Exterior photo`
-   * **Ảnh trưng bày** (Merchandise slide): `Ảnh hàng hóa`, `Anh hang hoa`, `Merchandise photo`
-   * **Ảnh cơ sở vật chất** (CSVC/Outstanding Issues): `Ảnh CSVC`, `Anh CSVC`, `CSVC photo`
-   * **Ảnh nhân sự** (Roster / Staff): `Ảnh nhân sự`, `Anh nhan su`, `Staff photo`
-2. **Cấu hình giới hạn file trên Google Form**:
-   * Thiết lập **Maximum number of files (Số lượng tệp tối đa)**: `2` (Phù hợp với thiết kế của slide báo cáo - tối đa 2 ảnh cho mỗi phần).
-   * Cấp quyền **Viewer (Người xem)** cho email Service Account đối với thư mục lưu trữ ảnh trên Google Drive (thư mục này được tạo tự động bởi Google Form khi bạn thêm câu hỏi File Upload).
-
----
-
-## 4. Thiết lập Cột trạng thái xử lý (`Status`) để quản lý luồng dữ liệu
-
-Để tránh việc sinh lại báo cáo trùng lặp cho những dòng dữ liệu cũ đã xử lý xong:
-1. Hãy tạo thêm một cột trống ở cuối cùng của Google Sheet (nếu tự làm thủ công) hoặc Python sẽ tự động chèn thêm cột này ở lần chạy đầu tiên.
-2. Tiêu đề cột phải viết chính xác: **`Status`** (phân biệt hoa thường).
-3. **Cơ chế hoạt động**:
-   * Khi ASM gửi Form mới lên $\rightarrow$ Cột `Status` sẽ trống (hoặc có giá trị mặc định không phải `done`). Python sẽ lấy dòng này về để xử lý.
-   * Sau khi Python chạy sinh xong báo cáo PPTX/PDF và xác thực QC thành công $\rightarrow$ Python sẽ tự động gửi lệnh API ghi chữ **`done`** vào cột `Status` của dòng tương ứng.
-   * Lần đồng bộ tiếp theo, những dòng có chữ `done` sẽ bị bỏ qua.
-
----
-
-## 5. Các bước kiểm tra nhanh
-
-Sau khi bạn thiết lập xong Google Sheet và chia sẻ cho email Service Account, hãy kiểm tra tính tương thích bằng cách mở terminal trong thư mục `StoreVisit` và chạy:
+Mở terminal trong thư mục dự án và chạy lệnh kiểm thử kết nối Google API:
 ```powershell
 .venv\Scripts\python.exe setup_google.py --test-connection
 ```
-Lệnh này sẽ quét toàn bộ tiêu đề cột trong Google Sheets của bạn và in ra. Bạn sẽ biết ngay cột nào đã được Python nhận diện đúng, cột nào bị thiếu hoặc sai từ khóa!
+Lệnh này sẽ quét toàn bộ tiêu đề cột trong Google Sheets và đối soát với hệ thống Data Loader của Python!

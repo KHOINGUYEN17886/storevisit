@@ -2988,6 +2988,19 @@ function doPost(e) {
       } else {
         result = { success: false, error: "cleanupSubmissionUploads: payload phải là mảng [submissionId, fileIds]" };
       }
+    } else if (action === "saveDraftToServer") {
+      if (Array.isArray(payload)) {
+        result = saveDraftToServer(payload[0], payload[1]);
+      } else {
+        result = saveDraftToServer(postData.username || (payload && payload.username), postData.draftJsonStr || (payload && payload.draftJsonStr) || JSON.stringify(payload));
+      }
+    } else if (action === "loadDraftFromServer") {
+      var targetUser = Array.isArray(payload) ? payload[0] : (postData.username || payload);
+      var targetStore = Array.isArray(payload) && payload.length > 1 ? payload[1] : (postData.storeCode || (payload && payload.storeCode));
+      result = loadDraftFromServer(targetUser, targetStore);
+    } else if (action === "listCloudDrafts") {
+      var targetUser = Array.isArray(payload) ? payload[0] : (postData.username || payload);
+      result = listCloudDrafts(targetUser);
     } else {
       result = { success: false, error: "Invalid action: " + action };
     }
@@ -4696,7 +4709,8 @@ function makeAllStorePhotosPublic() {
 }
 
 /**
- * Lưu bản nháp lên Google Sheets (Cloud Draft Backup) để chống mất khi đổi máy
+ * Lưu bản nháp lên Google Sheets (Cloud Draft Sync SSOT)
+ * Hỗ trợ lưu đa bản nháp theo username và store_code
  */
 function saveDraftToServer(username, draftJsonStr) {
   try {
@@ -4705,42 +4719,46 @@ function saveDraftToServer(username, draftJsonStr) {
     var sheet = ss.getSheetByName("Draft_StoreVisits");
     if (!sheet) {
       sheet = ss.insertSheet("Draft_StoreVisits");
-      var headers = ["username", "store_code", "asm_name", "report_date", "updated_at", "draft_json"];
+      var headers = ["key_id", "username", "store_code", "asm_name", "report_date", "updated_at", "draft_json"];
       sheet.appendRow(headers);
       sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
     }
     
-    var draftObj = JSON.parse(draftJsonStr);
-    var scode = (draftObj.simple && draftObj.simple.storeCode) ? draftObj.simple.storeCode : "";
-    var asm = (draftObj.simple && draftObj.simple.asmName) ? draftObj.simple.asmName : "";
-    var rdate = (draftObj.simple && draftObj.simple.reportDate) ? draftObj.simple.reportDate : "";
+    var draftObj = typeof draftJsonStr === 'string' ? JSON.parse(draftJsonStr) : draftJsonStr;
+    var scode = (draftObj.simple && draftObj.simple.storeCode) ? String(draftObj.simple.storeCode).trim() : (draftObj.storeCode || "DEFAULT");
+    var asm = (draftObj.simple && draftObj.simple.asmName) ? draftObj.simple.asmName : (draftObj.asmName || "");
+    var rdate = (draftObj.simple && draftObj.simple.reportDate) ? draftObj.simple.reportDate : (draftObj.reportDate || "");
     var nowIso = new Date().toISOString();
+    var keyId = String(username).trim().toLowerCase() + "::" + scode.toLowerCase();
+    var jsonPayload = typeof draftJsonStr === 'string' ? draftJsonStr : JSON.stringify(draftJsonStr);
     
     var data = sheet.getDataRange().getValues();
-    var uIdx = 0;
     var foundRow = -1;
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][uIdx]).trim().toLowerCase() === String(username).trim().toLowerCase()) {
+      var rowKey = String(data[i][0]).trim().toLowerCase();
+      var rowUser = String(data[i][1]).trim().toLowerCase();
+      // Match by exact key_id or legacy match by username if single key
+      if (rowKey === keyId || (rowUser === String(username).trim().toLowerCase() && (data[i][2] === scode || !data[i][0]))) {
         foundRow = i + 1;
         break;
       }
     }
     
     if (foundRow > 0) {
-      sheet.getRange(foundRow, 2, 1, 5).setValues([[scode, asm, rdate, nowIso, draftJsonStr]]);
+      sheet.getRange(foundRow, 1, 1, 7).setValues([[keyId, username, scode, asm, rdate, nowIso, jsonPayload]]);
     } else {
-      sheet.appendRow([username, scode, asm, rdate, nowIso, draftJsonStr]);
+      sheet.appendRow([keyId, username, scode, asm, rdate, nowIso, jsonPayload]);
     }
-    return { success: true, updated_at: nowIso };
+    return { success: true, updated_at: nowIso, store_code: scode };
   } catch(e) {
     return { success: false, error: e.toString() };
   }
 }
 
 /**
- * Tải bản nháp từ Google Sheets (Cloud Draft)
+ * Tải bản nháp mới nhất từ Google Sheets (Cloud Draft)
  */
-function loadDraftFromServer(username) {
+function loadDraftFromServer(username, storeCode) {
   try {
     if (!username) return { success: false, error: "Thiếu username." };
     var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -4748,16 +4766,76 @@ function loadDraftFromServer(username) {
     if (!sheet) return { success: false, error: "Chưa có bản nháp nào trên server." };
     
     var data = sheet.getDataRange().getValues();
-    var uIdx = 0;
+    var targetUser = String(username).trim().toLowerCase();
+    var targetStore = storeCode ? String(storeCode).trim().toLowerCase() : "";
+    
+    var latestDraft = null;
+    var latestTime = 0;
+    
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][uIdx]).trim().toLowerCase() === String(username).trim().toLowerCase()) {
-        var draftJson = data[i][5];
-        return { success: true, draftJson: draftJson, updated_at: data[i][4] };
+      // Check column 1 (username) or column 0 (legacy username)
+      var rowUser = (data[i].length >= 7) ? String(data[i][1]).trim().toLowerCase() : String(data[i][0]).trim().toLowerCase();
+      var rowStore = (data[i].length >= 7) ? String(data[i][2]).trim().toLowerCase() : String(data[i][1]).trim().toLowerCase();
+      var timeCol = (data[i].length >= 7) ? data[i][5] : data[i][4];
+      var jsonCol = (data[i].length >= 7) ? data[i][6] : data[i][5];
+      
+      if (rowUser === targetUser) {
+        if (!targetStore || rowStore === targetStore) {
+          var timeVal = new Date(timeCol).getTime() || 0;
+          if (timeVal >= latestTime) {
+            latestTime = timeVal;
+            latestDraft = {
+              success: true,
+              key_id: data[i][0],
+              username: rowUser,
+              store_code: rowStore,
+              updated_at: timeCol,
+              draftJson: jsonCol
+            };
+          }
+        }
       }
     }
-    return { success: false, error: "Không tìm thấy bản nháp cho user này." };
+    
+    if (latestDraft) {
+      return latestDraft;
+    }
+    return { success: false, error: "Không tìm thấy bản nháp cho user này trên Cloud." };
   } catch(e) {
     return { success: false, error: e.toString() };
+  }
+}
+
+/**
+ * Liệt kê tất cả các bản nháp trên Cloud của user
+ */
+function listCloudDrafts(username) {
+  try {
+    if (!username) return { success: false, drafts: [] };
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName("Draft_StoreVisits");
+    if (!sheet) return { success: true, drafts: [] };
+    
+    var data = sheet.getDataRange().getValues();
+    var targetUser = String(username).trim().toLowerCase();
+    var drafts = [];
+    
+    for (var i = 1; i < data.length; i++) {
+      var rowUser = (data[i].length >= 7) ? String(data[i][1]).trim().toLowerCase() : String(data[i][0]).trim().toLowerCase();
+      if (rowUser === targetUser) {
+        drafts.push({
+          key_id: data[i][0],
+          store_code: (data[i].length >= 7) ? data[i][2] : data[i][1],
+          asm_name: (data[i].length >= 7) ? data[i][3] : data[i][2],
+          report_date: (data[i].length >= 7) ? data[i][4] : data[i][3],
+          updated_at: (data[i].length >= 7) ? data[i][5] : data[i][4],
+          draftJson: (data[i].length >= 7) ? data[i][6] : data[i][5]
+        });
+      }
+    }
+    return { success: true, drafts: drafts };
+  } catch(e) {
+    return { success: false, error: e.toString(), drafts: [] };
   }
 }
 
