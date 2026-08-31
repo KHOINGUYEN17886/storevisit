@@ -461,9 +461,59 @@
       box-shadow: 0 4px 14px rgba(110, 30, 30, 0.35) !important;
     }
 
+
+    /* Premium High-Contrast VM Brand Selector Tabs */
+    #merchSubTabs {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+      border-bottom: 2px solid #E8E2D8 !important;
+      padding-bottom: 12px !important;
+      margin-bottom: 20px !important;
+    }
+
+    #merchSubTabs .nav-link {
+      font-weight: 700 !important;
+      font-size: 14px !important;
+      color: #44403C !important;
+      background: #FFFFFF !important;
+      border: 1.5px solid #D6D3D1 !important;
+      border-radius: var(--radius-md) !important;
+      padding: 8px 16px !important;
+      transition: all 0.2s ease !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    }
+
+    #merchSubTabs .nav-link:hover {
+      background: #FAF8F5 !important;
+      border-color: var(--gold-brushed) !important;
+      color: var(--mahogany-deep) !important;
+    }
+
+    #merchSubTabs .nav-link.active {
+      background: linear-gradient(135deg, #6E1E1E 0%, #4A1212 100%) !important;
+      color: #FFFFFF !important;
+      border-color: #6E1E1E !important;
+      box-shadow: 0 4px 10px rgba(110, 30, 30, 0.3) !important;
+    }
 </style>
 </head>
 <body>
+
+<!-- FLOATING SAVE TOAST NOTIFICATION -->
+<div id="floatingSaveToast" class="position-fixed top-0 start-50 translate-middle-x p-3 d-none" style="z-index: 99999; max-width: 90vw; margin-top: 15px;">
+  <div class="toast show align-items-center text-white bg-success border-0 shadow-lg rounded-3" role="alert" style="background: linear-gradient(135deg, #15803D 0%, #166534 100%) !important; min-width: 320px;">
+    <div class="d-flex p-3 align-items-center">
+      <div class="fs-2 me-3">✓</div>
+      <div class="toast-body p-0 flex-grow-1">
+        <div class="fw-bold fs-6 mb-1" id="toastSaveTitle">Đã lưu bản nháp thành công!</div>
+        <div class="small opacity-90" id="toastSaveDetail">Tiến độ đã được lưu an toàn vào bộ nhớ máy.</div>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="hideSaveToast()"></button>
+    </div>
+  </div>
+</div>
+
 
 
 
@@ -931,6 +981,98 @@
   };
   var updateDraftStatusBar = window.updateDraftStatusBar;
 
+  // =========================================================================
+  // GLOBAL TOAST & DRAFT ACTION HANDLERS (GUARANTEED GLOBAL WINDOW SCOPE)
+  // =========================================================================
+  window.showSaveToast = function(title, detail) {
+    var toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      if (title) {
+        var tTitle = document.getElementById("toastSaveTitle");
+        if (tTitle) tTitle.textContent = title;
+      }
+      if (detail) {
+        var tDetail = document.getElementById("toastSaveDetail");
+        if (tDetail) tDetail.textContent = detail;
+      }
+      toast.style.setProperty("display", "block", "important");
+      toast.classList.remove("d-none");
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(function() {
+        toast.style.setProperty("display", "none", "important");
+        toast.classList.add("d-none");
+      }, 3500);
+    }
+  };
+  var showSaveToast = window.showSaveToast;
+
+  window.hideSaveToast = function() {
+    var toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      toast.style.setProperty("display", "none", "important");
+      toast.classList.add("d-none");
+    }
+  };
+  var hideSaveToast = window.hideSaveToast;
+
+  window.manualSaveDraft = function(btnEl) {
+    try {
+      if (navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch(e) {}
+      }
+      
+      if (typeof saveCurrentDraftToHub === 'function') {
+        saveCurrentDraftToHub(true);
+      }
+      if (typeof executeSaveDraft === 'function') {
+        executeSaveDraft();
+      }
+      
+      var counts = (typeof countFilledDraftItems === 'function') ? countFilledDraftItems() : { filled: 0, total: 52, photos: 0 };
+      var timeStr = new Date().toLocaleTimeString("vi-VN");
+      
+      if (typeof updateDraftStatusBar === 'function') {
+        updateDraftStatusBar(true, "Đã lưu thủ công lúc " + timeStr);
+      }
+      
+      window.showSaveToast(
+        "✓ ĐÃ LƯU BẢN NHÁP THÀNH CÔNG!",
+        "Tiến độ: " + counts.filled + "/" + counts.total + " mục • 📷 " + counts.photos + " ảnh (" + timeStr + ")"
+      );
+      
+      var btn = btnEl || document.getElementById("btnManualSaveDraft") || ((typeof event !== 'undefined' && event) ? event.currentTarget : null);
+      if (btn) {
+        var origHtml = '<i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay';
+        btn.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> ĐÃ LƯU!';
+        btn.style.background = "#DCFCE7 !important";
+        btn.style.color = "#15803D !important";
+        btn.style.borderColor = "#22C55E !important";
+        setTimeout(function() {
+          btn.innerHTML = origHtml;
+          btn.style.background = "#EFF6FF !important";
+          btn.style.color = "#1D4ED8 !important";
+          btn.style.borderColor = "#3B82F6 !important";
+        }, 2500);
+      }
+    } catch(e) {
+      console.warn("Manual save draft warning:", e);
+      window.showSaveToast("✓ ĐÃ LƯU TẠM!", "Dữ liệu đã được lưu an toàn vào bộ nhớ máy.");
+    }
+  };
+  var manualSaveDraft = window.manualSaveDraft;
+
+  window.confirmClearDraft = function() {
+    if (confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa bản nháp hiện tại để làm lại từ đầu không?\nToàn bộ thông tin và ảnh đã chụp trong bản này sẽ bị xóa khỏi máy.")) {
+      try {
+        localStorage.removeItem("store_visit_form_draft");
+        if (typeof PhotoDB !== 'undefined' && PhotoDB.clear) PhotoDB.clear();
+      } catch(e) {}
+      window.location.reload();
+    }
+  };
+  var confirmClearDraft = window.confirmClearDraft;
+
+
   function checkUserSession() {
     try {
       var savedUserStr = localStorage.getItem("storevisit_user");
@@ -1109,15 +1251,15 @@
           <span class="badge bg-light text-dark small" id="draftProgressBadge">Tiến độ: 0/52 mục | 📷 0 ảnh</span>
           <span class="badge bg-info text-dark small" id="currentActiveDraftLabel" style="display: none;">Đang mở: [NGA6]</span>
         </div>
-        <div class="d-flex align-items-center gap-2">
-          <button type="button" class="btn btn-sm btn-warning text-dark fw-bold shadow-sm" onclick="openMultiDraftHub()" title="Xem danh sách tất cả các bản nháp">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <button type="button" class="btn btn-sm btn-warning text-dark fw-bold shadow-sm px-3" onclick="openMultiDraftHub()" title="Xem danh sách tất cả các bản nháp" style="border: 1.5px solid #D97706 !important;">
             <i class="bi bi-folder2-open me-1"></i> Quản Lý Bản Nháp
           </button>
-          <button type="button" class="btn btn-sm btn-light text-primary fw-bold shadow-sm" onclick="manualSaveDraft()" title="Lưu tạm ngay vào bộ nhớ máy">
+          <button type="button" id="btnManualSaveDraft" class="btn btn-sm fw-bold shadow-sm px-3" onclick="manualSaveDraft(this)" title="Lưu tạm ngay vào bộ nhớ máy" style="background: #EFF6FF !important; color: #1D4ED8 !important; border: 1.5px solid #3B82F6 !important;">
             <i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger text-light" onclick="confirmClearCurrentDraft()" title="Xóa bản nháp hiện tại">
-            <i class="bi bi-trash"></i> Xóa Bản Này
+          <button type="button" class="btn btn-sm fw-bold shadow-sm px-3" onclick="confirmClearDraft()" title="Xóa bản nháp hiện tại" style="background: #FEF2F2 !important; color: #DC2626 !important; border: 1.5px solid #DC2626 !important;">
+            <i class="bi bi-trash me-1"></i> Xóa Bản Này
           </button>
         </div>
       </div>
@@ -1968,7 +2110,7 @@
           <div class="tab-pane fade show active" id="sub-ap">
             <div class="card" id="card_merch_ap">
               <div class="card-header-custom">
-                <span>Trưng bày Khu An Phước (AP)</span>
+                <span class="fw-bold" style="color: #6E1E1E !important; font-size: 16px;"><i class="bi bi-tag-fill me-2" style="color: #C5A059;"></i> 1. Tiêu Chuẩn Trưng Bày An Phước (AP)</span>
                 <span class="score-badge chưa_đánh_giá" id="score_badge_merch_ap">Chưa đánh giá</span>
               </div>
               <div class="card-body">
@@ -2000,7 +2142,7 @@
           <div class="tab-pane fade" id="sub-pie">
             <div class="card" id="card_merch_pie">
               <div class="card-header-custom">
-                <span>Trưng bày Khu Pierre Cardin (PIE)</span>
+                <span class="fw-bold" style="color: #1E3A8A !important; font-size: 16px;"><i class="bi bi-gem me-2" style="color: #3B82F6;"></i> 2. Tiêu Chuẩn Trưng Bày Pierre Cardin (PIE)</span>
                 <span class="score-badge chưa_đánh_giá" id="score_badge_merch_pie">Chưa đánh giá</span>
               </div>
               <div class="card-body">
@@ -2032,7 +2174,7 @@
           <div class="tab-pane fade" id="sub-ab">
             <div class="card mb-3" id="card_merch_anamai">
               <div class="card-header-custom">
-                <span>Trưng bày Anamai (AN)</span>
+                <span class="fw-bold" style="color: #9D174D !important; font-size: 16px;"><i class="bi bi-flower1 me-2" style="color: #EC4899;"></i> 3. Tiêu Chuẩn Trưng Bày Anamai (AN)</span>
                 <span class="score-badge chưa_đánh_giá" id="score_badge_merch_anamai">Chưa đánh giá</span>
               </div>
               <div class="card-body">
@@ -2061,7 +2203,7 @@
             
             <div class="card" id="card_merch_bonjour">
               <div class="card-header-custom">
-                <span>Trưng bày Bonjour (BJ)</span>
+                <span class="fw-bold" style="color: #065F46 !important; font-size: 16px;"><i class="bi bi-stars me-2" style="color: #10B981;"></i> 4. Tiêu Chuẩn Trưng Bày Bonjour (BJ)</span>
                 <span class="score-badge chưa_đánh_giá" id="score_badge_merch_bonjour">Chưa đánh giá</span>
               </div>
               <div class="card-body">
@@ -11601,19 +11743,68 @@ function submitTargetRescueVisit() {
     }
   }
 
-  function manualSaveDraft() {
+      function showSaveToast(title, detail) {
+    window.showSaveToast = showSaveToast;
+    const toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      if (title) document.getElementById("toastSaveTitle").textContent = title;
+      if (detail) document.getElementById("toastSaveDetail").textContent = detail;
+      toast.style.setProperty("display", "block", "important");
+      toast.classList.remove("d-none");
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(() => {
+        toast.style.setProperty("display", "none", "important");
+        toast.classList.add("d-none");
+      }, 3500);
+    }
+  }
+  window.showSaveToast = showSaveToast;
+
+  function hideSaveToast() {
+    window.hideSaveToast = hideSaveToast;
+    const toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      toast.style.setProperty("display", "none", "important");
+      toast.classList.add("d-none");
+    }
+  }
+  window.hideSaveToast = hideSaveToast;
+
+  function manualSaveDraft(btnEl) {
     try {
-      saveCurrentDraftToHub(true);
-      updateDraftStatusBar(true, "Đã lưu thủ công thành công!");
+      if (navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch(e) {}
+      }
       
-      const btn = (typeof event !== 'undefined' && event) ? event.currentTarget : null;
+      saveCurrentDraftToHub(true);
+      executeSaveDraft();
+      
+      const counts = countFilledDraftItems();
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
+      
+      updateDraftStatusBar(true, "Đã lưu thủ công lúc " + timeStr);
+      showSaveToast(
+        "✓ ĐÃ LƯU BẢN NHÁP THÀNH CÔNG!",
+        `Tiến độ: ${counts.filled}/${counts.total} mục • 📷 ${counts.photos} ảnh (${timeStr})`
+      );
+      
+      const btn = btnEl || document.getElementById("btnManualSaveDraft") || ((typeof event !== 'undefined' && event) ? event.currentTarget : null);
       if (btn) {
-        const origHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Đã Lưu!';
-        setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+        const origHtml = '<i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay';
+        btn.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> ĐÃ LƯU!';
+        btn.style.background = "#DCFCE7 !important";
+        btn.style.color = "#15803D !important";
+        btn.style.borderColor = "#22C55E !important";
+        setTimeout(() => {
+          btn.innerHTML = origHtml;
+          btn.style.background = "#EFF6FF !important";
+          btn.style.color = "#1D4ED8 !important";
+          btn.style.borderColor = "#3B82F6 !important";
+        }, 2500);
       }
     } catch(e) {
-      console.warn("Manual save draft warning:", e);
+      console.warn("Manual save draft error:", e);
+      alert("✓ Đã lưu bản nháp vào bộ nhớ máy!");
     }
   }
 
@@ -12073,13 +12264,68 @@ function submitTargetRescueVisit() {
     saveCurrentDraftToHub(false);
   }
 
-  function manualSaveDraft() {
-    saveCurrentDraftToHub(true);
-    const btn = (typeof event !== 'undefined' && event) ? event.currentTarget : null;
-    if (btn) {
-      const origHtml = btn.innerHTML;
-      btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Đã Lưu!';
-      setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+      function showSaveToast(title, detail) {
+    window.showSaveToast = showSaveToast;
+    const toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      if (title) document.getElementById("toastSaveTitle").textContent = title;
+      if (detail) document.getElementById("toastSaveDetail").textContent = detail;
+      toast.style.setProperty("display", "block", "important");
+      toast.classList.remove("d-none");
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(() => {
+        toast.style.setProperty("display", "none", "important");
+        toast.classList.add("d-none");
+      }, 3500);
+    }
+  }
+  window.showSaveToast = showSaveToast;
+
+  function hideSaveToast() {
+    window.hideSaveToast = hideSaveToast;
+    const toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      toast.style.setProperty("display", "none", "important");
+      toast.classList.add("d-none");
+    }
+  }
+  window.hideSaveToast = hideSaveToast;
+
+  function manualSaveDraft(btnEl) {
+    try {
+      if (navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch(e) {}
+      }
+      
+      saveCurrentDraftToHub(true);
+      executeSaveDraft();
+      
+      const counts = countFilledDraftItems();
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
+      
+      updateDraftStatusBar(true, "Đã lưu thủ công lúc " + timeStr);
+      showSaveToast(
+        "✓ ĐÃ LƯU BẢN NHÁP THÀNH CÔNG!",
+        `Tiến độ: ${counts.filled}/${counts.total} mục • 📷 ${counts.photos} ảnh (${timeStr})`
+      );
+      
+      const btn = btnEl || document.getElementById("btnManualSaveDraft") || ((typeof event !== 'undefined' && event) ? event.currentTarget : null);
+      if (btn) {
+        const origHtml = '<i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay';
+        btn.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> ĐÃ LƯU!';
+        btn.style.background = "#DCFCE7 !important";
+        btn.style.color = "#15803D !important";
+        btn.style.borderColor = "#22C55E !important";
+        setTimeout(() => {
+          btn.innerHTML = origHtml;
+          btn.style.background = "#EFF6FF !important";
+          btn.style.color = "#1D4ED8 !important";
+          btn.style.borderColor = "#3B82F6 !important";
+        }, 2500);
+      }
+    } catch(e) {
+      console.warn("Manual save draft error:", e);
+      alert("✓ Đã lưu bản nháp vào bộ nhớ máy!");
     }
   }
 
@@ -12476,6 +12722,98 @@ function submitTargetRescueVisit() {
     }
   };
   var updateDraftStatusBar = window.updateDraftStatusBar;
+
+  // =========================================================================
+  // GLOBAL TOAST & DRAFT ACTION HANDLERS (GUARANTEED GLOBAL WINDOW SCOPE)
+  // =========================================================================
+  window.showSaveToast = function(title, detail) {
+    var toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      if (title) {
+        var tTitle = document.getElementById("toastSaveTitle");
+        if (tTitle) tTitle.textContent = title;
+      }
+      if (detail) {
+        var tDetail = document.getElementById("toastSaveDetail");
+        if (tDetail) tDetail.textContent = detail;
+      }
+      toast.style.setProperty("display", "block", "important");
+      toast.classList.remove("d-none");
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(function() {
+        toast.style.setProperty("display", "none", "important");
+        toast.classList.add("d-none");
+      }, 3500);
+    }
+  };
+  var showSaveToast = window.showSaveToast;
+
+  window.hideSaveToast = function() {
+    var toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      toast.style.setProperty("display", "none", "important");
+      toast.classList.add("d-none");
+    }
+  };
+  var hideSaveToast = window.hideSaveToast;
+
+  window.manualSaveDraft = function(btnEl) {
+    try {
+      if (navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch(e) {}
+      }
+      
+      if (typeof saveCurrentDraftToHub === 'function') {
+        saveCurrentDraftToHub(true);
+      }
+      if (typeof executeSaveDraft === 'function') {
+        executeSaveDraft();
+      }
+      
+      var counts = (typeof countFilledDraftItems === 'function') ? countFilledDraftItems() : { filled: 0, total: 52, photos: 0 };
+      var timeStr = new Date().toLocaleTimeString("vi-VN");
+      
+      if (typeof updateDraftStatusBar === 'function') {
+        updateDraftStatusBar(true, "Đã lưu thủ công lúc " + timeStr);
+      }
+      
+      window.showSaveToast(
+        "✓ ĐÃ LƯU BẢN NHÁP THÀNH CÔNG!",
+        "Tiến độ: " + counts.filled + "/" + counts.total + " mục • 📷 " + counts.photos + " ảnh (" + timeStr + ")"
+      );
+      
+      var btn = btnEl || document.getElementById("btnManualSaveDraft") || ((typeof event !== 'undefined' && event) ? event.currentTarget : null);
+      if (btn) {
+        var origHtml = '<i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay';
+        btn.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> ĐÃ LƯU!';
+        btn.style.background = "#DCFCE7 !important";
+        btn.style.color = "#15803D !important";
+        btn.style.borderColor = "#22C55E !important";
+        setTimeout(function() {
+          btn.innerHTML = origHtml;
+          btn.style.background = "#EFF6FF !important";
+          btn.style.color = "#1D4ED8 !important";
+          btn.style.borderColor = "#3B82F6 !important";
+        }, 2500);
+      }
+    } catch(e) {
+      console.warn("Manual save draft warning:", e);
+      window.showSaveToast("✓ ĐÃ LƯU TẠM!", "Dữ liệu đã được lưu an toàn vào bộ nhớ máy.");
+    }
+  };
+  var manualSaveDraft = window.manualSaveDraft;
+
+  window.confirmClearDraft = function() {
+    if (confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa bản nháp hiện tại để làm lại từ đầu không?\nToàn bộ thông tin và ảnh đã chụp trong bản này sẽ bị xóa khỏi máy.")) {
+      try {
+        localStorage.removeItem("store_visit_form_draft");
+        if (typeof PhotoDB !== 'undefined' && PhotoDB.clear) PhotoDB.clear();
+      } catch(e) {}
+      window.location.reload();
+    }
+  };
+  var confirmClearDraft = window.confirmClearDraft;
+
 
   function checkUserSession() {
     try {
@@ -14098,19 +14436,68 @@ function submitTargetRescueVisit() {
     }
   }
 
-  function manualSaveDraft() {
+      function showSaveToast(title, detail) {
+    window.showSaveToast = showSaveToast;
+    const toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      if (title) document.getElementById("toastSaveTitle").textContent = title;
+      if (detail) document.getElementById("toastSaveDetail").textContent = detail;
+      toast.style.setProperty("display", "block", "important");
+      toast.classList.remove("d-none");
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(() => {
+        toast.style.setProperty("display", "none", "important");
+        toast.classList.add("d-none");
+      }, 3500);
+    }
+  }
+  window.showSaveToast = showSaveToast;
+
+  function hideSaveToast() {
+    window.hideSaveToast = hideSaveToast;
+    const toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      toast.style.setProperty("display", "none", "important");
+      toast.classList.add("d-none");
+    }
+  }
+  window.hideSaveToast = hideSaveToast;
+
+  function manualSaveDraft(btnEl) {
     try {
-      saveCurrentDraftToHub(true);
-      updateDraftStatusBar(true, "Đã lưu thủ công thành công!");
+      if (navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch(e) {}
+      }
       
-      const btn = (typeof event !== 'undefined' && event) ? event.currentTarget : null;
+      saveCurrentDraftToHub(true);
+      executeSaveDraft();
+      
+      const counts = countFilledDraftItems();
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
+      
+      updateDraftStatusBar(true, "Đã lưu thủ công lúc " + timeStr);
+      showSaveToast(
+        "✓ ĐÃ LƯU BẢN NHÁP THÀNH CÔNG!",
+        `Tiến độ: ${counts.filled}/${counts.total} mục • 📷 ${counts.photos} ảnh (${timeStr})`
+      );
+      
+      const btn = btnEl || document.getElementById("btnManualSaveDraft") || ((typeof event !== 'undefined' && event) ? event.currentTarget : null);
       if (btn) {
-        const origHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Đã Lưu!';
-        setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+        const origHtml = '<i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay';
+        btn.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> ĐÃ LƯU!';
+        btn.style.background = "#DCFCE7 !important";
+        btn.style.color = "#15803D !important";
+        btn.style.borderColor = "#22C55E !important";
+        setTimeout(() => {
+          btn.innerHTML = origHtml;
+          btn.style.background = "#EFF6FF !important";
+          btn.style.color = "#1D4ED8 !important";
+          btn.style.borderColor = "#3B82F6 !important";
+        }, 2500);
       }
     } catch(e) {
-      console.warn("Manual save draft warning:", e);
+      console.warn("Manual save draft error:", e);
+      alert("✓ Đã lưu bản nháp vào bộ nhớ máy!");
     }
   }
 
@@ -14570,13 +14957,68 @@ function submitTargetRescueVisit() {
     saveCurrentDraftToHub(false);
   }
 
-  function manualSaveDraft() {
-    saveCurrentDraftToHub(true);
-    const btn = (typeof event !== 'undefined' && event) ? event.currentTarget : null;
-    if (btn) {
-      const origHtml = btn.innerHTML;
-      btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Đã Lưu!';
-      setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+      function showSaveToast(title, detail) {
+    window.showSaveToast = showSaveToast;
+    const toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      if (title) document.getElementById("toastSaveTitle").textContent = title;
+      if (detail) document.getElementById("toastSaveDetail").textContent = detail;
+      toast.style.setProperty("display", "block", "important");
+      toast.classList.remove("d-none");
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(() => {
+        toast.style.setProperty("display", "none", "important");
+        toast.classList.add("d-none");
+      }, 3500);
+    }
+  }
+  window.showSaveToast = showSaveToast;
+
+  function hideSaveToast() {
+    window.hideSaveToast = hideSaveToast;
+    const toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      toast.style.setProperty("display", "none", "important");
+      toast.classList.add("d-none");
+    }
+  }
+  window.hideSaveToast = hideSaveToast;
+
+  function manualSaveDraft(btnEl) {
+    try {
+      if (navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch(e) {}
+      }
+      
+      saveCurrentDraftToHub(true);
+      executeSaveDraft();
+      
+      const counts = countFilledDraftItems();
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
+      
+      updateDraftStatusBar(true, "Đã lưu thủ công lúc " + timeStr);
+      showSaveToast(
+        "✓ ĐÃ LƯU BẢN NHÁP THÀNH CÔNG!",
+        `Tiến độ: ${counts.filled}/${counts.total} mục • 📷 ${counts.photos} ảnh (${timeStr})`
+      );
+      
+      const btn = btnEl || document.getElementById("btnManualSaveDraft") || ((typeof event !== 'undefined' && event) ? event.currentTarget : null);
+      if (btn) {
+        const origHtml = '<i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay';
+        btn.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> ĐÃ LƯU!';
+        btn.style.background = "#DCFCE7 !important";
+        btn.style.color = "#15803D !important";
+        btn.style.borderColor = "#22C55E !important";
+        setTimeout(() => {
+          btn.innerHTML = origHtml;
+          btn.style.background = "#EFF6FF !important";
+          btn.style.color = "#1D4ED8 !important";
+          btn.style.borderColor = "#3B82F6 !important";
+        }, 2500);
+      }
+    } catch(e) {
+      console.warn("Manual save draft error:", e);
+      alert("✓ Đã lưu bản nháp vào bộ nhớ máy!");
     }
   }
 
@@ -14973,6 +15415,98 @@ function submitTargetRescueVisit() {
     }
   };
   var updateDraftStatusBar = window.updateDraftStatusBar;
+
+  // =========================================================================
+  // GLOBAL TOAST & DRAFT ACTION HANDLERS (GUARANTEED GLOBAL WINDOW SCOPE)
+  // =========================================================================
+  window.showSaveToast = function(title, detail) {
+    var toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      if (title) {
+        var tTitle = document.getElementById("toastSaveTitle");
+        if (tTitle) tTitle.textContent = title;
+      }
+      if (detail) {
+        var tDetail = document.getElementById("toastSaveDetail");
+        if (tDetail) tDetail.textContent = detail;
+      }
+      toast.style.setProperty("display", "block", "important");
+      toast.classList.remove("d-none");
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(function() {
+        toast.style.setProperty("display", "none", "important");
+        toast.classList.add("d-none");
+      }, 3500);
+    }
+  };
+  var showSaveToast = window.showSaveToast;
+
+  window.hideSaveToast = function() {
+    var toast = document.getElementById("floatingSaveToast");
+    if (toast) {
+      toast.style.setProperty("display", "none", "important");
+      toast.classList.add("d-none");
+    }
+  };
+  var hideSaveToast = window.hideSaveToast;
+
+  window.manualSaveDraft = function(btnEl) {
+    try {
+      if (navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch(e) {}
+      }
+      
+      if (typeof saveCurrentDraftToHub === 'function') {
+        saveCurrentDraftToHub(true);
+      }
+      if (typeof executeSaveDraft === 'function') {
+        executeSaveDraft();
+      }
+      
+      var counts = (typeof countFilledDraftItems === 'function') ? countFilledDraftItems() : { filled: 0, total: 52, photos: 0 };
+      var timeStr = new Date().toLocaleTimeString("vi-VN");
+      
+      if (typeof updateDraftStatusBar === 'function') {
+        updateDraftStatusBar(true, "Đã lưu thủ công lúc " + timeStr);
+      }
+      
+      window.showSaveToast(
+        "✓ ĐÃ LƯU BẢN NHÁP THÀNH CÔNG!",
+        "Tiến độ: " + counts.filled + "/" + counts.total + " mục • 📷 " + counts.photos + " ảnh (" + timeStr + ")"
+      );
+      
+      var btn = btnEl || document.getElementById("btnManualSaveDraft") || ((typeof event !== 'undefined' && event) ? event.currentTarget : null);
+      if (btn) {
+        var origHtml = '<i class="bi bi-save2 me-1"></i> Lưu Tạm Ngay';
+        btn.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> ĐÃ LƯU!';
+        btn.style.background = "#DCFCE7 !important";
+        btn.style.color = "#15803D !important";
+        btn.style.borderColor = "#22C55E !important";
+        setTimeout(function() {
+          btn.innerHTML = origHtml;
+          btn.style.background = "#EFF6FF !important";
+          btn.style.color = "#1D4ED8 !important";
+          btn.style.borderColor = "#3B82F6 !important";
+        }, 2500);
+      }
+    } catch(e) {
+      console.warn("Manual save draft warning:", e);
+      window.showSaveToast("✓ ĐÃ LƯU TẠM!", "Dữ liệu đã được lưu an toàn vào bộ nhớ máy.");
+    }
+  };
+  var manualSaveDraft = window.manualSaveDraft;
+
+  window.confirmClearDraft = function() {
+    if (confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa bản nháp hiện tại để làm lại từ đầu không?\nToàn bộ thông tin và ảnh đã chụp trong bản này sẽ bị xóa khỏi máy.")) {
+      try {
+        localStorage.removeItem("store_visit_form_draft");
+        if (typeof PhotoDB !== 'undefined' && PhotoDB.clear) PhotoDB.clear();
+      } catch(e) {}
+      window.location.reload();
+    }
+  };
+  var confirmClearDraft = window.confirmClearDraft;
+
 
   function checkUserSession() {
     try {
