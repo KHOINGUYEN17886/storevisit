@@ -358,7 +358,44 @@
       font-weight: 800 !important;
     }
 
-    /* 1-Touch Quick Pulse Toggle */
+    
+    /* 1-Touch Quick Pulse Toggle (Executive High Contrast) */
+    .quick-toggle-btn {
+      width: 100%;
+      height: 52px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid #E8E2D8 !important;
+      background: #FFFFFF !important;
+      font-weight: 700 !important;
+      font-size: 14px !important;
+      color: #1C1917 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 0 16px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+      user-select: none !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+    }
+
+    .quick-toggle-btn:hover {
+      border-color: var(--gold-brushed) !important;
+      background: #FAF8F5 !important;
+    }
+
+    .quick-toggle-btn.passed {
+      background: #F0FDF4 !important;
+      border-color: #22C55E !important;
+      color: #15803D !important;
+    }
+
+    .quick-toggle-btn.failed {
+      background: #FEF2F2 !important;
+      border-color: #EF4444 !important;
+      color: #B91C1C !important;
+    }
+
     .quick-toggle-btn {
       width: 100%;
       height: 48px;
@@ -1171,7 +1208,7 @@
                 <div id="quickPulseSection" class="ios-glass-card d-none p-3 p-md-4 mb-4">
           <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-glass) !important;">
             <div>
-              <h5 class="fw-bold text-white mb-0">⚡ Kiểm Tra Nhanh Hiện Trường (Quick Pulse)</h5>
+              <h5 class="fw-bold mb-0" style="color: #6E1E1E !important;">⚡ Kiểm Tra Nhanh Hiện Trường (Quick Pulse)</h5>
               <small class="text-muted">Thao tác siêu tốc 2-3 phút, 1 chạm trên mobile</small>
             </div>
             <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">Thời gian: 2-3 phút</span>
@@ -1180,8 +1217,8 @@
           <div class="row g-2 mb-3">
 
             <div class="col-12 col-md-6 mb-2">
-              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn1" onclick="toggleQuickItem(1)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
-                <span class="fw-semibold text-white">👕 1. Tác phong, Đồng phục & Năng lượng NV</span>
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn1" onclick="toggleQuickItem(1)" style="background: #FFFFFF; border: 1.5px solid #E8E2D8; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <span class="fw-bold" style="color: #1C1917 !important; font-size: 14px;">👕 1. Tác phong, Đồng phục & Năng lượng NV</span>
                 <span class="badge bg-secondary" id="qBadge1">Chưa chọn</span>
               </button>
               <div id="quickDefectBox1" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
@@ -1194,8 +1231,8 @@
               </div>
             </div>
             <div class="col-12 col-md-6 mb-2">
-              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn2" onclick="toggleQuickItem(2)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
-                <span class="fw-semibold text-white">❄️ 2. Máy lạnh, Ánh sáng & Vệ sinh CH</span>
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn2" onclick="toggleQuickItem(2)" style="background: #FFFFFF; border: 1.5px solid #E8E2D8; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <span class="fw-bold" style="color: #1C1917 !important; font-size: 14px;">❄️ 2. Máy lạnh, Ánh sáng & Vệ sinh CH</span>
                 <span class="badge bg-secondary" id="qBadge2">Chưa chọn</span>
               </button>
               <div id="quickDefectBox2" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
@@ -1208,8 +1245,8 @@
               </div>
             </div>
             <div class="col-12 col-md-6 mb-2">
-              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn3" onclick="toggleQuickItem(3)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
-                <span class="fw-semibold text-white">👔 3. Mặt tiền & Trưng bày hàng hóa bắt mắt</span>
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn3" onclick="toggleQuickItem(3)" style="background: #FFFFFF; border: 1.5px solid #E8E2D8; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <span class="fw-bold" style="color: #1C1917 !important; font-size: 14px;">👔 3. Mặt tiền & Trưng bày hàng hóa bắt mắt</span>
                 <span class="badge bg-secondary" id="qBadge3">Chưa chọn</span>
               </button>
               <div id="quickDefectBox3" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
@@ -1222,8 +1259,8 @@
               </div>
             </div>
             <div class="col-12 col-md-6 mb-2">
-              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn4" onclick="toggleQuickItem(4)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
-                <span class="fw-semibold text-white">📦 4. Kho hàng gọn gàng & Quầy thu ngân chuẩn</span>
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn4" onclick="toggleQuickItem(4)" style="background: #FFFFFF; border: 1.5px solid #E8E2D8; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <span class="fw-bold" style="color: #1C1917 !important; font-size: 14px;">📦 4. Kho hàng gọn gàng & Quầy thu ngân chuẩn</span>
                 <span class="badge bg-secondary" id="qBadge4">Chưa chọn</span>
               </button>
               <div id="quickDefectBox4" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
@@ -1236,8 +1273,8 @@
               </div>
             </div>
             <div class="col-12 col-md-6 mb-2">
-              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn5" onclick="toggleQuickItem(5)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
-                <span class="fw-semibold text-white">🎯 5. Tiến độ khắc phục các tồn đọng lần trước</span>
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn5" onclick="toggleQuickItem(5)" style="background: #FFFFFF; border: 1.5px solid #E8E2D8; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <span class="fw-bold" style="color: #1C1917 !important; font-size: 14px;">🎯 5. Tiến độ khắc phục các tồn đọng lần trước</span>
                 <span class="badge bg-secondary" id="qBadge5">Chưa chọn</span>
               </button>
               <div id="quickDefectBox5" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
@@ -1250,7 +1287,7 @@
               </div>
             </div>
             <div class="col-12 col-md-6 mb-2">
-              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn6" onclick="toggleQuickItem(6)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn6" onclick="toggleQuickItem(6)" style="background: #FFFFFF; border: 1.5px solid #E8E2D8; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <span class="fw-semibold text-white">💬 6. Đã trao đổi & Hướng dẫn CHT ca trực</span>
                 <span class="badge bg-secondary" id="qBadge6">Chưa chọn</span>
               </button>
@@ -1272,28 +1309,28 @@
             <div class="row g-2">
               <div class="col-6 col-md-3">
                 <div class="photo-upload-slot p-2 rounded text-center">
-                  <label class="form-label small mb-1 text-white-50">1. Mặt tiền</label>
+                  <label class="form-label small mb-1 fw-bold" style="color: #44403C !important;">1. Mặt tiền</label>
                   <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="qpPhoto1" onchange="handleQuickPulsePhoto(1, this)">
                   <div class="small text-muted mt-1" id="qpPhotoStatus1">Chưa chụp</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
                 <div class="photo-upload-slot p-2 rounded text-center">
-                  <label class="form-label small mb-1 text-white-50">2. Quầy POS</label>
+                  <label class="form-label small mb-1 fw-bold" style="color: #44403C !important;">2. Quầy POS</label>
                   <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="qpPhoto2" onchange="handleQuickPulsePhoto(2, this)">
                   <div class="small text-muted mt-1" id="qpPhotoStatus2">Chưa chụp</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
                 <div class="photo-upload-slot p-2 rounded text-center">
-                  <label class="form-label small mb-1 text-white-50">3. Kệ Hot SKUs</label>
+                  <label class="form-label small mb-1 fw-bold" style="color: #44403C !important;">3. Kệ Hot SKUs</label>
                   <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="qpPhoto3" onchange="handleQuickPulsePhoto(3, this)">
                   <div class="small text-muted mt-1" id="qpPhotoStatus3">Chưa chụp</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
                 <div class="photo-upload-slot p-2 rounded text-center">
-                  <label class="form-label small mb-1 text-white-50">4. Vệ sinh CH</label>
+                  <label class="form-label small mb-1 fw-bold" style="color: #44403C !important;">4. Vệ sinh CH</label>
                   <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="qpPhoto4" onchange="handleQuickPulsePhoto(4, this)">
                   <div class="small text-muted mt-1" id="qpPhotoStatus4">Chưa chụp</div>
                 </div>
@@ -1394,21 +1431,21 @@
                 <div class="row g-2">
                   <div class="col-12 col-md-4">
                     <div class="photo-upload-slot p-2 rounded text-center">
-                      <label class="form-label small mb-1 text-white-50">1. Hiện trạng đứt hàng / tồn kho</label>
+                      <label class="form-label small mb-1 fw-bold" style="color: #44403C !important;">1. Hiện trạng đứt hàng / tồn kho</label>
                       <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="trPhotoBefore" onchange="handleTargetRescuePhoto('before', this)">
                       <div class="small text-muted mt-1" id="trPhotoBeforeStatus">Chưa tải ảnh</div>
                     </div>
                   </div>
                   <div class="col-12 col-md-4">
                     <div class="photo-upload-slot p-2 rounded text-center">
-                      <label class="form-label small mb-1 text-white-50">2. Triển khai can thiệp / trưng bày</label>
+                      <label class="form-label small mb-1 fw-bold" style="color: #44403C !important;">2. Triển khai can thiệp / trưng bày</label>
                       <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="trPhotoAction" onchange="handleTargetRescuePhoto('action', this)">
                       <div class="small text-muted mt-1" id="trPhotoActionStatus">Chưa tải ảnh</div>
                     </div>
                   </div>
                   <div class="col-12 col-md-4">
                     <div class="photo-upload-slot p-2 rounded text-center">
-                      <label class="form-label small mb-1 text-white-50">3. Nghiệm thu sau can thiệp</label>
+                      <label class="form-label small mb-1 fw-bold" style="color: #44403C !important;">3. Nghiệm thu sau can thiệp</label>
                       <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="trPhotoVerify" onchange="handleTargetRescuePhoto('verify', this)">
                       <div class="small text-muted mt-1" id="trPhotoVerifyStatus">Chưa tải ảnh</div>
                     </div>
@@ -4742,6 +4779,7 @@ function renderExecutiveDiagnosticCard(storeCode) {
  */
 function switchInspectionMode(modeKey) {
   window.CURRENT_INSPECTION_MODE = modeKey;
+  currentInspectionMode = modeKey;
 
   // Update switcher buttons UI
   document.querySelectorAll('.ios-mode-btn').forEach(function(btn) {
@@ -4752,7 +4790,7 @@ function switchInspectionMode(modeKey) {
     }
   });
 
-  // Sync with internal form modeSelect
+  // Sync internal mode select
   const modeSelectEl = document.getElementById('modeSelect');
   if (modeSelectEl) {
     if (modeKey === "cross") modeSelectEl.value = "cross";
@@ -4786,6 +4824,10 @@ function switchInspectionMode(modeKey) {
     if (tabsContainer) tabsContainer.classList.remove('d-none');
     if (mainTabsContent) mainTabsContent.classList.remove('d-none');
   }
+  
+  if (typeof updateStoreList === "function") {
+    updateStoreList();
+  }
 }
 
 /**
@@ -4803,18 +4845,22 @@ function toggleQuickItem(idx) {
   const btn = document.getElementById('qBtn' + idx);
   const badge = document.getElementById('qBadge' + idx);
 
+  const defectBox = document.getElementById('quickDefectBox' + idx);
   if (nextState === "Đạt") {
     btn.className = "quick-toggle-btn passed";
     badge.className = "badge bg-success";
     badge.innerText = "✓ Đạt";
+    if (defectBox) defectBox.classList.add('d-none');
   } else if (nextState === "Chưa đạt") {
     btn.className = "quick-toggle-btn failed";
     badge.className = "badge bg-danger";
     badge.innerText = "✗ Chưa đạt";
+    if (defectBox) defectBox.classList.remove('d-none');
   } else {
     btn.className = "quick-toggle-btn";
     badge.className = "badge bg-secondary";
     badge.innerText = "Chưa chọn";
+    if (defectBox) defectBox.classList.add('d-none');
   }
 }
 
