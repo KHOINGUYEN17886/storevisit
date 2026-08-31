@@ -17,547 +17,298 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <style>
+    /* ========================================================================= */
+    /* APPLE macOS / iOS DARK LUXURY DESIGN SYSTEM (AN PHUOC RETAIL COMMANDER)  */
+    /* ========================================================================= */
     :root {
-      --brand-red: #C41E3A;
-      --brand-red-dark: #A01830;
-      --brand-red-light: #FDECEA;
-      --brand-gold: #C8A951;
-      --brand-gold-light: #FBF4E0;
-      --brand-navy: #1B2A4A;
-      --primary-color: #C41E3A;
-      --secondary-color: #A01830;
-      --accent-color: #C8A951;
-      --bg-color: #F4F5F7;
-      --card-bg: #ffffff;
-      --text-main: #111827;
-      --text-muted: #6B7280;
-      --success-color: #166534;
-      --warning-color: #92400E;
-      --danger-color: #991B1B;
-      --portal-border: #E5E7EB;
-      --portal-card-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      --bg-canvas: #0B0F17;
+      --bg-surface: #111726;
+      --bg-card: rgba(17, 24, 39, 0.85);
+      --bg-card-hover: rgba(24, 33, 53, 0.95);
+      --border-glass: rgba(255, 255, 255, 0.08);
+      --border-glass-focus: rgba(225, 29, 72, 0.5);
+      
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      
+      --brand-crimson: #E11D48;
+      --brand-crimson-glow: rgba(225, 29, 72, 0.35);
+      --brand-gold: #D4AF37;
+      --brand-gold-glow: rgba(212, 175, 55, 0.35);
+      --brand-navy-dark: #0A192F;
+      
+      --emerald-success: #10B981;
+      --emerald-glow: rgba(16, 185, 129, 0.3);
+      --rose-danger: #F43F5E;
+      --rose-glow: rgba(244, 63, 94, 0.3);
+      --amber-warning: #F59E0B;
+      
+      --glass-blur: blur(24px);
+      --card-radius: 16px;
+      --pill-radius: 9999px;
+      --transition-smooth: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
     
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding-bottom: 80px;
+      font-family: 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      background-color: var(--bg-canvas);
+      background-image: radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.08) 0%, transparent 60%),
+                        radial-gradient(circle at 100% 100%, rgba(10, 25, 47, 0.2) 0%, transparent 50%);
+      color: var(--text-primary);
+      padding-bottom: 90px;
+      -webkit-font-smoothing: antialiased;
     }
-    
-    .app-header {
-      background: #ffffff;
-      color: var(--brand-navy);
-      padding: 16px 0;
-      margin-bottom: 25px;
-      border-bottom: 1.5px solid #E5E7EB;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-    }
-    
-    .app-title {
-      font-weight: 800;
-      font-size: 22px;
-      letter-spacing: -0.5px;
-      color: var(--brand-navy);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .card {
-      background: #ffffff;
-      border: 1px solid #E5E7EB;
-      border-radius: 1rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
-      transition: all 0.2s ease;
-      margin-bottom: 25px;
+
+    /* Glass Cards */
+    .card, .ios-glass-card {
+      background: var(--bg-card) !important;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-glass) !important;
+      border-radius: var(--card-radius) !important;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      color: var(--text-primary);
+      transition: var(--transition-smooth);
+      margin-bottom: 24px;
       overflow: hidden;
     }
     
-    .card:hover {
-      box-shadow: 0 4px 16px rgba(196,30,58,.10);
-      border-color: #FBBCCA;
+    .card:hover, .ios-glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.16) !important;
+      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
     }
 
     .card-header-custom {
-      background-color: rgba(27, 42, 74, 0.04);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      padding: 18px 24px;
+      background: rgba(255, 255, 255, 0.03) !important;
+      border-bottom: 1px solid var(--border-glass) !important;
+      padding: 16px 22px;
       font-weight: 700;
-      font-size: 16px;
-      color: var(--brand-navy);
+      font-size: 15px;
+      letter-spacing: 0.2px;
+      color: var(--text-primary);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
+
+    /* Header Bar */
+    .app-header {
+      background: rgba(11, 15, 23, 0.85) !important;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--border-glass) !important;
+      padding: 14px 0;
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 1020;
+    }
     
-    .nav-tabs-container {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 6px;
-      border: 1px solid #E5E7EB;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-      margin-bottom: 25px;
-      overflow-x: auto;
-      white-space: nowrap;
+    .app-title {
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.3px;
+      color: #FFFFFF !important;
       display: flex;
-      flex-wrap: nowrap;
-    }
-    
-    .nav-tabs {
-      border-bottom: none !important;
-      display: flex;
-      flex-wrap: nowrap;
-    }
-    
-    .nav-tabs .nav-link {
-      border: none !important;
-      color: #6B7280;
-      font-weight: 600;
-      padding: 10px 18px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      margin-right: 5px;
-    }
-    
-    .nav-tabs .nav-link:hover {
-      background-color: var(--brand-red-light);
-      color: var(--brand-red);
-    }
-    
-    .nav-tabs .nav-link.active {
-      background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark)) !important;
-      color: white !important;
-      box-shadow: 0 4px 12px rgba(196,30,58,0.3);
-    }
-    
-    #mainMenuTabs.main-menu-pills {
-      border-bottom: none !important;
-      display: flex;
-      flex-wrap: nowrap;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    #mainMenuTabs.main-menu-pills .main-menu-item {
-      display: inline-block;
-    }
-    .main-menu-btn {
-      border: none !important;
-      color: #6B7280;
-      font-weight: 600;
-      padding: 10px 18px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      margin-right: 5px;
-      background: none;
-      cursor: pointer;
-      display: inline-flex;
       align-items: center;
-      gap: 6px;
-    }
-    .main-menu-btn:hover {
-      background-color: var(--brand-red-light);
-      color: var(--brand-red);
-    }
-    .main-menu-btn.active {
-      background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark)) !important;
-      color: white !important;
-      box-shadow: 0 4px 12px rgba(196,30,58,0.3);
+      gap: 10px;
     }
 
+    /* Form Controls */
     .form-label {
       font-weight: 600;
-      color: var(--brand-navy);
+      color: var(--text-secondary);
       margin-bottom: 8px;
-      font-size: 14px;
+      font-size: 13px;
+      letter-spacing: 0.1px;
     }
     
     .form-control, .form-select {
-      border-radius: 8px;
-      border: 1.5px solid #e2e8f0;
+      background-color: rgba(15, 23, 42, 0.6) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border-glass) !important;
+      border-radius: 10px !important;
       padding: 10px 14px;
       font-size: 14px;
-      transition: all 0.2s ease;
+      transition: var(--transition-smooth);
+    }
+    
+    .form-control::placeholder {
+      color: var(--text-muted) !important;
     }
     
     .form-control:focus, .form-select:focus {
-      border-color: var(--brand-red);
-      box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.15);
+      background-color: rgba(15, 23, 42, 0.9) !important;
+      border-color: var(--brand-crimson) !important;
+      box-shadow: 0 0 0 3px var(--brand-crimson-glow) !important;
+      outline: none;
     }
 
+    /* Apple Segmented Controls */
     .segmented-control {
-      background-color: #f1f5f9;
+      background-color: rgba(15, 23, 42, 0.8);
       border-radius: 10px;
-      padding: 4px;
+      padding: 3px;
       display: flex;
       width: 100%;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-glass);
     }
     
     .segment-btn {
       flex: 1;
       text-align: center;
-      padding: 8px 0;
-      font-size: 13px;
+      padding: 7px 0;
+      font-size: 12.5px;
       font-weight: 600;
       border-radius: 8px;
       cursor: pointer;
       user-select: none;
-      transition: all 0.2s ease;
-      color: var(--text-muted);
+      transition: var(--transition-smooth);
+      color: var(--text-secondary);
       border: none;
-      background: none;
+      background: transparent;
+    }
+    
+    .segment-btn:hover {
+      color: var(--text-primary);
     }
     
     .segment-btn.active[data-value="Chưa kiểm tra"] {
-      background-color: #cbd5e1;
-      color: #334155;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
     }
     .segment-btn.active[data-value="Đạt"] {
-      background-color: var(--success-color);
-      color: white;
-      box-shadow: 0 2px 5px rgba(22, 101, 52, 0.2);
+      background-color: var(--emerald-success);
+      color: #FFFFFF;
+      box-shadow: 0 2px 10px var(--emerald-glow);
     }
     .segment-btn.active[data-value="Không đạt"] {
-      background-color: var(--danger-color);
-      color: white;
-      box-shadow: 0 2px 5px rgba(153, 27, 27, 0.2);
+      background-color: var(--rose-danger);
+      color: #FFFFFF;
+      box-shadow: 0 2px 10px var(--rose-glow);
     }
     .segment-btn.active[data-value="Không áp dụng"] {
-      background-color: #64748b;
-      color: white;
-      box-shadow: 0 2px 5px rgba(100, 116, 139, 0.2);
+      background-color: #475569;
+      color: #FFFFFF;
     }
 
-    .collapse-field {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
-      opacity: 0;
-    }
-    
-    .collapse-field.show {
-      max-height: 600px;
-      opacity: 1;
-      padding-top: 15px;
-      transition: max-height 0.4s ease-in, opacity 0.4s ease-in, padding 0.4s ease-in;
-    }
-    
-    .score-badge {
-      font-size: 13px;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 20px;
-    }
-    
-    .score-badge.tốt { background-color: rgba(22, 101, 52, 0.15); color: var(--success-color); }
-    .score-badge.đạt { background-color: rgba(200, 169, 81, 0.2); color: #92400e; }
-    .score-badge.chưa_đánh_giá { background-color: #f1f5f9; color: var(--text-muted); }
-    .score-badge.không_áp_dụng { background-color: #cbd5e1; color: #334155; }
-
-    .btn-primary-custom {
-      background: linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
-      border: none;
-      color: white;
-      font-weight: 700;
-      padding: 10px 22px;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-    }
-    
-    .btn-primary-custom:hover {
-      background: linear-gradient(135deg, var(--brand-red-dark), #8B1225);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(196,30,58,.35);
-      color: white;
-    }
-    
-    .badge-gold {
-      background-color: var(--brand-gold);
-      color: white;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    #overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(27, 42, 74, 0.92); z-index: 9999; display: none;
-      justify-content: center; align-items: center; flex-direction: column;
-      color: white;
-      backdrop-filter: blur(5px);
-    }
-
-    .checklist-row {
-      padding: 15px 0;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .checklist-row:last-child {
-      border-bottom: none;
-    }
-    
-    .issue-card {
-      border-left: 4px solid var(--brand-gold);
-      background-color: rgba(200, 169, 81, 0.08);
-      padding: 12px 18px;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-
-    .autosave-toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #1B2A4A;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 30px;
-      font-size: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      z-index: 999;
-      display: none;
-      align-items: center;
-    }
-    
-    .serious-flag {
-      color: var(--danger-color);
-      font-size: 11px;
-      font-weight: bold;
-      margin-left: 5px;
-      background-color: rgba(153, 27, 27, 0.1);
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-
-    /* Báo Cáo Tổng Hợp — In/Xuất PDF: chỉ in đúng nội dung dashboard đang mở,
-       giữ nguyên canvas biểu đồ Chart.js (window.print() trên trang hiện tại,
-       KHÔNG clone innerHTML sang cửa sổ mới — canvas sẽ mất nội dung nếu clone). */
-    @media print {
-      body.mr-print-mode > *:not(.container) { display: none !important; }
-      body.mr-print-mode .container > *:not(#main-view-management-report) { display: none !important; }
-      body.mr-print-mode #main-view-management-report .no-print { display: none !important; }
-      body.mr-print-mode #main-view-management-report { display: block !important; }
-    }
-  
-    /* =======================================================
-       FULL-SCREEN ENTERPRISE AUTH PORTAL STYLES
-       ======================================================= */
-    #appAuthPortal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 99999;
-      background: linear-gradient(135deg, #051426 0%, #0A2342 45%, #153E6F 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .auth-card {
-      width: 100%;
-      max-width: 460px;
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
-      overflow: hidden;
-      border: none;
-    }
-    .auth-header {
-      background: linear-gradient(135deg, #0A2342 0%, #153B66 100%);
-      padding: 28px 24px;
-      text-align: center;
-      color: #fff;
-    }
-    .auth-logo-badge {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #C41E3A, #8A1024);
-      color: #fff;
-      font-size: 22px;
-      font-weight: 800;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 14px;
-      box-shadow: 0 6px 16px rgba(196, 30, 58, 0.35);
-      margin-bottom: 12px;
-    }
-    .auth-body {
-      padding: 28px 24px;
-    }
-    .quick-asm-chip {
-      display: inline-block;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 12px;
-      background: #f1f5f9;
-      color: #334155;
-      cursor: pointer;
-      margin: 2px;
-      transition: all 0.15s;
-      border: 1px solid #e2e8f0;
-    }
-    .quick-asm-chip:hover {
-      background: #0A2342;
-      color: #fff;
-      border-color: #0A2342;
-    }
-
-    /* Multi-Draft Card Styles */
-    .draft-item-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-      background: #ffffff;
-    }
-    .draft-item-card:hover {
-      border-color: #0A2342;
-      box-shadow: 0 4px 12px rgba(10, 35, 66, 0.08);
-      transform: translateY(-2px);
-    }
-
-
-    /* =========================================================================
-       APPLE HIG & SPA STYLES (WAVE 3 RETAIL COMMANDER)
-       ========================================================================= */
-    .ios-glass-card {
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(229, 231, 235, 0.8);
-      border-radius: 18px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-      margin-bottom: 20px;
-      overflow: hidden;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    
+    /* iOS 5-Mode Switcher */
     .ios-mode-switcher {
-      display: flex;
-      background: #F1F5F9;
-      padding: 4px;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-glass);
       border-radius: 14px;
-      margin-bottom: 20px;
-      gap: 4px;
+      padding: 5px;
+      display: flex;
+      gap: 6px;
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      border: 1px solid #E2E8F0;
+      white-space: nowrap;
     }
     
     .ios-mode-btn {
       flex: 1;
-      min-width: 100px;
-      padding: 10px 12px;
+      min-width: 130px;
+      padding: 10px 14px;
       font-size: 13px;
       font-weight: 600;
-      text-align: center;
-      border-radius: 10px;
+      color: var(--text-secondary);
       border: none;
       background: transparent;
-      color: #64748B;
+      border-radius: 10px;
       cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 7px;
+      transition: var(--transition-smooth);
+    }
+    
+    .ios-mode-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
     }
     
     .ios-mode-btn.active {
-      background: #FFFFFF;
-      color: #0F172A;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      font-weight: 700;
+      background: var(--brand-crimson) !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 4px 16px var(--brand-crimson-glow);
     }
-    
+
+    /* Diagnostic KPI Metric Cards */
     .diag-metric-box {
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-glass);
       border-radius: 12px;
-      padding: 12px;
+      padding: 12px 14px;
       text-align: center;
     }
     
     .diag-metric-val {
-      font-size: 16px;
+      font-size: 20px;
       font-weight: 800;
-      color: #0F172A;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
     }
     
     .diag-metric-lbl {
       font-size: 11px;
       font-weight: 600;
-      color: #64748B;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
       margin-top: 2px;
     }
-    
-    .sev-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-    .sev-protect { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
-    .sev-watch { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
-    .sev-recovery { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
-    .sev-rescue { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
-    .sev-unknown { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
-    
-    .blocker-card {
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      border-left: 4px solid;
-    }
-    .blocker-p1 { background: #FEF2F2; border-left-color: #EF4444; border-top: 1px solid #FEE2E2; border-right: 1px solid #FEE2E2; border-bottom: 1px solid #FEE2E2; }
-    .blocker-p2 { background: #FFFBEB; border-left-color: #F59E0B; border-top: 1px solid #FEF3C7; border-right: 1px solid #FEF3C7; border-bottom: 1px solid #FEF3C7; }
-    .blocker-p3 { background: #F8FAFC; border-left-color: #64748B; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; }
 
-    .quick-toggle-btn {
-      width: 100%;
-      height: 48px;
+    /* Instant Defect Collector Box */
+    .instant-defect-box {
+      background: rgba(244, 63, 94, 0.06);
+      border: 1px solid rgba(244, 63, 94, 0.25);
       border-radius: 12px;
-      border: 1.5px solid #E2E8F0;
-      background: #FFFFFF;
-      font-weight: 600;
-      font-size: 14px;
-      color: #334155;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
+      padding: 14px 16px;
+      margin-top: 10px;
+      animation: fadeInSlideDown 0.3s ease-out;
+    }
+    
+    @keyframes fadeInSlideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Photo Upload Tiles */
+    .photo-upload-slot {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1.5px dashed var(--border-glass);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
       cursor: pointer;
-      transition: all 0.15s ease;
-      user-select: none;
+      transition: var(--transition-smooth);
     }
-    .quick-toggle-btn.passed {
-      background: #F0FDF4;
-      border-color: #22C55E;
-      color: #15803D;
+    
+    .photo-upload-slot:hover {
+      border-color: var(--brand-crimson);
+      background: rgba(225, 29, 72, 0.04);
     }
-    .quick-toggle-btn.failed {
-      background: #FEF2F2;
-      border-color: #EF4444;
-      color: #B91C1C;
+    
+    /* Buttons */
+    .btn-primary, .btn-brand {
+      background: var(--brand-crimson) !important;
+      border-color: var(--brand-crimson) !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 4px 16px var(--brand-crimson-glow);
+      font-weight: 600;
+      border-radius: 10px;
+      transition: var(--transition-smooth);
+    }
+    
+    .btn-primary:hover, .btn-brand:hover {
+      background: var(--brand-crimson-dark) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--brand-crimson-glow);
     }
 
-  </style>
+</style>
 </head>
 <body>
 
@@ -906,71 +657,153 @@
         <!-- ============================================================= -->
         <!-- MODE 1: QUICK PULSE VIEW (2-3 PHÚT)                           -->
         <!-- ============================================================= -->
-        <div id="quickPulseSection" class="ios-glass-card d-none p-3 p-md-4 mb-4">
-          <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <div id="quickPulseSection" class="ios-glass-card d-none p-3 p-md-4 mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2" style="border-color: var(--border-glass) !important;">
             <div>
-              <h5 class="fw-bold text-dark mb-0">⚡ Kiểm Tra Nhanh Hiện Trường (Quick Pulse)</h5>
-              <small class="text-muted">Dành cho ASM đi cửa hàng nội thành HCM (Thao tác nhanh 2-3 phút, 1 chạm)</small>
+              <h5 class="fw-bold text-white mb-0">⚡ Kiểm Tra Nhanh Hiện Trường (Quick Pulse)</h5>
+              <small class="text-muted">Thao tác siêu tốc 2-3 phút, 1 chạm trên mobile</small>
             </div>
-            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Thời gian: 2-3 phút</span>
+            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">Thời gian: 2-3 phút</span>
           </div>
 
-          <div class="row g-3 mb-4">
-            <!-- 6 Quick Toggles -->
-            <div class="col-12 col-md-6">
-              <button type="button" class="quick-toggle-btn" id="qBtn1" onclick="toggleQuickItem(1)">
-                <span>👕 1. Tác phong, Đồng phục & Năng lượng NV</span>
+          <div class="row g-2 mb-3">
+
+            <div class="col-12 col-md-6 mb-2">
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn1" onclick="toggleQuickItem(1)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
+                <span class="fw-semibold text-white">👕 1. Tác phong, Đồng phục & Năng lượng NV</span>
                 <span class="badge bg-secondary" id="qBadge1">Chưa chọn</span>
               </button>
+              <div id="quickDefectBox1" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
+                <div class="small fw-bold text-danger mb-2"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ghi nhận vấn đề & Chụp ảnh hiện trường:</div>
+                <input type="text" class="form-control form-control-sm mb-2" id="quickDefectNote1" placeholder="Mô tả tồn đọng hoặc vấn đề phát hiện...">
+                <div class="d-flex align-items-center gap-2">
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="quickDefectPhoto1" onchange="handleQuickDefectPhoto(1, this)">
+                  <div id="quickDefectPhotoStatus1"></div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <button type="button" class="quick-toggle-btn" id="qBtn2" onclick="toggleQuickItem(2)">
-                <span>❄️ 2. Máy lạnh, Ánh sáng & Vệ sinh CH</span>
+            <div class="col-12 col-md-6 mb-2">
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn2" onclick="toggleQuickItem(2)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
+                <span class="fw-semibold text-white">❄️ 2. Máy lạnh, Ánh sáng & Vệ sinh CH</span>
                 <span class="badge bg-secondary" id="qBadge2">Chưa chọn</span>
               </button>
+              <div id="quickDefectBox2" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
+                <div class="small fw-bold text-danger mb-2"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ghi nhận vấn đề & Chụp ảnh hiện trường:</div>
+                <input type="text" class="form-control form-control-sm mb-2" id="quickDefectNote2" placeholder="Mô tả tồn đọng hoặc vấn đề phát hiện...">
+                <div class="d-flex align-items-center gap-2">
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="quickDefectPhoto2" onchange="handleQuickDefectPhoto(2, this)">
+                  <div id="quickDefectPhotoStatus2"></div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <button type="button" class="quick-toggle-btn" id="qBtn3" onclick="toggleQuickItem(3)">
-                <span>👔 3. Mặt tiền & Trưng bày hàng hóa bắt mắt</span>
+            <div class="col-12 col-md-6 mb-2">
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn3" onclick="toggleQuickItem(3)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
+                <span class="fw-semibold text-white">👔 3. Mặt tiền & Trưng bày hàng hóa bắt mắt</span>
                 <span class="badge bg-secondary" id="qBadge3">Chưa chọn</span>
               </button>
+              <div id="quickDefectBox3" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
+                <div class="small fw-bold text-danger mb-2"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ghi nhận vấn đề & Chụp ảnh hiện trường:</div>
+                <input type="text" class="form-control form-control-sm mb-2" id="quickDefectNote3" placeholder="Mô tả tồn đọng hoặc vấn đề phát hiện...">
+                <div class="d-flex align-items-center gap-2">
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="quickDefectPhoto3" onchange="handleQuickDefectPhoto(3, this)">
+                  <div id="quickDefectPhotoStatus3"></div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <button type="button" class="quick-toggle-btn" id="qBtn4" onclick="toggleQuickItem(4)">
-                <span>📦 4. Kho hàng gọn gàng & Quầy thu ngân chuẩn</span>
+            <div class="col-12 col-md-6 mb-2">
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn4" onclick="toggleQuickItem(4)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
+                <span class="fw-semibold text-white">📦 4. Kho hàng gọn gàng & Quầy thu ngân chuẩn</span>
                 <span class="badge bg-secondary" id="qBadge4">Chưa chọn</span>
               </button>
+              <div id="quickDefectBox4" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
+                <div class="small fw-bold text-danger mb-2"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ghi nhận vấn đề & Chụp ảnh hiện trường:</div>
+                <input type="text" class="form-control form-control-sm mb-2" id="quickDefectNote4" placeholder="Mô tả tồn đọng hoặc vấn đề phát hiện...">
+                <div class="d-flex align-items-center gap-2">
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="quickDefectPhoto4" onchange="handleQuickDefectPhoto(4, this)">
+                  <div id="quickDefectPhotoStatus4"></div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <button type="button" class="quick-toggle-btn" id="qBtn5" onclick="toggleQuickItem(5)">
-                <span>🎯 5. Tiến độ khắc phục các tồn đọng lần trước</span>
+            <div class="col-12 col-md-6 mb-2">
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn5" onclick="toggleQuickItem(5)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
+                <span class="fw-semibold text-white">🎯 5. Tiến độ khắc phục các tồn đọng lần trước</span>
                 <span class="badge bg-secondary" id="qBadge5">Chưa chọn</span>
               </button>
+              <div id="quickDefectBox5" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
+                <div class="small fw-bold text-danger mb-2"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ghi nhận vấn đề & Chụp ảnh hiện trường:</div>
+                <input type="text" class="form-control form-control-sm mb-2" id="quickDefectNote5" placeholder="Mô tả tồn đọng hoặc vấn đề phát hiện...">
+                <div class="d-flex align-items-center gap-2">
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="quickDefectPhoto5" onchange="handleQuickDefectPhoto(5, this)">
+                  <div id="quickDefectPhotoStatus5"></div>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-6">
-              <button type="button" class="quick-toggle-btn" id="qBtn6" onclick="toggleQuickItem(6)">
-                <span>💬 6. Đã trao đổi & Hướng dẫn CHT ca trực</span>
+            <div class="col-12 col-md-6 mb-2">
+              <button type="button" class="quick-toggle-btn w-100 text-start d-flex justify-content-between align-items-center p-3 rounded-3" id="qBtn6" onclick="toggleQuickItem(6)" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);">
+                <span class="fw-semibold text-white">💬 6. Đã trao đổi & Hướng dẫn CHT ca trực</span>
                 <span class="badge bg-secondary" id="qBadge6">Chưa chọn</span>
               </button>
+              <div id="quickDefectBox6" class="instant-defect-box d-none mt-2 p-3 rounded-3" style="background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3);">
+                <div class="small fw-bold text-danger mb-2"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ghi nhận vấn đề & Chụp ảnh hiện trường:</div>
+                <input type="text" class="form-control form-control-sm mb-2" id="quickDefectNote6" placeholder="Mô tả tồn đọng hoặc vấn đề phát hiện...">
+                <div class="d-flex align-items-center gap-2">
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="quickDefectPhoto6" onchange="handleQuickDefectPhoto(6, this)">
+                  <div id="quickDefectPhotoStatus6"></div>
+                </div>
+              </div>
             </div>
           </div>
+
+
+          <!-- 4 Quick Pulse Overview Photo Slots -->
+          <div class="card p-3 mb-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+            <h6 class="fw-bold text-white mb-2"><i class="bi bi-camera-fill me-1 text-warning"></i> Chụp Ảnh Nhanh Hiện Trường (Tối đa 4 góc, linh hoạt)</h6>
+            <div class="row g-2">
+              <div class="col-6 col-md-3">
+                <div class="photo-upload-slot p-2 rounded text-center">
+                  <label class="form-label small mb-1 text-white-50">1. Mặt tiền</label>
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="qpPhoto1" onchange="handleQuickPulsePhoto(1, this)">
+                  <div class="small text-muted mt-1" id="qpPhotoStatus1">Chưa chụp</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="photo-upload-slot p-2 rounded text-center">
+                  <label class="form-label small mb-1 text-white-50">2. Quầy POS</label>
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="qpPhoto2" onchange="handleQuickPulsePhoto(2, this)">
+                  <div class="small text-muted mt-1" id="qpPhotoStatus2">Chưa chụp</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="photo-upload-slot p-2 rounded text-center">
+                  <label class="form-label small mb-1 text-white-50">3. Kệ Hot SKUs</label>
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="qpPhoto3" onchange="handleQuickPulsePhoto(3, this)">
+                  <div class="small text-muted mt-1" id="qpPhotoStatus3">Chưa chụp</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="photo-upload-slot p-2 rounded text-center">
+                  <label class="form-label small mb-1 text-white-50">4. Vệ sinh CH</label>
+                  <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="qpPhoto4" onchange="handleQuickPulsePhoto(4, this)">
+                  <div class="small text-muted mt-1" id="qpPhotoStatus4">Chưa chụp</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
 
           <!-- Quick Note -->
           <div class="mb-3">
-            <label class="form-label fw-bold">Ghi chú nhanh của ASM (nếu có)</label>
+            <label class="form-label fw-bold text-white-50">Ghi chú nóng của ASM (nếu có)</label>
             <textarea class="form-control" id="quickPulseNote" rows="2" placeholder="Nhập nhanh nhận xét nổi bật hoặc chỉ đạo nóng cho Cửa hàng trưởng..."></textarea>
           </div>
 
           <div class="d-grid gap-2">
-            <button type="button" class="btn btn-warning btn-lg fw-bold py-3 text-dark rounded-3" onclick="submitQuickPulseVisit()">
+            <button type="button" class="btn btn-warning btn-lg fw-bold py-3 text-dark rounded-3 shadow" onclick="submitQuickPulseVisit()">
               <i class="bi bi-send-fill me-2"></i> Gửi Biên Bản Quick Pulse
             </button>
           </div>
         </div>
 
-        <!-- ============================================================= -->
-        <!-- MODE 2: TARGET RESCUE VIEW (CAN THIỆP CỨU DOANH SỐ)           -->
-        <!-- ============================================================= -->
         <div id="targetRescueSection" class="ios-glass-card d-none p-3 p-md-4 mb-4 border-danger">
           <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
             <div>
@@ -1043,7 +876,36 @@
           </div>
 
           <div class="d-grid gap-2">
-            <button type="button" class="btn btn-danger btn-lg fw-bold py-3 rounded-3" onclick="submitTargetRescueVisit()">
+            
+              <!-- 3 Visual Evidence Slots -->
+              <div class="card p-3 mb-3" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass);">
+                <h6 class="fw-bold text-danger mb-2"><i class="bi bi-images me-1"></i> Bằng Chứng Hình Ảnh Cứu Target (3 Giai Đoạn)</h6>
+                <div class="row g-2">
+                  <div class="col-12 col-md-4">
+                    <div class="photo-upload-slot p-2 rounded text-center">
+                      <label class="form-label small mb-1 text-white-50">1. Hiện trạng đứt hàng / tồn kho</label>
+                      <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="trPhotoBefore" onchange="handleTargetRescuePhoto('before', this)">
+                      <div class="small text-muted mt-1" id="trPhotoBeforeStatus">Chưa tải ảnh</div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <div class="photo-upload-slot p-2 rounded text-center">
+                      <label class="form-label small mb-1 text-white-50">2. Triển khai can thiệp / trưng bày</label>
+                      <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="trPhotoAction" onchange="handleTargetRescuePhoto('action', this)">
+                      <div class="small text-muted mt-1" id="trPhotoActionStatus">Chưa tải ảnh</div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <div class="photo-upload-slot p-2 rounded text-center">
+                      <label class="form-label small mb-1 text-white-50">3. Nghiệm thu sau can thiệp</label>
+                      <input type="file" capture="environment" accept="image/*" class="form-control form-control-sm" id="trPhotoVerify" onchange="handleTargetRescuePhoto('verify', this)">
+                      <div class="small text-muted mt-1" id="trPhotoVerifyStatus">Chưa tải ảnh</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+          <button type="button" class="btn btn-danger btn-lg fw-bold py-3 rounded-3" onclick="submitTargetRescueVisit()">
               <i class="bi bi-shield-check me-2"></i> Ký Cam Kết & Gửi Kế Hoạch Cứu Target
             </button>
           </div>
@@ -4681,19 +4543,21 @@ function submitTargetRescueVisit() {
   }
 
 
+  
   function updateStoreList() {
     const modeEl = document.getElementById('modeSelect');
     const asmEl = document.getElementById('asmName');
     const regionEl = document.getElementById('regionSelect');
     const storeSelect = document.getElementById('storeCode');
     
-    if (!modeEl || !asmEl || !regionEl || !storeSelect) return;
+    if (!storeSelect) return;
     
-    const mode = modeEl.value;
-    const asm = asmEl.value;
-    const region = regionEl.value;
+    const mode = (typeof currentInspectionMode !== 'undefined' && currentInspectionMode) ? currentInspectionMode : (modeEl ? modeEl.value : 'quick_pulse');
+    const asm = asmEl ? asmEl.value : '';
+    const region = regionEl ? regionEl.value : '';
+    const user = currentUser || window.CURRENT_USER || JSON.parse(localStorage.getItem("storevisit_user") || "null");
     
-    // Clear existing store options (keep only the placeholder)
+    // Clear existing store options
     storeSelect.options.length = 0;
     var placeholder = document.createElement('option');
     placeholder.value = '';
@@ -4701,11 +4565,59 @@ function submitTargetRescueVisit() {
     storeSelect.appendChild(placeholder);
     
     var stores = [];
-    if (typeof activeStoreData !== 'undefined' && activeStoreData) {
-      if (mode === 'own' && asm) {
-        stores = activeStoreData.mapping_by_asm[asm] || [];
-      } else if (mode === 'cross' && region) {
-        stores = activeStoreData.mapping_by_region[region] || [];
+    var data = (typeof activeStoreData !== 'undefined' && activeStoreData) ? activeStoreData : (typeof storeData !== 'undefined' ? storeData : null);
+    
+    if (data && data.mapping_by_asm) {
+      if (mode === 'cross') {
+        // Mode Kiểm Tra Chéo: Mở toàn bộ 185 cửa hàng hoặc lọc theo Region
+        if (region && data.mapping_by_region && data.mapping_by_region[region]) {
+          stores = data.mapping_by_region[region];
+        } else {
+          var allStoresSet = new Set();
+          Object.values(data.mapping_by_asm).forEach(function(list) {
+            list.forEach(function(s) { allStoresSet.add(s); });
+          });
+          stores = Array.from(allStoresSet).sort();
+        }
+      } else {
+        // Own Inspection Modes (Quick Pulse, Target Rescue, Deep Audit, Opening)
+        if (user && user.role === 'asm') {
+          // ASM: Chỉ xem và chọn các cửa hàng thuộc quyền quản lý của mình
+          var userAsm = user.fullName || user.username || asm;
+          function normStr(s) {
+            return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                      .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                      .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+          }
+          var targetNorm = normStr(userAsm);
+          var matchedKey = Object.keys(data.mapping_by_asm).find(function(k) {
+            var kn = normStr(k);
+            return kn === targetNorm || targetNorm.includes(kn) || kn.includes(targetNorm);
+          });
+          
+          if (matchedKey && data.mapping_by_asm[matchedKey]) {
+            stores = data.mapping_by_asm[matchedKey];
+          } else if (user.stores && user.stores !== 'ALL') {
+            stores = user.stores.split(',').map(function(s) { return s.trim(); });
+          } else if (asm && data.mapping_by_asm[asm]) {
+            stores = data.mapping_by_asm[asm];
+          }
+        } else if (user && (user.role === 'master' || user.role === 'admin')) {
+          // Master Khôi: Nếu chọn ASM thì lọc theo ASM đó, nếu chưa chọn thì hiển thị toàn bộ 185 cửa hàng
+          if (asm && data.mapping_by_asm[asm]) {
+            stores = data.mapping_by_asm[asm];
+          } else {
+            var allStoresSetMaster = new Set();
+            Object.values(data.mapping_by_asm).forEach(function(list) {
+              list.forEach(function(s) { allStoresSetMaster.add(s); });
+            });
+            stores = Array.from(allStoresSetMaster).sort();
+          }
+        } else {
+          if (asm && data.mapping_by_asm[asm]) {
+            stores = data.mapping_by_asm[asm];
+          }
+        }
       }
     }
     
@@ -4715,9 +4627,15 @@ function submitTargetRescueVisit() {
       opt.textContent = store;
       storeSelect.appendChild(opt);
     });
+    
+    // Auto trigger store profile change if only 1 store or previous selection
+    if (storeSelect.options.length === 2) {
+      storeSelect.selectedIndex = 1;
+      if (typeof handleStoreProfileChange === 'function') handleStoreProfileChange();
+    }
   }
 
-  // --- CHECKLIST ENGINE ---
+
   function renderChecklist(secKey, secObj) {
     const container = document.getElementById(`checklist_${secKey}`);
     if (!container) return;
@@ -9855,6 +9773,33 @@ function submitTargetRescueVisit() {
 
   
 
+<script>
+
+  // Quick Pulse Photo Handlers
+  window.quickPulsePhotos = window.quickPulsePhotos || {};
+  function handleQuickPulsePhoto(slotIdx, input) {
+    if (input.files && input.files[0]) {
+      compressImageClient(input.files[0], 1280, 0.8, function(compressedUrl) {
+        window.quickPulsePhotos["photo_" + slotIdx] = compressedUrl;
+        const statusEl = document.getElementById("qpPhotoStatus" + slotIdx);
+        if (statusEl) statusEl.innerHTML = '<span class="text-success small fw-bold">✓ Đã chụp xong</span>';
+      });
+    }
+  }
+
+  // Target Rescue Photo Handlers
+  window.targetRescuePhotos = window.targetRescuePhotos || {};
+  function handleTargetRescuePhoto(stage, input) {
+    if (input.files && input.files[0]) {
+      compressImageClient(input.files[0], 1280, 0.8, function(compressedUrl) {
+        window.targetRescuePhotos["photo_" + stage] = compressedUrl;
+        const statusEl = document.getElementById("trPhoto" + stage.charAt(0).toUpperCase() + stage.slice(1) + "Status");
+        if (statusEl) statusEl.innerHTML = '<span class="text-success small fw-bold">✓ Đã tải ảnh</span>';
+      });
+    }
+  }
+
+</script>
 </body></html>`);
     printWindow.document.close();
     printWindow.onload = function() { printWindow.print(); };
@@ -10816,8 +10761,10 @@ function submitTargetRescueVisit() {
       .loginUser(uInput, pInput);
   }
 
+  
   function applyUserSession(user) {
     currentUser = user;
+    window.CURRENT_USER = user;
     localStorage.setItem("storevisit_user", JSON.stringify(user));
     
     const userBar = document.getElementById("userHeaderBar");
@@ -10825,59 +10772,38 @@ function submitTargetRescueVisit() {
     const badgeEl = document.getElementById("userRoleBadge");
     if (userBar && nameEl && badgeEl) {
       userBar.classList.remove("d-none");
-      nameEl.textContent = `👤 ${user.fullName || user.username}`;
-      if (user.role === "master") {
-        badgeEl.textContent = "Master Account";
+      nameEl.textContent = `${user.fullName || user.username}`;
+      if (user.role === "master" || user.role === "admin") {
+        badgeEl.textContent = "Master Administrator";
         badgeEl.className = "badge bg-warning text-dark me-3";
       } else {
-        badgeEl.textContent = user.region ? `ASM - ${user.region}` : "ASM";
+        badgeEl.textContent = user.region ? `ASM • ${user.region}` : "ASM Quản Lý";
         badgeEl.className = "badge bg-info text-dark me-3";
       }
     }
     
-    const menuUsersItem = document.getElementById("menu-users-item");
-    if (menuUsersItem) {
-      if (user.role === "master" || user.role === "admin") {
-        menuUsersItem.classList.remove("d-none");
-      } else {
-        menuUsersItem.classList.add("d-none");
-      }
-    }
-    
-    // Reveal StoresInfo Sync Button ONLY for Master Nguyễn Đăng Khôi
-    const btnSyncStores = document.getElementById("btnSyncStoresInfoMaster");
-    if (btnSyncStores) {
-      if (user.username === "khoi" || user.username === "khoind" || user.role === "master") {
-        btnSyncStores.classList.remove("d-none");
-      } else {
-        btnSyncStores.classList.add("d-none");
-      }
-    }
-    
-    // Auto-select ASM Name in Form if matching.
     const asmSelect = document.getElementById("asmName");
-    if (asmSelect && user.fullName) {
-      function normStr(s) {
-        return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                  .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
-                  .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-      }
-      const normalizedFull = normStr(user.fullName);
-      let found = false;
-      for (let i = 0; i < asmSelect.options.length; i++) {
-        const optVal = normStr(asmSelect.options[i].value);
-        if (!optVal) continue;
-        if (optVal === normalizedFull || normalizedFull.includes(optVal) || optVal.includes(normalizedFull)) {
-          asmSelect.selectedIndex = i;
-          found = true;
-          break;
+    if (asmSelect) {
+      if (user.role === 'asm' && user.fullName) {
+        function normStr(s) {
+          return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                    .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        }
+        const normalizedFull = normStr(user.fullName);
+        for (let i = 0; i < asmSelect.options.length; i++) {
+          const optVal = normStr(asmSelect.options[i].value);
+          if (optVal && (optVal === normalizedFull || normalizedFull.includes(optVal) || optVal.includes(normalizedFull))) {
+            asmSelect.selectedIndex = i;
+            break;
+          }
         }
       }
-      if (found && typeof updateStoreList === 'function') {
-        updateStoreList();
-      }
     }
+    
+    updateStoreList();
   }
+
 
   function filterStoreOptionsForUser() {
     if (!currentUser) return;
@@ -12332,5 +12258,32 @@ function submitTargetRescueVisit() {
     </div>
   </div>
 
+<script>
+
+  // Quick Pulse Photo Handlers
+  window.quickPulsePhotos = window.quickPulsePhotos || {};
+  function handleQuickPulsePhoto(slotIdx, input) {
+    if (input.files && input.files[0]) {
+      compressImageClient(input.files[0], 1280, 0.8, function(compressedUrl) {
+        window.quickPulsePhotos["photo_" + slotIdx] = compressedUrl;
+        const statusEl = document.getElementById("qpPhotoStatus" + slotIdx);
+        if (statusEl) statusEl.innerHTML = '<span class="text-success small fw-bold">✓ Đã chụp xong</span>';
+      });
+    }
+  }
+
+  // Target Rescue Photo Handlers
+  window.targetRescuePhotos = window.targetRescuePhotos || {};
+  function handleTargetRescuePhoto(stage, input) {
+    if (input.files && input.files[0]) {
+      compressImageClient(input.files[0], 1280, 0.8, function(compressedUrl) {
+        window.targetRescuePhotos["photo_" + stage] = compressedUrl;
+        const statusEl = document.getElementById("trPhoto" + stage.charAt(0).toUpperCase() + stage.slice(1) + "Status");
+        if (statusEl) statusEl.innerHTML = '<span class="text-success small fw-bold">✓ Đã tải ảnh</span>';
+      });
+    }
+  }
+
+</script>
 </body>
 </html>
