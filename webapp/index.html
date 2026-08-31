@@ -18,56 +18,109 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <style>
     /* ========================================================================= */
-    /* APPLE macOS / iOS DARK LUXURY DESIGN SYSTEM (AN PHUOC RETAIL COMMANDER)  */
+    /* EXECUTIVE LIGHT LUXURY DESIGN SYSTEM (AN PHUOC RETAIL COMMANDER)         */
+    /* High-Contrast, WCAG AAA Readable, Platinum Canvas & Royal Navy           */
     /* ========================================================================= */
     :root {
-      --bg-canvas: #0B0F17;
-      --bg-surface: #111726;
-      --bg-card: rgba(17, 24, 39, 0.85);
-      --bg-card-hover: rgba(24, 33, 53, 0.95);
-      --border-glass: rgba(255, 255, 255, 0.08);
-      --border-glass-focus: rgba(225, 29, 72, 0.5);
+      --bg-canvas: #F8FAFC;
+      --bg-surface: #F1F5F9;
+      --bg-card: #FFFFFF;
+      --bg-card-hover: #FAFCFF;
+      --border-subtle: #E2E8F0;
+      --border-focus: #C41E3A;
       
-      --text-primary: #F8FAFC;
-      --text-secondary: #94A3B8;
+      --text-primary: #0F172A;
+      --text-secondary: #334155;
       --text-muted: #64748B;
       
-      --brand-crimson: #E11D48;
-      --brand-crimson-glow: rgba(225, 29, 72, 0.35);
+      --brand-navy: #0A2540;
+      --brand-navy-dark: #061826;
+      --brand-navy-light: #F0F4F8;
+      
+      --brand-crimson: #C41E3A;
+      --brand-crimson-hover: #A01830;
+      --brand-crimson-glow: rgba(196, 30, 58, 0.15);
+      
       --brand-gold: #D4AF37;
-      --brand-gold-glow: rgba(212, 175, 55, 0.35);
-      --brand-navy-dark: #0A192F;
+      --brand-gold-dark: #B8860B;
+      --brand-gold-light: #FEF9C3;
       
-      --emerald-success: #10B981;
-      --emerald-glow: rgba(16, 185, 129, 0.3);
-      --rose-danger: #F43F5E;
-      --rose-glow: rgba(244, 63, 94, 0.3);
-      --amber-warning: #F59E0B;
+      --emerald-success: #15803D;
+      --emerald-bg: #DCFCE7;
+      --rose-danger: #BE123C;
+      --rose-bg: #FFE4E6;
+      --amber-warning: #B45309;
+      --amber-bg: #FEF3C7;
       
-      --glass-blur: blur(24px);
-      --card-radius: 16px;
+      --card-radius: 14px;
       --pill-radius: 9999px;
-      --transition-smooth: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-smooth: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      --luxury-shadow: 0 4px 20px -2px rgba(10, 37, 64, 0.06), 0 2px 6px -1px rgba(10, 37, 64, 0.04);
+      --hero-shadow: 0 20px 40px -15px rgba(10, 37, 64, 0.12), 0 0 0 1px rgba(10, 37, 64, 0.05);
     }
     
     body {
       font-family: 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
       background-color: var(--bg-canvas);
-      background-image: radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.08) 0%, transparent 60%),
-                        radial-gradient(circle at 100% 100%, rgba(10, 25, 47, 0.2) 0%, transparent 50%);
       color: var(--text-primary);
       padding-bottom: 90px;
       -webkit-font-smoothing: antialiased;
+      margin: 0;
     }
 
-    /* Glass Cards */
+    /* Auth Portal Full Screen */
+    #appAuthPortal {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #F0F4F8 0%, #E2E8F0 100%);
+      padding: 20px;
+    }
+
+    .auth-card {
+      background: #FFFFFF !important;
+      border-radius: 18px !important;
+      border: 1px solid rgba(10, 37, 64, 0.08) !important;
+      box-shadow: var(--hero-shadow) !important;
+      max-width: 440px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .auth-header {
+      background: linear-gradient(135deg, #0A2540 0%, #153E6F 100%) !important;
+      color: #FFFFFF !important;
+      padding: 28px 24px;
+      text-align: center;
+    }
+
+    .auth-logo-badge {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #C41E3A, #991B1B);
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 20px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+    }
+
+    .auth-body {
+      padding: 28px 24px;
+      background: #FFFFFF;
+    }
+
+    /* Cards */
     .card, .ios-glass-card {
-      background: var(--bg-card) !important;
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--border-glass) !important;
+      background: #FFFFFF !important;
+      border: 1px solid var(--border-subtle) !important;
       border-radius: var(--card-radius) !important;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      box-shadow: var(--luxury-shadow) !important;
       color: var(--text-primary);
       transition: var(--transition-smooth);
       margin-bottom: 24px;
@@ -75,18 +128,17 @@
     }
     
     .card:hover, .ios-glass-card:hover {
-      border-color: rgba(255, 255, 255, 0.16) !important;
-      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+      border-color: #CBD5E1 !important;
+      box-shadow: 0 8px 24px -4px rgba(10, 37, 64, 0.08) !important;
     }
 
     .card-header-custom {
-      background: rgba(255, 255, 255, 0.03) !important;
-      border-bottom: 1px solid var(--border-glass) !important;
-      padding: 16px 22px;
+      background: var(--brand-navy-light) !important;
+      border-bottom: 1px solid var(--border-subtle) !important;
+      padding: 16px 20px;
       font-weight: 700;
       font-size: 15px;
-      letter-spacing: 0.2px;
-      color: var(--text-primary);
+      color: var(--brand-navy);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -94,10 +146,9 @@
 
     /* Header Bar */
     .app-header {
-      background: rgba(11, 15, 23, 0.85) !important;
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border-bottom: 1px solid var(--border-glass) !important;
+      background: #FFFFFF !important;
+      border-bottom: 1px solid var(--border-subtle) !important;
+      box-shadow: 0 2px 8px rgba(10, 37, 64, 0.04);
       padding: 14px 0;
       margin-bottom: 24px;
       position: sticky;
@@ -109,27 +160,26 @@
       font-weight: 800;
       font-size: 20px;
       letter-spacing: -0.3px;
-      color: #FFFFFF !important;
+      color: var(--brand-navy) !important;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    /* Form Controls */
+    /* Form Controls - MAXIMUM CONTRAST */
     .form-label {
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
+      font-weight: 700;
+      color: var(--text-primary) !important;
+      margin-bottom: 6px;
       font-size: 13px;
-      letter-spacing: 0.1px;
     }
     
     .form-control, .form-select {
-      background-color: rgba(15, 23, 42, 0.6) !important;
+      background-color: #FFFFFF !important;
       color: var(--text-primary) !important;
-      border: 1px solid var(--border-glass) !important;
-      border-radius: 10px !important;
-      padding: 10px 14px;
+      border: 1.5px solid #CBD5E1 !important;
+      border-radius: 8px !important;
+      padding: 9px 13px;
       font-size: 14px;
       transition: var(--transition-smooth);
     }
@@ -139,20 +189,20 @@
     }
     
     .form-control:focus, .form-select:focus {
-      background-color: rgba(15, 23, 42, 0.9) !important;
+      background-color: #FFFFFF !important;
       border-color: var(--brand-crimson) !important;
       box-shadow: 0 0 0 3px var(--brand-crimson-glow) !important;
       outline: none;
     }
 
-    /* Apple Segmented Controls */
+    /* Segmented Controls */
     .segmented-control {
-      background-color: rgba(15, 23, 42, 0.8);
-      border-radius: 10px;
+      background-color: #F1F5F9;
+      border-radius: 8px;
       padding: 3px;
       display: flex;
       width: 100%;
-      border: 1px solid var(--border-glass);
+      border: 1px solid #E2E8F0;
     }
     
     .segment-btn {
@@ -161,7 +211,7 @@
       padding: 7px 0;
       font-size: 12.5px;
       font-weight: 600;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       user-select: none;
       transition: var(--transition-smooth);
@@ -175,47 +225,47 @@
     }
     
     .segment-btn.active[data-value="Chưa kiểm tra"] {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: var(--text-primary);
+      background-color: #CBD5E1;
+      color: #1E293B;
     }
     .segment-btn.active[data-value="Đạt"] {
       background-color: var(--emerald-success);
       color: #FFFFFF;
-      box-shadow: 0 2px 10px var(--emerald-glow);
+      box-shadow: 0 2px 6px rgba(21, 128, 61, 0.25);
     }
     .segment-btn.active[data-value="Không đạt"] {
-      background-color: var(--rose-danger);
+      background-color: var(--brand-crimson);
       color: #FFFFFF;
-      box-shadow: 0 2px 10px var(--rose-glow);
+      box-shadow: 0 2px 6px rgba(196, 30, 58, 0.25);
     }
     .segment-btn.active[data-value="Không áp dụng"] {
-      background-color: #475569;
+      background-color: #64748B;
       color: #FFFFFF;
     }
 
-    /* iOS 5-Mode Switcher */
+    /* 5-Mode Switcher */
     .ios-mode-switcher {
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--border-glass);
-      border-radius: 14px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
       padding: 5px;
       display: flex;
       gap: 6px;
       overflow-x: auto;
       white-space: nowrap;
+      box-shadow: var(--luxury-shadow);
     }
     
     .ios-mode-btn {
       flex: 1;
       min-width: 130px;
-      padding: 10px 14px;
+      padding: 9px 14px;
       font-size: 13px;
       font-weight: 600;
       color: var(--text-secondary);
       border: none;
       background: transparent;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -226,34 +276,35 @@
     
     .ios-mode-btn:hover {
       color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.05);
+      background: #F1F5F9;
     }
     
     .ios-mode-btn.active {
       background: var(--brand-crimson) !important;
       color: #FFFFFF !important;
-      box-shadow: 0 4px 16px var(--brand-crimson-glow);
+      box-shadow: 0 3px 10px rgba(196, 30, 58, 0.25);
     }
 
     /* Diagnostic KPI Metric Cards */
     .diag-metric-box {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-glass);
-      border-radius: 12px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
       padding: 12px 14px;
       text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
     
     .diag-metric-val {
       font-size: 20px;
       font-weight: 800;
-      color: var(--text-primary);
+      color: var(--brand-navy);
       letter-spacing: -0.5px;
     }
     
     .diag-metric-lbl {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
@@ -262,25 +313,19 @@
 
     /* Instant Defect Collector Box */
     .instant-defect-box {
-      background: rgba(244, 63, 94, 0.06);
-      border: 1px solid rgba(244, 63, 94, 0.25);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-top: 10px;
-      animation: fadeInSlideDown 0.3s ease-out;
-    }
-    
-    @keyframes fadeInSlideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
+      background: #FFF1F2;
+      border: 1px solid #FECDD3;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 8px;
     }
 
     /* Photo Upload Tiles */
     .photo-upload-slot {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1.5px dashed var(--border-glass);
-      border-radius: 12px;
-      padding: 16px;
+      background: #F8FAFC;
+      border: 1.5px dashed #CBD5E1;
+      border-radius: 10px;
+      padding: 14px;
       text-align: center;
       cursor: pointer;
       transition: var(--transition-smooth);
@@ -288,7 +333,7 @@
     
     .photo-upload-slot:hover {
       border-color: var(--brand-crimson);
-      background: rgba(225, 29, 72, 0.04);
+      background: #FFF5F5;
     }
     
     /* Buttons */
@@ -296,16 +341,55 @@
       background: var(--brand-crimson) !important;
       border-color: var(--brand-crimson) !important;
       color: #FFFFFF !important;
-      box-shadow: 0 4px 16px var(--brand-crimson-glow);
       font-weight: 600;
-      border-radius: 10px;
+      border-radius: 8px;
       transition: var(--transition-smooth);
     }
     
     .btn-primary:hover, .btn-brand:hover {
-      background: var(--brand-crimson-dark) !important;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px var(--brand-crimson-glow);
+      background: var(--brand-crimson-hover) !important;
+      border-color: var(--brand-crimson-hover) !important;
+    }
+
+    /* Overlays hidden by default */
+    #overlay, #loadingOverlay {
+      display: none !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(10, 37, 64, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: #FFFFFF;
+    }
+
+    #overlay.active, #overlay.show, #loadingOverlay.active, #loadingOverlay.show {
+      display: flex !important;
+    }
+
+    .autosave-toast {
+      display: none !important;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0A2540;
+      color: #FFFFFF;
+      padding: 10px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      z-index: 1050;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .autosave-toast.show {
+      display: flex !important;
+      align-items: center;
     }
 
 </style>
@@ -315,13 +399,13 @@
 
 
 
-<div id="overlay">
+<div id="overlay" style="display: none;">
   <div class="spinner-border text-light" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 0.25em;"></div>
   <h4 class="mt-4 fw-bold" id="overlayTitle">Đang chuẩn bị báo cáo...</h4>
   <p class="text-white-50 mt-1" id="overlayDesc">Quá trình này có thể mất từ 10-30 giây để xử lý tuần tự toàn bộ hình ảnh</p>
 </div>
 
-<div class="autosave-toast" id="autosaveToast">
+<div class="autosave-toast" id="autosaveToast" style="display: none;">
   <span class="spinner-grow spinner-grow-sm text-light me-2" role="status"></span>
   Đã tự động lưu bản nháp...
 </div>
