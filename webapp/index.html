@@ -895,6 +895,42 @@
     updateStoreList();
   }
 
+  
+  // Global Draft Status & Progress Helper (Guaranteed Zero Hoisting ReferenceError)
+  window.updateDraftStatusBar = function(isSaved, customMsg) {
+    const badge = document.getElementById("draftStatusBadge");
+    const text = document.getElementById("draftStatusText");
+    const progBadge = document.getElementById("draftProgressBadge");
+
+    const counts = (typeof countFilledDraftItems === 'function') ? countFilledDraftItems() : { filled: 0, total: 52, photos: 0 };
+
+    if (progBadge) {
+      progBadge.textContent = `Tiến độ: ${counts.filled}/${counts.total} mục | 📷 ${counts.photos} ảnh`;
+      progBadge.style.display = "inline-block";
+    }
+
+    if (isSaved) {
+      if (typeof lastSavedDraftTime !== 'undefined') lastSavedDraftTime = new Date();
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
+      if (badge) {
+        badge.className = "badge bg-success";
+        badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Đã Lưu';
+      }
+      if (text) {
+        text.textContent = customMsg || `Đã lưu nháp lúc ${timeStr}`;
+      }
+    } else {
+      if (badge) {
+        badge.className = "badge bg-warning text-dark";
+        badge.innerHTML = '<i class="bi bi-pencil-fill"></i> Đang Nhập...';
+      }
+      if (text) {
+        text.textContent = customMsg || "Có thay đổi chưa lưu";
+      }
+    }
+  };
+  var updateDraftStatusBar = window.updateDraftStatusBar;
+
   function checkUserSession() {
     try {
       var savedUserStr = localStorage.getItem("storevisit_user");
@@ -1353,71 +1389,170 @@
         </div>
 
         <div id="targetRescueSection" class="ios-glass-card d-none p-3 p-md-4 mb-4 border-danger">
-          <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+          <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
             <div>
-              <h5 class="fw-bold text-danger mb-0">🎯 Chuyên Đề Cứu Doanh Số & Cam Kết Can Thiệp</h5>
-              <small class="text-muted">Áp dụng cho cửa hàng chậm tiến độ (Phân tích WHY & Khóa Action Plan)</small>
+              <h5 class="fw-bold mb-0" style="color: #991B1B !important;">🎯 Biên Bản Can Thiệp & Cứu Doanh Số Cửa Hàng (Problem Store Visit)</h5>
+              <small class="text-muted">Chuẩn hóa 4 bước thực chiến: Nhìn nhận Vấn đề → Tìm Nguyên nhân → Cam kết Việc cần làm → Ghi nhận Kết quả</small>
             </div>
-            <span class="badge bg-danger text-white px-3 py-2 rounded-pill">Target Rescue</span>
+            <span class="badge bg-danger text-white px-3 py-2 rounded-pill fw-bold">Target Rescue 4-Step</span>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-bold">1. Xác định nguyên nhân gốc rễ chính (Primary Blocker):</label>
-            <div class="d-flex flex-column gap-2" id="rescueBlockerChoiceGroup">
-              <div class="form-check p-2 bg-light rounded border">
-                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason1" value="PACE_DROP" checked>
-                <label class="form-check-label ms-2 fw-semibold" for="rsReason1">
-                  🔴 Nhịp độ bán hàng chậm sút (Pace Drop) - Cần đẩy mạnh bán hàng & ca tối
-                </label>
+          <!-- HUD SO SÁNH DOANH THU & CÙNG KỲ NĂM TRƯỚC (Góp ý Anh Tín QLKD) -->
+          <div class="p-3 mb-4 rounded-3" style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border: 1.5px solid #FECDD3;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-danger"><i class="bi bi-graph-down-arrow me-1"></i> Báo Cáo Hiệu Suất & So Sánh Cùng Kỳ:</span>
+              <span class="badge bg-danger text-white" id="rescueYoYBadge">-12.4% so với cùng kỳ 2025</span>
+            </div>
+            <div class="row g-2 text-dark">
+              <div class="col-6 col-md-3">
+                <small class="text-muted d-block">Target Tháng:</small>
+                <strong class="fs-6" id="rescueTargetVal">250.0M</strong>
               </div>
-              <div class="form-check p-2 bg-light rounded border">
-                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason2" value="STOCKOUT_CORE">
-                <label class="form-check-label ms-2 fw-semibold" for="rsReason2">
-                  📦 Thiếu hụt mã hàng chủ lực / Đứt size bán chạy (Core Stockout)
-                </label>
+              <div class="col-6 col-md-3">
+                <small class="text-muted d-block">Thực Đạt MTD:</small>
+                <strong class="fs-6 text-danger" id="rescueActualVal">162.5M (65.0%)</strong>
               </div>
-              <div class="form-check p-2 bg-light rounded border">
-                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason3" value="AGING_STOCK">
-                <label class="form-check-label ms-2 fw-semibold" for="rsReason3">
-                  ⚠️ Tồn kho cơ cấu chưa chuẩn / Hàng cũ chậm luân chuyển cao
-                </label>
+              <div class="col-6 col-md-3">
+                <small class="text-muted d-block">Hụt Doanh Thu (Gap):</small>
+                <strong class="fs-6 text-danger" id="rescueGapVal">-87.5M</strong>
               </div>
-              <div class="form-check p-2 bg-light rounded border">
-                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason4" value="STAFF_SKILL">
-                <label class="form-check-label ms-2 fw-semibold" for="rsReason4">
-                  👥 Kỹ năng tư vấn, chốt sale hoặc phân ca nhân sự chưa tối ưu
-                </label>
-              </div>
-              <div class="form-check p-2 bg-light rounded border">
-                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason5" value="OTHER">
-                <label class="form-check-label ms-2 fw-semibold" for="rsReason5">
-                  🔍 Nguyên nhân đặc thù khác (mặt bằng, thời tiết, đối thủ cạnh tranh...)
-                </label>
+              <div class="col-6 col-md-3">
+                <small class="text-muted d-block">Cần Đạt / Ngày:</small>
+                <strong class="fs-6 text-primary" id="rescueRunRateVal">7.3M/ngày (Còn 12 ngày)</strong>
               </div>
             </div>
           </div>
 
-          <div class="card border-danger bg-white mb-3">
-            <div class="card-header bg-danger text-white fw-bold">
-              📝 2. Cam Kết Kế Hoạch Hành Động (Action Plan Contract)
+          <!-- BƯỚC 1: VẤN ĐỀ CHÍNH TẠI CỬA HÀNG (Góp ý Chị Linh QLCH) -->
+          <div class="card mb-3 border-0 shadow-sm" style="background: #FFFFFF; border: 1.5px solid #E8E2D8 !important;">
+            <div class="card-header fw-bold bg-light text-dark py-2 px-3">
+              <span class="badge bg-danger me-2">Bước 1</span> 1. Cửa hàng đang gặp vấn đề chính gì? (Chọn 1 hoặc nhiều)
             </div>
-            <div class="card-body">
+            <div class="card-body p-3">
+              <div class="row g-2">
+                <div class="col-6 col-md-4">
+                  <div class="form-check p-2 border rounded bg-white">
+                    <input class="form-check-input ms-1" type="checkbox" id="probRev" value="DOANH_SO" checked>
+                    <label class="form-check-label ms-2 fw-semibold text-dark" for="probRev">💰 Doanh số chậm sút</label>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="form-check p-2 border rounded bg-white">
+                    <input class="form-check-input ms-1" type="checkbox" id="probStock" value="HANG_HOA">
+                    <label class="form-check-label ms-2 fw-semibold text-dark" for="probStock">📦 Hàng hóa / Đứt size Hot</label>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="form-check p-2 border rounded bg-white">
+                    <input class="form-check-input ms-1" type="checkbox" id="probVM" value="TRUNG_BAY">
+                    <label class="form-check-label ms-2 fw-semibold text-dark" for="probVM">👔 Trưng bày & Visual Merch</label>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="form-check p-2 border rounded bg-white">
+                    <input class="form-check-input ms-1" type="checkbox" id="probStaff" value="NHAN_SU">
+                    <label class="form-check-label ms-2 fw-semibold text-dark" for="probStaff">👥 Nhân sự & Đào tạo sale</label>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="form-check p-2 border rounded bg-white">
+                    <input class="form-check-input ms-1" type="checkbox" id="probOps" value="VAN_HANH">
+                    <label class="form-check-label ms-2 fw-semibold text-dark" for="probOps">⚙️ Vận hành & Cơ sở vật chất</label>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="form-check p-2 border rounded bg-white">
+                    <input class="form-check-input ms-1" type="checkbox" id="probComp" value="DOI_THU">
+                    <label class="form-check-label ms-2 fw-semibold text-dark" for="probComp">🏬 Đối thủ cạnh tranh ép giá</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BƯỚC 2: NGUYÊN NHÂN THỰC TẾ SAU KIỂM TRA (Góp ý Chị Linh) -->
+          <div class="card mb-3 border-0 shadow-sm" style="background: #FFFFFF; border: 1.5px solid #E8E2D8 !important;">
+            <div class="card-header fw-bold bg-light text-dark py-2 px-3">
+              <span class="badge bg-warning text-dark me-2">Bước 2</span> 2. Nguyên nhân thực tế sau khi kiểm tra tại chỗ:
+            </div>
+            <div class="card-body p-3">
+              <div class="d-flex flex-column gap-2 mb-3" id="rescueBlockerChoiceGroup">
+                <div class="form-check p-2 bg-light rounded border">
+                  <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason1" value="PACE_DROP" checked>
+                  <label class="form-check-label ms-2 fw-semibold text-dark" for="rsReason1">
+                    🔴 Nhịp độ bán hàng chậm sút (Pace Drop) - Cần đẩy mạnh ca tối & cuối tuần
+                  </label>
+                </div>
+                <div class="form-check p-2 bg-light rounded border">
+                  <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason2" value="STOCKOUT_CORE">
+                  <label class="form-check-label ms-2 fw-semibold text-dark" for="rsReason2">
+                    📦 Thiếu hụt mã hàng chủ lực / Đứt size bán chạy (Core Stockout)
+                  </label>
+                </div>
+                <div class="form-check p-2 bg-light rounded border">
+                  <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason3" value="AGING_STOCK">
+                  <label class="form-check-label ms-2 fw-semibold text-dark" for="rsReason3">
+                    ⚠️ Tồn kho cơ cấu chưa chuẩn / Hàng cũ chậm luân chuyển cao
+                  </label>
+                </div>
+                <div class="form-check p-2 bg-light rounded border">
+                  <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason4" value="STAFF_SKILL">
+                  <label class="form-check-label ms-2 fw-semibold text-dark" for="rsReason4">
+                    👥 Kỹ năng tư vấn, chốt sale hoặc phân ca nhân sự chưa tối ưu (Cần đào tạo tại chỗ)
+                  </label>
+                </div>
+                <div class="form-check p-2 bg-light rounded border">
+                  <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason5" value="OTHER">
+                  <label class="form-check-label ms-2 fw-semibold text-dark" for="rsReason5">
+                    🔍 Nguyên nhân đặc thù khác (mặt bằng, thời tiết, đối thủ cạnh tranh...)
+                  </label>
+                </div>
+              </div>
+              <textarea class="form-control" id="rescueReasonDetail" rows="2" placeholder="Ghi chú chi tiết nguyên nhân (Ví dụ: 3 nhân viên mới chưa nắm vững kỹ năng upsell sơ mi + cà vạt, thiếu 20 áo size 39 mã AP01...)"></textarea>
+            </div>
+          </div>
+
+          <!-- BƯỚC 3: VIỆC CẦN LÀM & HẠN HOÀN THÀNH (Góp ý Anh Tín + Chị Linh) -->
+          <div class="card mb-3 border-danger shadow-sm bg-white">
+            <div class="card-header bg-danger text-white fw-bold py-2 px-3">
+              <span class="badge bg-white text-danger me-2">Bước 3</span> 3. Việc cần làm: Hành động cụ thể QLKD thống nhất với CH <span class="text-white">*</span>
+            </div>
+            <div class="card-body p-3">
               <div class="mb-3">
-                <label class="form-label fw-bold">Giải pháp can thiệp hành động cụ thể <span class="text-danger">*</span></label>
-                <textarea class="form-control" id="rescueActionPlan" rows="3" placeholder="Ví dụ: Điều chuyển 30 áo sơ mi size 39-40 từ kho tổng về trước thứ 5; Tăng cường 1 nhân viên cứng chốt sale ca tối cuối tuần..." required></textarea>
+                <label class="form-label fw-bold text-dark">Kế hoạch can thiệp & Hành động chi tiết (Đào tạo / Hàng hóa / Trưng bày / Target):</label>
+                <textarea class="form-control" id="rescueActionPlan" rows="3" placeholder="Ví dụ: 1) QLKD trực tiếp đào tạo kỹ năng tư vấn combo cho 3 NV ca tối; 2) Điều chuyển 25 áo sơ mi size 39-40 từ CH lân cận về trước thứ 5; 3) Đảo lại vị trí quầy Hot SKUs ra cửa đón khách..." required></textarea>
               </div>
-              <div class="row g-2 mb-3">
+              <div class="row g-2">
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Người chịu trách nhiệm chính <span class="text-danger">*</span></label>
+                  <label class="form-label fw-bold text-dark">Người phụ trách chính (Owner) <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="rescueOwner" placeholder="Tên CHT & ASM phụ trách" required>
                 </div>
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Thời hạn hoàn thành (Due Date) <span class="text-danger">*</span></label>
-                  <input type="date" class="form-control" id="rescueDueDate" required>
+                  <label class="form-label fw-bold text-danger">Hạn hoàn thành (Deadline) <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control border-danger fw-bold text-danger" id="rescueDueDate" required>
                 </div>
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Doanh thu dự kiến hồi phục</label>
+                  <label class="form-label fw-bold text-dark">Doanh thu dự kiến hồi phục</label>
                   <input type="text" class="form-control" id="rescueExpectedRecovery" placeholder="Ví dụ: 50,000,000 đ">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BƯỚC 4: KẾT QUẢ XỬ LÝ TẠI CHỖ & NỘI DUNG CẦN FOLLOW TIẾP (Góp ý Chị Linh) -->
+          <div class="card mb-3 border-0 shadow-sm" style="background: #FFFFFF; border: 1.5px solid #E8E2D8 !important;">
+            <div class="card-header fw-bold bg-light text-dark py-2 px-3">
+              <span class="badge bg-success me-2">Bước 4</span> 4. Kết quả / Ghi nhận tại chỗ & Vấn đề cần Follow tiếp:
+            </div>
+            <div class="card-body p-3">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold text-success"><i class="bi bi-check2-circle me-1"></i> Đã xử lý dứt điểm được gì ngay tại chỗ:</label>
+                  <textarea class="form-control" id="rescueImmediateFix" rows="2" placeholder="Ví dụ: Đã chỉnh lại ánh sáng quầy kệ, xếp gọn kho hàng, test nhanh kỹ năng chào khách của 2 NV..."></textarea>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold text-primary"><i class="bi bi-arrow-repeat me-1"></i> Vấn đề nào cần tiếp tục theo dõi (Follow-up):</label>
+                  <textarea class="form-control" id="rescueFollowUp" rows="2" placeholder="Ví dụ: Theo dõi doanh thu ca tối ngày cuối tuần, kiểm tra lô hàng điều chuyển về ngày thứ 5..."></textarea>
                 </div>
               </div>
             </div>
@@ -2354,23 +2489,32 @@
         </div>
       </div>
       
-      <!-- TAB 7: ĐỐI THỦ CẠNH TRANH -->
+      <!-- TAB 7: ĐỐI THỦ CẠNH TRANH (Nâng cấp theo góp ý Anh Dũng QLKD) -->
       <div class="tab-pane fade" id="tab-competitor" role="tabpanel">
-        <div class="card">
-          <div class="card-header-custom">Khảo sát đối thủ cạnh tranh & Cửa hàng lân cận</div>
-          <div class="card-body">
-            <div class="mb-3 p-3 border rounded bg-light">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="has_competitor_checkbox" checked onchange="toggleHasCompetitor(this.checked)">
-                <label class="form-check-label fw-bold text-primary" for="has_competitor_checkbox">
-                  Có đối thủ cạnh tranh cần ghi nhận tại khu vực lân cận
+        <div class="card shadow-sm border-0">
+          <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-shop me-2"></i> Khảo sát đối thủ cạnh tranh & Cửa hàng lân cận</span>
+            <span class="badge bg-light text-dark fw-normal">ASM: Tùy tình hình từng CH</span>
+          </div>
+          <div class="card-body p-3 p-md-4">
+            <div class="mb-4 p-3 rounded-3" style="background: #F5F1EB; border: 1.5px solid #E8E2D8;">
+              <div class="form-check form-switch d-flex align-items-center gap-2 mb-2">
+                <input class="form-check-input" type="checkbox" id="has_competitor_checkbox" checked onchange="toggleHasCompetitor(this.checked)" style="cursor: pointer; width: 44px; height: 22px;">
+                <label class="form-check-label fw-bold text-dark fs-6" for="has_competitor_checkbox" style="cursor: pointer;">
+                  Khu vực lân cận có đối thủ cạnh tranh trực tiếp (Việt Tiến, Owen, Novelty, John Henry...)
                 </label>
               </div>
+              <small class="text-muted d-block ms-5">Nếu cửa hàng nằm ở vị trí độc tôn hoặc TTTM riêng biệt không có đối thủ lân cận, hãy tắt công tắc này.</small>
             </div>
             
-            <div id="no_competitor_container" class="d-none mb-3">
-              <label class="form-label text-warning fw-bold">Nhận xét ngắn về tình hình lân cận (Bắt buộc):</label>
-              <textarea class="form-control" id="compNoCompetitorReason" name="compNoCompetitorReason" rows="3" placeholder="Ví dụ: Khu vực xung quanh không có cửa hàng thời trang công sở đối thủ trực tiếp nào hoạt động..."></textarea>
+            <div id="no_competitor_container" class="d-none mb-4 p-3 rounded-3 bg-white border">
+              <label class="form-label fw-bold text-dark mb-2"><i class="bi bi-shield-check text-success me-1"></i> Xác nhận lý do không có đối thủ lân cận:</label>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="selectNoCompReason('Vị trí độc quyền / Gian hàng độc tôn trong TTTM')">🏢 Độc quyền trong TTTM</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="selectNoCompReason('Không có đối thủ thời trang nam công sở trong bán kính 1km')">📍 Bán kính 1km không có đối thủ</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="selectNoCompReason('Cửa hàng độc lập tuyến phố riêng biệt')">🌟 Tuyến phố biệt lập</button>
+              </div>
+              <textarea class="form-control" id="compNoCompetitorReason" name="compNoCompetitorReason" rows="2" placeholder="Ghi chú nhanh lý do (không bắt buộc nếu đã chọn gợi ý ở trên)..."></textarea>
             </div>
             
             <div id="competitor_details_container">
@@ -6010,7 +6154,17 @@ function submitTargetRescueVisit() {
     debounceSaveDraft();
   }
 
+    function selectNoCompReason(reasonText) {
+    const ta = document.getElementById("compNoCompetitorReason");
+    if (ta) {
+      ta.value = reasonText;
+      if (typeof debounceSaveDraft === 'function') debounceSaveDraft();
+    }
+  }
+  window.selectNoCompReason = selectNoCompReason;
+
   function toggleHasCompetitor(hasComp) {
+    window.toggleHasCompetitor = toggleHasCompetitor;
     const detailsContainer = document.getElementById("competitor_details_container");
     const noCompContainer = document.getElementById("no_competitor_container");
     const noCompReason = document.getElementById("compNoCompetitorReason");
@@ -6029,15 +6183,15 @@ function submitTargetRescueVisit() {
       if (detailsContainer) detailsContainer.classList.add("d-none");
       if (noCompContainer) noCompContainer.classList.remove("d-none");
       if (noCompReason) {
-        noCompReason.required = true;
+        noCompReason.required = false;
         noCompReason.disabled = false;
       }
       
       for (let i = 1; i <= 3; i++) {
-        clearCompFile(i);
+        if (typeof clearCompFile === 'function') clearCompFile(i);
       }
     }
-    debounceSaveDraft();
+    if (typeof debounceSaveDraft === 'function') debounceSaveDraft();
   }
 
   function processCompFile(fileInput, index) {
@@ -12287,6 +12441,42 @@ function submitTargetRescueVisit() {
     }
   }
 
+  
+  // Global Draft Status & Progress Helper (Guaranteed Zero Hoisting ReferenceError)
+  window.updateDraftStatusBar = function(isSaved, customMsg) {
+    const badge = document.getElementById("draftStatusBadge");
+    const text = document.getElementById("draftStatusText");
+    const progBadge = document.getElementById("draftProgressBadge");
+
+    const counts = (typeof countFilledDraftItems === 'function') ? countFilledDraftItems() : { filled: 0, total: 52, photos: 0 };
+
+    if (progBadge) {
+      progBadge.textContent = `Tiến độ: ${counts.filled}/${counts.total} mục | 📷 ${counts.photos} ảnh`;
+      progBadge.style.display = "inline-block";
+    }
+
+    if (isSaved) {
+      if (typeof lastSavedDraftTime !== 'undefined') lastSavedDraftTime = new Date();
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
+      if (badge) {
+        badge.className = "badge bg-success";
+        badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Đã Lưu';
+      }
+      if (text) {
+        text.textContent = customMsg || `Đã lưu nháp lúc ${timeStr}`;
+      }
+    } else {
+      if (badge) {
+        badge.className = "badge bg-warning text-dark";
+        badge.innerHTML = '<i class="bi bi-pencil-fill"></i> Đang Nhập...';
+      }
+      if (text) {
+        text.textContent = customMsg || "Có thay đổi chưa lưu";
+      }
+    }
+  };
+  var updateDraftStatusBar = window.updateDraftStatusBar;
+
   function checkUserSession() {
     try {
       const savedUserStr = localStorage.getItem("storevisit_user");
@@ -14747,6 +14937,42 @@ function submitTargetRescueVisit() {
       }, 200);
     }
   }
+
+  
+  // Global Draft Status & Progress Helper (Guaranteed Zero Hoisting ReferenceError)
+  window.updateDraftStatusBar = function(isSaved, customMsg) {
+    const badge = document.getElementById("draftStatusBadge");
+    const text = document.getElementById("draftStatusText");
+    const progBadge = document.getElementById("draftProgressBadge");
+
+    const counts = (typeof countFilledDraftItems === 'function') ? countFilledDraftItems() : { filled: 0, total: 52, photos: 0 };
+
+    if (progBadge) {
+      progBadge.textContent = `Tiến độ: ${counts.filled}/${counts.total} mục | 📷 ${counts.photos} ảnh`;
+      progBadge.style.display = "inline-block";
+    }
+
+    if (isSaved) {
+      if (typeof lastSavedDraftTime !== 'undefined') lastSavedDraftTime = new Date();
+      const timeStr = new Date().toLocaleTimeString("vi-VN");
+      if (badge) {
+        badge.className = "badge bg-success";
+        badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Đã Lưu';
+      }
+      if (text) {
+        text.textContent = customMsg || `Đã lưu nháp lúc ${timeStr}`;
+      }
+    } else {
+      if (badge) {
+        badge.className = "badge bg-warning text-dark";
+        badge.innerHTML = '<i class="bi bi-pencil-fill"></i> Đang Nhập...';
+      }
+      if (text) {
+        text.textContent = customMsg || "Có thay đổi chưa lưu";
+      }
+    }
+  };
+  var updateDraftStatusBar = window.updateDraftStatusBar;
 
   function checkUserSession() {
     try {
