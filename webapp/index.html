@@ -568,9 +568,10 @@
       
       /* ======================================================================
          USER HEADER BAR: Full-width row on mobile, wrap action buttons
+         CRITICAL FIX: Do NOT set display:flex!important — it overrides Bootstrap d-none!
+         Instead use :not(.d-none) to apply flex layout only when bar is visible.
       ====================================================================== */
-      #userHeaderBar {
-        display: flex !important;
+      #userHeaderBar:not(.d-none) {
         flex-direction: row !important;
         flex-wrap: wrap !important;
         align-items: center !important;
@@ -643,15 +644,19 @@
       }
       
       /* ======================================================================
-         MAIN MENU PILLS: Wrap on mobile
+         MAIN MENU PILLS: Horizontal scroll on mobile (no wrap)
+         NOTE: inline style on HTML also sets nowrap — CSS must match to avoid conflict
       ====================================================================== */
       .main-menu-pills {
-        flex-wrap: wrap !important;
+        flex-wrap: nowrap !important;
         gap: 6px !important;
+        min-width: max-content !important;
       }
       .main-menu-btn {
         font-size: 12px !important;
         padding: 7px 12px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
       }
       
       /* ======================================================================
@@ -13743,6 +13748,188 @@ function submitTargetRescueVisit() {
     if (modalEl && typeof bootstrap !== 'undefined') {
       const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
       modal.show();
+    }
+  }
+
+
+  /* ============================================================
+   * CLOUD DRAFT SYNC FUNCTIONS
+   * Lưu / Tải bản nháp từ Google Sheets qua GAS API
+   * ============================================================ */
+
+  /**
+   * checkCloudDraftOnStartup(user)
+   * Gọi ngay sau login: kiểm tra xem có bản nháp mới hơn trên cloud không.
+   * Nếu có: hiển thị banner thông báo, cho phép user chọn import.
+   */
+  async function checkCloudDraftOnStartup(user) {
+    try {
+      const API_URL = window.GAS_API_URL;
+      if (!API_URL || !user || !user.username) return;
+
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "listCloudDrafts", username: user.username })
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (!data.success || !data.drafts || data.drafts.length === 0) return;
+
+      // So sánh với local drafts
+      const localIndex = getDraftsIndex();
+      const localIds = Object.keys(localIndex);
+      const cloudDrafts = data.drafts;
+
+      // Tìm cloud drafts mới hơn local (hoặc không có local)
+      const newerCloudDrafts = cloudDrafts.filter(cd => {
+        const localEntry = localIndex[cd.store_code];
+        if (!localEntry) return true; // không có local -> cloud là mới
+        const cloudTime = new Date(cd.updated_at).getTime();
+        const localTime = new Date(localEntry.updatedAt || 0).getTime();
+        return cloudTime > localTime + 60000; // cloud mới hơn >= 1 phút
+      });
+
+      if (newerCloudDrafts.length === 0) return;
+
+      showCloudDraftNotificationBanner(newerCloudDrafts);
+    } catch(e) {
+      console.warn("[CloudSync] checkCloudDraftOnStartup error:", e);
+    }
+  }
+
+  /**
+   * showCloudDraftNotificationBanner(drafts)
+   * Hiển thị banner thông báo có bản nháp cloud mới hơn.
+   */
+  function showCloudDraftNotificationBanner(drafts) {
+    const banner = document.getElementById("cloudDraftNotifyBanner");
+    if (!banner) return;
+    const storeList = drafts.map(d => `<strong>${d.store_code}</strong>`).join(", ");
+    banner.innerHTML = `
+      <div class="alert alert-info alert-dismissible d-flex align-items-center gap-3 py-2 px-3 shadow-sm" role="alert" style="border-left:4px solid #0ea5e9; border-radius:10px;">
+        <i class="bi bi-cloud-download-fill fs-5 text-info flex-shrink-0"></i>
+        <div class="flex-grow-1">
+          <strong>☁️ Phát hiện bản nháp trên Cloud!</strong>
+          <span class="d-block small mt-1">Cửa hàng ${storeList} có bản nháp mới hơn thiết bị này.</span>
+        </div>
+        <button type="button" class="btn btn-info btn-sm fw-bold flex-shrink-0" onclick="syncDraftsFromCloudManual()">
+          <i class="bi bi-cloud-arrow-down-fill me-1"></i>Tải về
+        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>`;
+    banner.classList.remove("d-none");
+  }
+
+  /**
+   * syncDraftsFromCloudManual()
+   * Gọi khi user bấm nút "Tải Bản Nháp Từ Cloud" trong modal hoặc banner.
+   * Tải toàn bộ cloud drafts của user, merge vào localStorage.
+   */
+  async function syncDraftsFromCloudManual() {
+    const user = window.CURRENT_USER || currentUser;
+    if (!user || !user.username) {
+      alert("Vui lòng đăng nhập để sử dụng tính năng đồng bộ Cloud.");
+      return;
+    }
+    const API_URL = window.GAS_API_URL;
+    if (!API_URL) {
+      alert("Không tìm thấy API URL. Tính năng Cloud Sync chỉ hoạt động khi kết nối server.");
+      return;
+    }
+
+    const btn = document.getElementById("btnManualCloudPull");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Đang tải...';
+    }
+
+    try {
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "listCloudDrafts", username: user.username })
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error || "GAS error");
+
+      if (!data.drafts || data.drafts.length === 0) {
+        alert("☁️ Không tìm thấy bản nháp nào trên Cloud cho tài khoản này.");
+        return;
+      }
+
+      // Tải từng draft và merge vào local
+      let imported = 0;
+      for (const cd of data.drafts) {
+        try {
+          const draftResp = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "loadDraftFromServer",
+              username: user.username,
+              store_code: cd.store_code
+            })
+          });
+          if (!draftResp.ok) continue;
+          const draftData = await draftResp.json();
+          if (!draftData.success || !draftData.draft_json) continue;
+
+          // So sánh timestamp trước khi ghi đè
+          const localIndex = getDraftsIndex();
+          const existingDraft = localIndex[cd.store_code];
+          if (existingDraft) {
+            const cloudTime = new Date(cd.updated_at).getTime();
+            const localTime = new Date(existingDraft.updatedAt || 0).getTime();
+            if (cloudTime <= localTime) continue; // local mới hơn, skip
+          }
+
+          // Ghi vào localStorage
+          const parsed = JSON.parse(draftData.draft_json);
+          const draftId = "cloud_" + cd.store_code + "_" + Date.now();
+          saveDraftToLocalStorage(draftId, parsed, cd.store_code, cd.updated_at);
+          imported++;
+        } catch(innerErr) {
+          console.warn("[CloudSync] Error importing draft for", cd.store_code, innerErr);
+        }
+      }
+
+      refreshDraftCounters();
+      const banner = document.getElementById("cloudDraftNotifyBanner");
+      if (banner) banner.classList.add("d-none");
+      
+      alert(`✅ Đồng bộ Cloud thành công!
+Đã tải ${imported}/${data.drafts.length} bản nháp về thiết bị này.`);
+    } catch(e) {
+      console.error("[CloudSync] syncDraftsFromCloudManual error:", e);
+      alert("❌ Lỗi kết nối Cloud: " + e.message + "\nVui lòng thử lại sau.");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-arrow-down-fill me-1"></i>Tải Bản Nháp Từ Cloud';
+      }
+    }
+  }
+
+  /**
+   * saveDraftToLocalStorage(draftId, parsedDraft, storeCode, updatedAt)
+   * Helper: lưu draft object vào localStorage với đúng schema multi-draft.
+   */
+  function saveDraftToLocalStorage(draftId, parsedDraft, storeCode, updatedAt) {
+    try {
+      const key = "store_visit_draft_" + draftId;
+      localStorage.setItem(key, JSON.stringify(parsedDraft));
+      const idx = getDraftsIndex();
+      idx[storeCode] = {
+        draftId: draftId,
+        storeCode: storeCode,
+        updatedAt: updatedAt || new Date().toISOString(),
+        source: "cloud"
+      };
+      saveDraftsIndex(idx);
+    } catch(e) {
+      console.warn("[CloudSync] saveDraftToLocalStorage error:", e);
     }
   }
 
