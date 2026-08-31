@@ -2458,6 +2458,9 @@ function processForm(formObject) {
       { key: "general_photos_json", defaultName: "general_photos_json", aliases: ["generalphotosjson", "general_photos_json"] },
       { key: "competitor_json", defaultName: "competitor_json", aliases: ["competitorjson", "competitor_json"] },
       { key: "inspection_mode", defaultName: "inspection_mode", aliases: ["inspection_mode", "hình thức kiểm tra", "loại kiểm tra", "hinh thuc kiem tra", "loai kiem tra"] },
+      { key: "inspection_profile", defaultName: "inspection_profile", aliases: ["inspection_profile", "hình thức thực địa", "chế độ kiểm tra", "hinh thuc thuc dia", "che do kiem tra"] },
+      { key: "red_alert_json", defaultName: "red_alert_json", aliases: ["red_alert_json", "redalertjson", "5 trụ cột", "cứu target", "5 tru cot", "cuu target"] },
+      { key: "quick_pulse_json", defaultName: "quick_pulse_json", aliases: ["quick_pulse_json", "quickpulsejson", "kiểm tra nhanh", "kiem tra nhanh"] },
       { key: "inspection_region", defaultName: "inspection_region", aliases: ["inspection_region", "khu vực kiểm tra", "region kiểm tra", "khu vuc kiem tra", "region kiem tra"] },
       { key: "opening_type", defaultName: "opening_type", aliases: ["opening_type", "loai khai truong"] },
       { key: "opening_phase", defaultName: "opening_phase", aliases: ["opening_phase", "giai doan khai truong"] },
@@ -2640,6 +2643,9 @@ function processForm(formObject) {
       general_photos_json: JSON.stringify(generalPhotos),
       competitor_json: JSON.stringify(competitorObj),
       inspection_mode: formObject.modeSelect,
+      inspection_profile: formObject.inspectionProfile || "full_audit",
+      red_alert_json: formObject.redAlertData || "",
+      quick_pulse_json: formObject.quickPulseData || "",
       inspection_region: formObject.regionSelect || "",
       opening_type: formObject.openingType || "",
       opening_phase: formObject.openingPhase || "",
@@ -4567,11 +4573,7 @@ function syncASMUsersFromStoresInfo(requesterUsername, storeDataList) {
       if (uName) existingRows[uName] = r + 1; // 1-indexed row
     }
     
-    function removeAccents(str) {
-      return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
-                .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    }
+    
     
     var STANDARD_UNAMES = {
       "nguyendangkhoi": "khoi",

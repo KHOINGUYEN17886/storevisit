@@ -1475,42 +1475,42 @@
               <div class="p-3 rounded border bg-light h-100">
                 <div class="fw-bold text-dark mb-1"><i class="bi bi-person-check text-primary me-2"></i> 1. Tác Phong & Diện Mạo Nhân Viên</div>
                 <div class="small text-muted mb-2">Đồng phục chuẩn, thẻ tên, đầu tóc chỉn chu, tươi cười cúi chào khách.</div>
-                <select class="form-select form-select-sm" name="qp_staff_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
+                <select class="form-select form-select-sm" name="qp_staff_eval" id="qp_staff_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
               </div>
             </div>
             <div class="col-md-6">
               <div class="p-3 rounded border bg-light h-100">
                 <div class="fw-bold text-dark mb-1"><i class="bi bi-shop-window text-info me-2"></i> 2. Mặt Tiền & Mannequin Tuần Mới</div>
                 <div class="small text-muted mb-2">Bảng hiệu sáng sạch, mannequin phối đồ đúng chủ đề tuần.</div>
-                <select class="form-select form-select-sm" name="qp_facade_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
+                <select class="form-select form-select-sm" name="qp_facade_eval" id="qp_facade_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
               </div>
             </div>
             <div class="col-md-6">
               <div class="p-3 rounded border bg-light h-100">
                 <div class="fw-bold text-dark mb-1"><i class="bi bi-tag text-success me-2"></i> 3. Hàng Hóa Chủ Lực Quầy Kệ</div>
                 <div class="small text-muted mb-2">Đủ size bán chạy (Sơ mi 39/40, Quần 31/32), không để móc trống.</div>
-                <select class="form-select form-select-sm" name="qp_stock_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
+                <select class="form-select form-select-sm" name="qp_stock_eval" id="qp_stock_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
               </div>
             </div>
             <div class="col-md-6">
               <div class="p-3 rounded border bg-light h-100">
                 <div class="fw-bold text-dark mb-1"><i class="bi bi-calculator text-warning me-2"></i> 4. Quầy Thu Ngân & Két Quỹ</div>
                 <div class="small text-muted mb-2">Mặt quầy sạch sẽ, tiền két khớp POS, catalog mới đầy đủ.</div>
-                <select class="form-select form-select-sm" name="qp_cashier_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
+                <select class="form-select form-select-sm" name="qp_cashier_eval" id="qp_cashier_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
               </div>
             </div>
             <div class="col-md-6">
               <div class="p-3 rounded border bg-light h-100">
                 <div class="fw-bold text-dark mb-1"><i class="bi bi-megaphone text-danger me-2"></i> 5. POSM & Khuyến Mãi Hiện Hành</div>
                 <div class="small text-muted mb-2">Standee, bảng giá khuyến mãi đúng vị trí, ngay ngắn, không rách.</div>
-                <select class="form-select form-select-sm" name="qp_posm_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
+                <select class="form-select form-select-sm" name="qp_posm_eval" id="qp_posm_eval"><option value="Đạt">Đạt chuẩn</option><option value="Lỗi">Có lỗi vi phạm</option></select>
               </div>
             </div>
             <div class="col-md-6">
               <div class="p-3 rounded border bg-light h-100">
                 <div class="fw-bold text-dark mb-1"><i class="bi bi-chat-left-dots text-secondary me-2"></i> 6. Khảo Sát Nhanh CHT</div>
-                <input type="text" class="form-control form-control-sm mb-1" name="qp_survey_q1" placeholder="Lượng khách tuần này so với tuần trước...">
-                <input type="text" class="form-control form-control-sm" name="qp_survey_q2" placeholder="Mã hàng hot nào khách hỏi nhiều mà thiếu...">
+                <input type="text" class="form-control form-control-sm mb-1" name="qp_survey_q1" id="qp_survey_q1" placeholder="Lượng khách tuần này so với tuần trước...">
+                <input type="text" class="form-control form-control-sm" name="qp_survey_q2" id="qp_survey_q2" placeholder="Mã hàng hot nào khách hỏi nhiều mà thiếu...">
               </div>
             </div>
           </div>
@@ -7707,13 +7707,13 @@ function submitTargetRescueVisit() {
 
       // Quick Pulse Data
       draft.quickPulse = {
-        qp_staff_eval: document.getElementById('qp_staff_eval') ? document.getElementById('qp_staff_eval').value : '',
-        qp_facade_eval: document.getElementById('qp_facade_eval') ? document.getElementById('qp_facade_eval').value : '',
-        qp_stock_eval: document.getElementById('qp_stock_eval') ? document.getElementById('qp_stock_eval').value : '',
-        qp_cashier_eval: document.getElementById('qp_cashier_eval') ? document.getElementById('qp_cashier_eval').value : '',
-        qp_posm_eval: document.getElementById('qp_posm_eval') ? document.getElementById('qp_posm_eval').value : '',
-        qp_survey_q1: document.getElementById('qp_survey_q1') ? document.getElementById('qp_survey_q1').value : '',
-        qp_survey_q2: document.getElementById('qp_survey_q2') ? document.getElementById('qp_survey_q2').value : ''
+        qp_staff_eval: (document.getElementById('qp_staff_eval') || document.querySelector('[name="qp_staff_eval"]')) ? (document.getElementById('qp_staff_eval') || document.querySelector('[name="qp_staff_eval"]')).value : '',
+        qp_facade_eval: (document.getElementById('qp_facade_eval') || document.querySelector('[name="qp_facade_eval"]')) ? (document.getElementById('qp_facade_eval') || document.querySelector('[name="qp_facade_eval"]')).value : '',
+        qp_stock_eval: (document.getElementById('qp_stock_eval') || document.querySelector('[name="qp_stock_eval"]')) ? (document.getElementById('qp_stock_eval') || document.querySelector('[name="qp_stock_eval"]')).value : '',
+        qp_cashier_eval: (document.getElementById('qp_cashier_eval') || document.querySelector('[name="qp_cashier_eval"]')) ? (document.getElementById('qp_cashier_eval') || document.querySelector('[name="qp_cashier_eval"]')).value : '',
+        qp_posm_eval: (document.getElementById('qp_posm_eval') || document.querySelector('[name="qp_posm_eval"]')) ? (document.getElementById('qp_posm_eval') || document.querySelector('[name="qp_posm_eval"]')).value : '',
+        qp_survey_q1: (document.getElementById('qp_survey_q1') || document.querySelector('[name="qp_survey_q1"]')) ? (document.getElementById('qp_survey_q1') || document.querySelector('[name="qp_survey_q1"]')).value : '',
+        qp_survey_q2: (document.getElementById('qp_survey_q2') || document.querySelector('[name="qp_survey_q2"]')) ? (document.getElementById('qp_survey_q2') || document.querySelector('[name="qp_survey_q2"]')).value : ''
       };
       
       localStorage.setItem("store_visit_form_draft", JSON.stringify(draft));
@@ -8868,6 +8868,33 @@ function submitTargetRescueVisit() {
         photoCSVC1: document.getElementById("photoCSVC1").value,
         checklist_json: JSON.stringify(formData),
         survey_json: JSON.stringify(surveyData),
+        inspectionProfile: document.getElementById('inspectionProfileSelect') ? document.getElementById('inspectionProfileSelect').value : 'full_audit',
+        redAlertData: JSON.stringify({
+          ra_revenue_reason: document.getElementById('ra_revenue_reason') ? document.getElementById('ra_revenue_reason').value : '',
+          ra_revenue_action: document.getElementById('ra_revenue_action') ? document.getElementById('ra_revenue_action').value : '',
+          ra_traffic_obs: document.getElementById('ra_traffic_obs') ? document.getElementById('ra_traffic_obs').value : '',
+          ra_lost_reason: document.getElementById('ra_lost_reason') ? document.getElementById('ra_lost_reason').value : '',
+          ra_vip_care: document.getElementById('ra_vip_care') ? document.getElementById('ra_vip_care').value : '',
+          ra_staff_headcount: document.getElementById('ra_staff_headcount') ? document.getElementById('ra_staff_headcount').value : '',
+          ra_staff_skill: document.getElementById('ra_staff_skill') ? document.getElementById('ra_staff_skill').value : '',
+          ra_staff_morale: document.getElementById('ra_staff_morale') ? document.getElementById('ra_staff_morale').value : '',
+          ra_ops_greeting: document.getElementById('ra_ops_greeting') ? document.getElementById('ra_ops_greeting').value : '',
+          ra_ops_cash: document.getElementById('ra_ops_cash') ? document.getElementById('ra_ops_cash').value : '',
+          ra_stock_issues: document.getElementById('ra_stock_issues') ? document.getElementById('ra_stock_issues').value : '',
+          ra_stock_transfer: document.getElementById('ra_stock_transfer') ? document.getElementById('ra_stock_transfer').value : '',
+          ra_external_factors: document.getElementById('ra_external_factors') ? document.getElementById('ra_external_factors').value : '',
+          ra_b2b_leads: document.getElementById('ra_b2b_leads') ? document.getElementById('ra_b2b_leads').value : '',
+          ra_ceo_recommendation: document.getElementById('ra_ceo_recommendation') ? document.getElementById('ra_ceo_recommendation').value : ''
+        }),
+        quickPulseData: JSON.stringify({
+          qp_staff_eval: document.getElementById('qp_staff_eval') ? document.getElementById('qp_staff_eval').value : '',
+          qp_facade_eval: document.getElementById('qp_facade_eval') ? document.getElementById('qp_facade_eval').value : '',
+          qp_stock_eval: document.getElementById('qp_stock_eval') ? document.getElementById('qp_stock_eval').value : '',
+          qp_cashier_eval: document.getElementById('qp_cashier_eval') ? document.getElementById('qp_cashier_eval').value : '',
+          qp_posm_eval: document.getElementById('qp_posm_eval') ? document.getElementById('qp_posm_eval').value : '',
+          qp_survey_q1: document.getElementById('qp_survey_q1') ? document.getElementById('qp_survey_q1').value : '',
+          qp_survey_q2: document.getElementById('qp_survey_q2') ? document.getElementById('qp_survey_q2').value : ''
+        }),
         isEdit: document.getElementById('isEditInput') ? document.getElementById('isEditInput').value : 'false'
       };
 
