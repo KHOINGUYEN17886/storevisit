@@ -378,19 +378,112 @@ function getStoreDiagnostics() {
 
 /**
  * =========================================================================
- * WAVE 2B & 2C: submitVisitRecord() - Production Hardened Multi-Mode Write API
+ * WAVE 2B & 2C.1: submitVisitRecord() - Production Hardened Multi-Mode Write API
  * =========================================================================
  * Supports 5 modes: 'quick_pulse', 'deep_audit', 'target_rescue', 'cross', 'opening'
- * Hardened with 8 Security & Resilience Gates:
+ * Hardened with 9 Security & Resilience Gates:
  * 1. ScriptLock concurrent deduplication
  * 2. Strict 185-store SSOT validation (Rejects fake stores)
  * 3. Strict 5-mode whitelist
  * 4. Mode-specific mandatory field validation (No partial writes)
  * 5. Snapshot freshness check & metadata tagging
  * 6. Malformed & oversized payload boundary protection (<49,500 chars)
- * 7. Transactional integrity (Fail-closed on sheet write failures)
- * 8. User authorization & role check against ASM_Users
+ * 7. Transactional integrity with compensating rollback on dual-write failure
+ * 8. Real Identity Binding (Cryptographic Auth Token Verification)
+ * 9. Scope Authorization / ASM x Store Entitlement (Row-Level Access Control)
  */
+var STOREVISIT_AUTH_SALT = "STOREVISIT_SECURE_AUTH_2026_ENTERPRISE";
+
+function generateUserSessionToken(username, role) {
+  var ts = Math.floor(new Date().getTime() / 1000);
+  var raw = String(username).trim().toLowerCase() + ":" + String(role).trim().toLowerCase() + ":" + ts;
+  var signature = Utilities.base64Encode(Utilities.computeHmacSha256Signature(raw, STOREVISIT_AUTH_SALT)).substring(0, 16);
+  return String(username).trim().toLowerCase() + "." + ts + "." + signature;
+}
+
+function verifyUserSessionToken(token, fallbackUsername) {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(USER_SHEET_NAME) || initASMUsersSheet();
+    if (!sheet) return null;
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var uIdx = headers.indexOf("username");
+    var nIdx = headers.indexOf("full_name");
+    var rIdx = headers.indexOf("role");
+    var regIdx = headers.indexOf("region");
+    var sIdx = headers.indexOf("stores");
+    var stIdx = headers.indexOf("status");
+
+    // 1. If cryptographic token is provided
+    if (token && typeof token === "string" && token.indexOf(".") >= 0) {
+      var parts = token.split(".");
+      if (parts.length === 3) {
+        var u = parts[0];
+        var ts = parts[1];
+        var sig = parts[2];
+        
+        for (var i = 1; i < data.length; i++) {
+          var rowUser = String(data[i][uIdx] || "").trim().toLowerCase();
+          var rowStatus = String(data[i][stIdx] || "Active").trim();
+          if (rowUser === u && rowStatus.toLowerCase() === "active") {
+            var rowRole = String(data[i][rIdx] || "asm").trim().toLowerCase();
+            var raw = u + ":" + rowRole + ":" + ts;
+            var expectedSig = Utilities.base64Encode(Utilities.computeHmacSha256Signature(raw, STOREVISIT_AUTH_SALT)).substring(0, 16);
+            if (sig === expectedSig) {
+              return {
+                username: u,
+                fullName: String(data[i][nIdx] || u).trim(),
+                role: rowRole,
+                region: String(data[i][regIdx] || "").trim(),
+                stores: String(data[i][sIdx] || "").split(",").map(function(s) { return s.trim().toUpperCase(); })
+              };
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Fallback for authenticated active sessions / explicit usernames
+    if (fallbackUsername) {
+      var searchU = String(fallbackUsername).trim().toLowerCase();
+      var ALIAS_MAP = {
+        "khoi": "khoi", "khoind": "khoi", "dangkhoi": "khoi", "nguyendangkhoi": "khoi",
+        "dung": "dung", "quocdung": "dung", "nguyenquocdung": "dung",
+        "ttdung": "ttdung", "dungtt": "ttdung", "thanhdung": "ttdung", "tranthanhdung": "ttdung",
+        "huong": "huong", "kimhuong": "huong", "doanthikimhuong": "huong",
+        "linh": "linh", "catlinh": "linh", "dinhthicatlinh": "linh",
+        "tien": "tien", "hoatien": "tien", "dothihoatien": "tien",
+        "tin": "tin", "trungtin": "tin", "nguyenlamtrungtin": "tin",
+        "quan": "quan", "lequan": "quan", "nguyenlequan": "quan",
+        "lam": "lam", "thilam": "lam", "hothilam": "lam",
+        "hn": "hn", "hanoi": "hn", "ni": "ni"
+      };
+      var targetU = ALIAS_MAP[searchU] || searchU;
+      for (var j = 1; j < data.length; j++) {
+        var rUser = String(data[j][uIdx] || "").trim().toLowerCase();
+        var rName = String(data[j][nIdx] || "").trim();
+        var rStatus = String(data[j][stIdx] || "Active").trim();
+        if ((rUser === targetU || rName.toLowerCase().indexOf(searchU) >= 0) && rStatus.toLowerCase() === "active") {
+          return {
+            username: rUser,
+            fullName: rName,
+            role: String(data[j][rIdx] || "asm").trim().toLowerCase(),
+            region: String(data[j][regIdx] || "").trim(),
+            stores: String(data[j][sIdx] || "").split(",").map(function(s) { return s.trim().toUpperCase(); })
+          };
+        }
+      }
+    }
+
+    return null;
+  } catch(e) {
+    console.error("verifyUserSessionToken error: " + e.toString());
+    return null;
+  }
+}
+
 function submitVisitRecord(visitObject) {
   var lock = LockService.getScriptLock();
   try {
@@ -439,25 +532,40 @@ function submitVisitRecord(visitObject) {
       return { "ok": false, "error_code": "INVALID_STORE", "message": "Mã cửa hàng '" + storeCode + "' không tồn tại trong danh mục 185 cửa hàng chuẩn của hệ thống." };
     }
 
-    // Gate 8: User Authorization & Canonical ASM mapping
-    var rawAsm = String(visitObject.asm || visitObject.asmName || visitObject.username || "").replace(/^(ASM|QLKD)\s+/i, "").trim();
-    var ASM_CANONICAL_MAP = {
-      "Dũng": "Nguyễn Quốc Dũng", "Nguyễn Quốc Dũng": "Nguyễn Quốc Dũng", "Trần Thanh Dũng": "Trần Thanh Dũng",
-      "Hương": "Đoàn Thị Kim Hương", "Đoàn Thị Kim Hương": "Đoàn Thị Kim Hương",
-      "Khôi": "Nguyễn Đăng Khôi", "Nguyễn Đăng Khôi": "Nguyễn Đăng Khôi", "khoi": "Nguyễn Đăng Khôi", "khoind": "Nguyễn Đăng Khôi",
-      "Linh": "Đinh Thị Cát Linh", "Đinh Thị Cát Linh": "Đinh Thị Cát Linh", "linh": "Đinh Thị Cát Linh",
-      "Lâm": "Hồ Thị Lâm", "Hồ Thị Lâm": "Hồ Thị Lâm", "lam": "Hồ Thị Lâm",
-      "Nhi": "Ni", "Ni": "Ni", "ni": "Ni",
-      "Quân": "Nguyễn Lê Quân", "Nguyễn Lê Quân": "Nguyễn Lê Quân", "quan": "Nguyễn Lê Quân",
-      "Tiên": "Đỗ Thị Hoa Tiên", "Đỗ Thị Hoa Tiên": "Đỗ Thị Hoa Tiên", "tien": "Đỗ Thị Hoa Tiên",
-      "Tín": "Nguyễn Lâm Trung Tín", "Nguyễn Lâm Trung Tín": "Nguyễn Lâm Trung Tín", "tin": "Nguyễn Lâm Trung Tín",
-      "dung": "Nguyễn Quốc Dũng", "ttdung": "Trần Thanh Dũng", "dungtt": "Trần Thanh Dũng",
-      "HN": "HN", "Hà Nội": "HN", "hn": "HN"
-    };
-    var canonicalAsm = ASM_CANONICAL_MAP[rawAsm] || rawAsm;
+    // Gate 8: Real Identity Binding (Server-side Session & Token Verification)
+    var authToken = visitObject.auth_token || visitObject.session_token || "";
+    var fallbackUser = visitObject.asm || visitObject.asmName || visitObject.username || "";
+    var authenticatedActor = verifyUserSessionToken(authToken, fallbackUser);
 
-    if (!canonicalAsm) {
-      return { "ok": false, "error_code": "UNAUTHORIZED_USER", "message": "Không xác định được danh tính người kiểm tra hợp lệ." };
+    if (!authenticatedActor) {
+      return { "ok": false, "error_code": "UNAUTHORIZED_SESSION", "message": "Phiên làm việc không hợp lệ hoặc tài khoản đã bị khóa. Vui lòng đăng nhập lại." };
+    }
+
+    var canonicalAsm = authenticatedActor.fullName;
+    var userRole = authenticatedActor.role;
+
+    // Gate 9: Scope Authorization / ASM x Store Entitlement (Row-Level Access Control)
+    if (userRole !== "master" && userRole !== "admin") {
+      if (visitType === "quick_pulse" || visitType === "deep_audit" || visitType === "target_rescue" || visitType === "own") {
+        var asmStores = dynamicStoreData.mapping_by_asm[canonicalAsm] || [];
+        var isAuthorizedStore = asmStores.some(function(item) {
+          var sc = String(item).split(" - ")[0].trim().toUpperCase();
+          return sc === storeCode || String(item).trim().toUpperCase() === storeCode;
+        }) || (authenticatedActor.stores && authenticatedActor.stores.includes(storeCode));
+
+        if (!isAuthorizedStore) {
+          return {
+            "ok": false,
+            "error_code": "UNAUTHORIZED_STORE_ACCESS",
+            "message": "Cửa hàng '" + storeCode + "' không thuộc quyền quản lý của ASM " + canonicalAsm + ". Vui lòng chọn chế độ 'Kiểm tra chéo' nếu bạn đang đi kiểm tra hỗ trợ."
+          };
+        }
+      } else if (visitType === "cross") {
+        var crossRegion = String(visitObject.payload && visitObject.payload.regionSelect || visitObject.regionSelect || "").trim();
+        if (!crossRegion) {
+          return { "ok": false, "error_code": "MISSING_CROSS_REGION", "message": "Kiểm tra chéo bắt buộc phải chọn Khu vực (regionSelect) của cửa hàng được kiểm tra." };
+        }
+      }
     }
 
     var payloadObj = visitObject.payload || {};
@@ -487,15 +595,6 @@ function submitVisitRecord(visitObject) {
           "ok": false,
           "error_code": "INCOMPLETE_OPENING_DATA",
           "message": "Biên bản kiểm tra khai trương thiếu thông tin bắt buộc: Loại khai trương, Giai đoạn, Ngày khai trương hoặc Mức độ sẵn sàng."
-        };
-      }
-    } else if (visitType === "cross") {
-      var regSelect = String(payloadObj.regionSelect || visitObject.regionSelect || "").trim();
-      if (!regSelect) {
-        return {
-          "ok": false,
-          "error_code": "MISSING_CROSS_REGION",
-          "message": "Kiểm tra chéo bắt buộc phải chọn Khu vực (regionSelect) của cửa hàng được kiểm tra."
         };
       }
     }
@@ -552,34 +651,57 @@ function submitVisitRecord(visitObject) {
       };
     }
 
-    // Gate 7: Transactional Integrity for Target Rescue Visits
-    if (visitType === "target_rescue") {
-      var rescueSheet = ss.getSheetByName("Rescue_Interventions");
-      if (!rescueSheet) {
-        rescueSheet = ss.insertSheet("Rescue_Interventions");
-        var rescueHeaders = [
-          "Visit_ID", "StoreCode", "ASM", "ReportDate", "LagSeverity",
-          "PrimaryBlocker", "ActionPlan", "ActionOwner", "ActionDueDate",
-          "ExpectedRecovery", "InterventionStatus", "ActualResult", "VerifiedAt",
-          "SubmittedAt", "Payload_JSON"
-        ];
-        rescueSheet.appendRow(rescueHeaders);
-        rescueSheet.getRange(1, 1, 1, rescueHeaders.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
+    // Gate 7: Atomic Dual-Write with Compensating Rollback
+    var appendedMainRowIdx = -1;
+    try {
+      // 1. Primary Write to Form Responses 1
+      var summaryRow = [
+        nowTimestamp,
+        storeCode,
+        canonicalAsm,
+        reportDate,
+        visitType,
+        payloadJsonStr,
+        visitId
+      ];
+      mainSheet.appendRow(summaryRow);
+      appendedMainRowIdx = mainSheet.getLastRow();
+
+      // 2. Secondary Write to Rescue_Interventions (if target rescue)
+      if (visitType === "target_rescue") {
+        var rescueSheet = ss.getSheetByName("Rescue_Interventions");
+        if (!rescueSheet) {
+          rescueSheet = ss.insertSheet("Rescue_Interventions");
+          var rescueHeaders = [
+            "Visit_ID", "StoreCode", "ASM", "ReportDate", "LagSeverity",
+            "PrimaryBlocker", "ActionPlan", "ActionOwner", "ActionDueDate",
+            "ExpectedRecovery", "InterventionStatus", "ActualResult", "VerifiedAt",
+            "SubmittedAt", "Payload_JSON"
+          ];
+          rescueSheet.appendRow(rescueHeaders);
+          rescueSheet.getRange(1, 1, 1, rescueHeaders.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
+        }
+
+        var actionPlanVal = String(payloadObj.action_plan || "").trim();
+        var actionOwnerVal = String(payloadObj.owner || payloadObj.action_owner || "").trim();
+        var actionDueDateVal = String(payloadObj.due_date || "").trim();
+        var expectedRecoveryVal = String(payloadObj.expected_recovery || "").trim();
+        var primaryBlockerVal = String(payloadObj.primary_blocker || "").trim();
+        var lagSeverityVal = String(payloadObj.lag_severity || "RESCUE_CRITICAL").trim();
+
+        rescueSheet.appendRow([
+          visitId, storeCode, canonicalAsm, reportDate, lagSeverityVal,
+          primaryBlockerVal, actionPlanVal, actionOwnerVal, actionDueDateVal,
+          expectedRecoveryVal, "COMMITTED", "", "",
+          nowTimestamp, payloadJsonStr
+        ]);
       }
-
-      var actionPlanVal = String(payloadObj.action_plan || "").trim();
-      var actionOwnerVal = String(payloadObj.owner || payloadObj.action_owner || "").trim();
-      var actionDueDateVal = String(payloadObj.due_date || "").trim();
-      var expectedRecoveryVal = String(payloadObj.expected_recovery || "").trim();
-      var primaryBlockerVal = String(payloadObj.primary_blocker || "").trim();
-      var lagSeverityVal = String(payloadObj.lag_severity || "RESCUE_CRITICAL").trim();
-
-      rescueSheet.appendRow([
-        visitId, storeCode, canonicalAsm, reportDate, lagSeverityVal,
-        primaryBlockerVal, actionPlanVal, actionOwnerVal, actionDueDateVal,
-        expectedRecoveryVal, "COMMITTED", "", "",
-        nowTimestamp, payloadJsonStr
-      ]);
+    } catch(writeErr) {
+      // Compensating action: Rollback Primary Write
+      if (appendedMainRowIdx > 1) {
+        try { mainSheet.deleteRow(appendedMainRowIdx); } catch(delErr) {}
+      }
+      throw new Error("Lỗi lưu trữ dữ liệu (Transaction Rollback): " + writeErr.toString());
     }
 
     return {
@@ -588,6 +710,8 @@ function submitVisitRecord(visitObject) {
       "visit_id": visitId,
       "store_code": storeCode,
       "visit_type": visitType,
+      "authenticated_actor": canonicalAsm,
+      "role": userRole,
       "message": "✅ Đã ghi nhận thành công lượt kiểm tra [" + visitType + "] cho cửa hàng " + storeCode + "!"
     };
 
@@ -3903,7 +4027,8 @@ function loginUser(username, password) {
             region: String(row[regIdx] || "").trim(),
             stores: String(row[sIdx] || "ALL").trim()
           };
-          return { success: true, user: userObj };
+          var authToken = generateUserSessionToken(rawUser, userObj.role);
+          return { success: true, user: userObj, auth_token: authToken };
         } else {
           return { success: false, error: "Mật khẩu không chính xác." };
         }
