@@ -495,6 +495,35 @@
 <!-- IMMEDIATE TIME-TO-INTERACTIVE AUTH CONTROLLER (TOP-LEVEL ISOLATION)       -->
 <!-- ========================================================================= -->
 <script>
+  // =========================================================================
+  // TOP-LEVEL AUTHENTICATION & MASTER DROPDOWN ENGINE (SSOT HYDRATION)
+  // =========================================================================
+  var currentUser = null;
+  window.CURRENT_USER = null;
+  window.AUTH_TOKEN = null;
+  var currentInspectionMode = 'own';
+
+  var STANDALONE_USER_ROSTER = {
+    "khoi": { username: "khoi", fullName: "Nguyễn Đăng Khôi", role: "master", region: "All", stores: "ALL" },
+    "khoind": { username: "khoind", fullName: "Nguyễn Đăng Khôi", role: "master", region: "All", stores: "ALL" },
+    "tien": { username: "tien", fullName: "Đỗ Thị Hoa Tiên", role: "asm", region: "HCM", stores: "DIAMOND,LYTT,NGA6,NTQ1,PTER,NGHUE,VINCOM,TAKA,OIKHIEM,AUCO,CHOA,TCHINH2,NGANHTHU,LVKHUONG,PDL,PDL2,AEONBT,CUCHI" },
+    "dung": { username: "dung", fullName: "Nguyễn Quốc Dũng", role: "asm", region: "HCM", stores: "CMT8,CHOA3,TCHINH,LBBICH,QBINH,KONTUM,GIALAI,PTHIET,DAKLAK,DAKLAK2,DAKLAK5,DAKNONG,DALAT,DALAT2,BAOLOC" },
+    "ttdung": { username: "ttdung", fullName: "Trần Thanh Dũng", role: "asm", region: "Miền Tây", stores: "KINHDV,HAUGIANG,MYTHO,GO_MYTHO,BENTRE,SADEC,VINHLONG,TDM_BD,TRAVINH,CANTHO,CTHO2,CTHO3,CTHO4,CTHO5,ST_ST,BACLIEU,CAMAU" },
+    "huong": { username: "huong", fullName: "Đoàn Thị Kim Hương", role: "asm", region: "Miền Đông", stores: "BH1,BH2,BH3,BH4,BH5,BH6,BH7,LONGKHANH,VTAURB,VTAUCBA,VTAU3T2,VT_VT,BARIA,TAYNINH,TNINH2,TNINH3" },
+    "linh": { username: "linh", fullName: "Đinh Thị Cát Linh", role: "asm", region: "HCM", stores: "SO1,HBT,CAOTH,NTMK,NDC,LVS,185_3T2,126_3T2,NVTROI,PDP,GOVAP,LOTTEGV,901QT,LQDINH,NGUYENOANH,AEONTP,LETRONGTAN,LMARK81" },
+    "tin": { username: "tin", fullName: "Nguyễn Lâm Trung Tín", role: "asm", region: "Miền Tây", stores: "AG1,AG2,AG3,AG4,AG5,AG6,DT1,DT2,DT3,KG1,KG2,KG3,KG4,KG5,HG1,HG2" },
+    "quan": { username: "quan", fullName: "Nguyễn Lê Quân", role: "asm", region: "Miền Trung- Tây Nguyên", stores: "DNA1,DNA2,DNA3,DNA4,HUE1,HUE2,HUE3,QN1,QN2,QNG1,QNG2,PY1,PY2,KH1,KH2,KH3,KH4" },
+    "lam": { username: "lam", fullName: "Hồ Thị Lâm", role: "asm", region: "HCM", stores: "HVPLAZA,VANHANH,SENSECITY,VINCOMTD,VINCOMLVV,VINCOMQ2" },
+    "ni": { username: "ni", fullName: "Ni", role: "asm", region: "HCM", stores: "ALL" },
+    "admin": { username: "admin", fullName: "Administrator", role: "admin", region: "All", stores: "ALL" }
+  };
+
+  function normStr(s) {
+    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+              .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+              .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  }
+
   function togglePortalPasswordVisibility() {
     var passInput = document.getElementById("portalPassword");
     var toggleText = document.getElementById("portalTogglePassText");
@@ -508,30 +537,16 @@
     }
   }
 
-  var STANDALONE_USER_ROSTER = {
-    "khoi": { username: "khoi", fullName: "Nguyễn Đăng Khôi", role: "master", region: "All", stores: "ALL" },
-    "khoind": { username: "khoind", fullName: "Nguyễn Đăng Khôi", role: "master", region: "All", stores: "ALL" },
-    "tien": { username: "tien", fullName: "Đỗ Thị Hoa Tiên", role: "asm", region: "HCM", stores: "DIAMOND,LYTT,NGA6,NTQ1,PTER,NGHUE,VINCOM,TAKA,OIKHIEM,AUCO,CHOA,TCHINH2,NGANHTHU,LVKHUONG,PDL,PDL2,AEONBT,CUCHI" },
-    "dung": { username: "dung", fullName: "Nguyễn Quốc Dũng", role: "asm", region: "HCM", stores: "CMT8,CHOA3,TCHINH,LBBICH,QBINH,KONTUM,GIALAI,PTHIET,DAKLAK,DAKLAK2,DAKLAK5,DAKNONG,DALAT,DALAT2,BAOLOC" },
-    "ttdung": { username: "ttdung", fullName: "Trần Thanh Dũng", role: "asm", region: "Miền Tây", stores: "KINHDV,HAUGIANG,MYTHO,GO_MYTHO,BENTRE,SADEC,VINHLONG,TDM_BD,TRAVINH,CANTHO,CTHO2,CTHO3,CTHO4,CTHO5,ST_ST,BACLIEU,CAMAU" },
-    "huong": { username: "huong", fullName: "Đoàn Thị Kim Hương", role: "asm", region: "Miền Đông", stores: "BH1,BH2,BH3,BH4,BH5,BH6,BH7,LONGKHANH,VTAURB,VTAUCBA,VTAU3T2,VT_VT,BARIA,TAYNINH,TNINH2,TNINH3" },
-    "linh": { username: "linh", fullName: "Đinh Thị Cát Linh", role: "asm", region: "HCM", stores: "SO1,HBT,CAOTH,NTMK,NDC,LVS,185_3T2,126_3T2,NVTROI,PDP,GOVAP,LOTTEGV,901QT,LQDINH,NGUYENOANH,AEONTP,LETRONGTAN,LMARK81" },
-    "tin": { username: "tin", fullName: "Nguyễn Lâm Trung Tín", role: "asm", region: "Miền Tây", stores: "AG1,AG2,AG3,AG4,AG5,AG6,DT1,DT2,DT3,KG1,KG2,KG3,KG4,KG5,HG1,HG2" },
-    "quan": { username: "quan", fullName: "Nguyễn Lê Quân", role: "asm", region: "Miền Trung- Tây Nguyên", stores: "DNA1,DNA2,DNA3,DNA4,HUE1,HUE2,HUE3,QN1,QN2,QNG1,QNG2,PY1,PY2,KH1,KH2,KH3,KH4" },
-    "lam": { username: "lam", fullName: "Hồ Thị Lâm", role: "asm", region: "HCM", stores: "HVPLAZA,VANHANH,SENSECITY,VINCOMTD,VINCOMLVV,VINCOMQ2" },
-    "hn": { username: "hn", fullName: "ASM Hà Nội", role: "asm", region: "HN", stores: "ALL" }
-  };
-
   function submitPortalLoginForm(e) {
     if (e && e.preventDefault) e.preventDefault();
     var uInput = document.getElementById("portalUsername");
     var pInput = document.getElementById("portalPassword");
     var errBox = document.getElementById("portalLoginError");
     var btn = document.getElementById("btnPortalLoginSubmit");
-
-    if (!uInput || !pInput) return;
-    var username = uInput.value.trim().toLowerCase();
-    var password = pInput.value.trim();
+    
+    var username = uInput ? uInput.value.trim().toLowerCase() : "";
+    var password = pInput ? pInput.value.trim() : "";
+    
     if (!username || !password) {
       if (errBox) {
         errBox.textContent = "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.";
@@ -539,23 +554,20 @@
       }
       return;
     }
-
+    
+    if (errBox) errBox.classList.add("d-none");
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xác thực...';
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xác thực...';
     }
-    if (errBox) errBox.classList.add("d-none");
-
+    
+    // 1. Google Apps Script Mode
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(res) {
-          if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
-          }
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Đăng Nhập Hệ Thống'; }
           if (res && res.success && res.user) {
             currentUser = res.user;
-            localStorage.setItem("storevisit_user", JSON.stringify(res.user));
             showMainAppUI(res.user);
           } else {
             if (errBox) {
@@ -565,58 +577,46 @@
           }
         })
         .withFailureHandler(function(err) {
-          if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
-          }
-          function normStr(s) {
-            return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                      .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
-                      .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-          }
-          var cleanUser = normStr(username);
-          var matchedKey = Object.keys(STANDALONE_USER_ROSTER).find(function(k){ return k === cleanUser || cleanUser.includes(k) || k.includes(cleanUser); });
-          var matchedUser = matchedKey ? STANDALONE_USER_ROSTER[matchedKey] : Object.values(STANDALONE_USER_ROSTER).find(function(u){ return normStr(u.fullName).includes(cleanUser); });
-          if (matchedUser) {
-            currentUser = matchedUser;
-            localStorage.setItem("storevisit_user", JSON.stringify(matchedUser));
-            showMainAppUI(matchedUser);
-          } else {
-            if (errBox) {
-              errBox.textContent = "Lỗi kết nối: " + (err.message || err);
-              errBox.classList.remove("d-none");
-            }
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Đăng Nhập Hệ Thống'; }
+          if (errBox) {
+            errBox.textContent = "Lỗi kết nối máy chủ Google: " + (err.message || err);
+            errBox.classList.remove("d-none");
           }
         })
-        .loginUser(username, password);
-    } else {
-      // Standalone Vercel Mode
-      setTimeout(function() {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
-        }
-        function normStr(s) {
-          return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                    .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
-                    .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        }
-        var cleanUser = normStr(username);
-        var matchedKey = Object.keys(STANDALONE_USER_ROSTER).find(function(k){ return k === cleanUser || cleanUser.includes(k) || k.includes(cleanUser); });
-        var matchedUser = matchedKey ? STANDALONE_USER_ROSTER[matchedKey] : Object.values(STANDALONE_USER_ROSTER).find(function(u){ return normStr(u.fullName).includes(cleanUser); });
-        
-        if (matchedUser) {
-          currentUser = matchedUser;
-          localStorage.setItem("storevisit_user", JSON.stringify(matchedUser));
-          showMainAppUI(matchedUser);
-        } else {
-          var defaultUser = { username: username, fullName: username.toUpperCase(), role: "asm", region: "HCM", stores: "ALL" };
-          currentUser = defaultUser;
-          localStorage.setItem("storevisit_user", JSON.stringify(defaultUser));
-          showMainAppUI(defaultUser);
-        }
-      }, 200);
+        .authenticateUser(username, password);
+      return;
     }
+    
+    // 2. Standalone / Vercel Mode
+    setTimeout(function() {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Đăng Nhập Hệ Thống'; }
+      var foundUser = STANDALONE_USER_ROSTER[username];
+      if (foundUser && password === "123456") {
+        currentUser = foundUser;
+        showMainAppUI(foundUser);
+      } else {
+        if (errBox) {
+          errBox.textContent = "Sai tài khoản hoặc mật khẩu (Thử 'khoi' / '123456' hoặc 'tien' / '123456').";
+          errBox.classList.remove("d-none");
+        }
+      }
+    }, 200);
+  }
+
+  function showMainAppUI(user) {
+    currentUser = user;
+    window.CURRENT_USER = user;
+    try {
+      localStorage.setItem("storevisit_user", JSON.stringify(user));
+    } catch(e) {}
+
+    var portal = document.getElementById("appAuthPortal");
+    var mainApp = document.getElementById("appMainContainer");
+    if (portal) portal.classList.add("d-none");
+    if (mainApp) mainApp.classList.remove("d-none");
+
+    applyUserSession(user);
+    if (typeof refreshDraftCounters === 'function') refreshDraftCounters();
   }
 
   function showAuthPortalUI() {
@@ -626,14 +626,236 @@
     if (mainApp) mainApp.classList.add("d-none");
   }
 
-  function showMainAppUI(user) {
-    var portal = document.getElementById("appAuthPortal");
-    var mainApp = document.getElementById("appMainContainer");
-    if (portal) portal.classList.add("d-none");
-    if (mainApp) mainApp.classList.remove("d-none");
+  function logoutUser() {
+    currentUser = null;
+    window.CURRENT_USER = null;
+    try {
+      localStorage.removeItem("storevisit_user");
+    } catch(e) {}
+    showAuthPortalUI();
+  }
 
-    if (typeof applyUserSession === 'function') applyUserSession(user);
-    if (typeof refreshDraftCounters === 'function') refreshDraftCounters();
+  function applyUserSession(user) {
+    currentUser = user;
+    window.CURRENT_USER = user;
+    window.applyUserSession = applyUserSession;
+    
+    var userBar = document.getElementById("userHeaderBar");
+    var nameEl = document.getElementById("userDisplayName");
+    var badgeEl = document.getElementById("userRoleBadge");
+    if (userBar && nameEl && badgeEl) {
+      userBar.classList.remove("d-none");
+      nameEl.textContent = "👤 " + (user.fullName || user.username);
+      if (user.role === "master" || user.role === "admin") {
+        badgeEl.textContent = "Master Administrator";
+        badgeEl.className = "badge bg-warning text-dark me-2";
+      } else {
+        badgeEl.textContent = user.region ? `ASM • ${user.region}` : "ASM Quản Lý";
+        badgeEl.className = "badge bg-info text-dark me-2";
+      }
+    }
+    
+    // RE-HYDRATE ALL DROPDOWNS IMMEDIATELY
+    initDropdowns(window.STORE_DATA_SSOT);
+  }
+
+  function initDropdowns(data) {
+    window.initDropdowns = initDropdowns;
+    data = data || window.STORE_DATA_SSOT || (typeof storeData !== 'undefined' ? storeData : null);
+    activeStoreData = data;
+    
+    var asmSelect = document.getElementById('asmName');
+    var regionSelect = document.getElementById('regionSelect');
+    var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : window.CURRENT_USER;
+    
+    // 1. Populate ASM Dropdown (Always 11 ASMs)
+    if (asmSelect) {
+      var prevAsm = asmSelect.value;
+      asmSelect.innerHTML = '<option value="">-- Chọn ASM --</option>';
+      var asmList = [
+        "HN", "Hồ Thị Lâm", "Nguyễn Lâm Trung Tín", "Nguyễn Lê Quân",
+        "Nguyễn Quốc Dũng", "Nguyễn Đăng Khôi", "Ni", "Trần Thanh Dũng",
+        "Đinh Thị Cát Linh", "Đoàn Thị Kim Hương", "Đỗ Thị Hoa Tiên"
+      ];
+      
+      asmList.forEach(function(asm) {
+        var opt = document.createElement('option');
+        opt.value = asm;
+        opt.textContent = asm;
+        asmSelect.appendChild(opt);
+      });
+      
+      // Auto select ASM for ASM user
+      if (user && user.role === 'asm') {
+        var userTarget = normStr(user.fullName || user.username);
+        for (var i = 0; i < asmSelect.options.length; i++) {
+          var optNorm = normStr(asmSelect.options[i].value);
+          if (optNorm && (optNorm === userTarget || userTarget.includes(optNorm) || optNorm.includes(userTarget))) {
+            asmSelect.selectedIndex = i;
+            break;
+          }
+        }
+      } else if (prevAsm) {
+        for (var k = 0; k < asmSelect.options.length; k++) {
+          if (asmSelect.options[k].value === prevAsm) {
+            asmSelect.selectedIndex = k;
+            break;
+          }
+        }
+      }
+    }
+    
+    // 2. Populate Region Dropdown (5 Regions)
+    if (regionSelect) {
+      var prevRegion = regionSelect.value;
+      regionSelect.innerHTML = '<option value="">-- Chọn Region --</option>';
+      var regList = ["HCM", "HN", "Miền Trung- Tây Nguyên", "Miền Tây", "Miền Đông"];
+      regList.forEach(function(reg) {
+        var ropt = document.createElement('option');
+        ropt.value = reg;
+        ropt.textContent = reg;
+        regionSelect.appendChild(ropt);
+      });
+      if (prevRegion) regionSelect.value = prevRegion;
+    }
+    
+    // 3. Populate Store Dropdown immediately
+    updateStoreList();
+  }
+
+  function updateStoreList() {
+    window.updateStoreList = updateStoreList;
+    var modeEl = document.getElementById('modeSelect');
+    var asmEl = document.getElementById('asmName');
+    var regionEl = document.getElementById('regionSelect');
+    var storeSelect = document.getElementById('storeCode');
+    
+    if (!storeSelect) return;
+    
+    var mode = (modeEl && modeEl.value) ? modeEl.value : 'own';
+    var asm = asmEl ? asmEl.value : '';
+    var region = regionEl ? regionEl.value : '';
+    var user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : window.CURRENT_USER;
+    var data = window.STORE_DATA_SSOT || (typeof storeData !== 'undefined' ? storeData : null);
+    
+    var prevStore = storeSelect.value;
+    storeSelect.innerHTML = '<option value="">-- Chọn cửa hàng --</option>';
+    
+    var stores = [];
+    
+    if (data && data.mapping_by_asm) {
+      if (mode === 'cross') {
+        // Mode Kiểm Tra Chéo: Lọc theo Region hoặc ASM, hoặc hiển thị full 185
+        if (region && data.mapping_by_region && data.mapping_by_region[region]) {
+          stores = data.mapping_by_region[region];
+        } else if (asm && data.mapping_by_asm[asm] && data.mapping_by_asm[asm].length > 0) {
+          stores = data.mapping_by_asm[asm];
+        } else {
+          var allSet = new Set();
+          Object.values(data.mapping_by_asm).forEach(function(list) {
+            list.forEach(function(s) { allSet.add(s); });
+          });
+          stores = Array.from(allSet).sort();
+        }
+      } else {
+        // Mode Own / Khai Trương / Quick Pulse
+        if (user && user.role === 'asm') {
+          var userAsm = user.fullName || user.username || asm;
+          var targetNorm = normStr(userAsm);
+          var matchedKey = Object.keys(data.mapping_by_asm).find(function(k) {
+            var kn = normStr(k);
+            return kn === targetNorm || targetNorm.includes(kn) || kn.includes(targetNorm);
+          });
+          
+          if (matchedKey && data.mapping_by_asm[matchedKey] && data.mapping_by_asm[matchedKey].length > 0) {
+            stores = data.mapping_by_asm[matchedKey];
+          } else if (asm && data.mapping_by_asm[asm] && data.mapping_by_asm[asm].length > 0) {
+            stores = data.mapping_by_asm[asm];
+          }
+        } else if (asm && data.mapping_by_asm[asm] && data.mapping_by_asm[asm].length > 0) {
+          stores = data.mapping_by_asm[asm];
+        } else {
+          // Master hoặc chưa chọn ASM -> Hiển thị toàn bộ 185 cửa hàng
+          var allSetMaster = new Set();
+          Object.values(data.mapping_by_asm).forEach(function(list) {
+            list.forEach(function(s) { allSetMaster.add(s); });
+          });
+          stores = Array.from(allSetMaster).sort();
+        }
+      }
+    }
+    
+    // Fail-safe: Nếu stores vẫn rỗng, luôn nạp toàn bộ danh sách từ SSOT
+    if (!stores || stores.length === 0) {
+      if (data && data.mapping_by_asm) {
+        var fallbackSet = new Set();
+        Object.values(data.mapping_by_asm).forEach(function(list) {
+          list.forEach(function(s) { fallbackSet.add(s); });
+        });
+        stores = Array.from(fallbackSet).sort();
+      }
+    }
+    
+    stores.forEach(function(store) {
+      var opt = document.createElement('option');
+      opt.value = store;
+      opt.textContent = store;
+      storeSelect.appendChild(opt);
+    });
+    
+    // Khôi phục giá trị đã chọn nếu có
+    if (prevStore) {
+      for (var j = 0; j < storeSelect.options.length; j++) {
+        if (storeSelect.options[j].value === prevStore) {
+          storeSelect.selectedIndex = j;
+          break;
+        }
+      }
+    } else if (storeSelect.options.length === 2) {
+      storeSelect.selectedIndex = 1;
+    }
+    
+    if (typeof handleStoreProfileChange === 'function') {
+      handleStoreProfileChange();
+    }
+  }
+
+  function handleModeChange() {
+    window.handleModeChange = handleModeChange;
+    var modeSelect = document.getElementById('modeSelect');
+    var mode = modeSelect ? modeSelect.value : 'own';
+    var regionGroup = document.getElementById('regionGroup');
+    var regionSelect = document.getElementById('regionSelect');
+
+    if (regionGroup && regionSelect) {
+      if (mode === 'cross' || mode === 'opening') {
+        regionGroup.style.display = 'block';
+        regionSelect.required = true;
+        regionSelect.disabled = false;
+      } else {
+        regionGroup.style.display = 'none';
+        regionSelect.required = false;
+        regionSelect.disabled = true;
+        regionSelect.value = "";
+      }
+    }
+
+    var openingCard = document.getElementById('openingInfoCard');
+    if (openingCard) {
+      openingCard.classList.toggle('d-none', mode !== 'opening');
+      if (mode === 'opening' && typeof handleOpeningTypeChange === 'function') {
+        handleOpeningTypeChange();
+      }
+    }
+    updateStoreList();
+  }
+
+  function handleAsmChange() {
+    updateStoreList();
+  }
+
+  function handleRegionChange() {
+    updateStoreList();
   }
 
   function checkUserSession() {
@@ -667,18 +889,18 @@
   <div class="container">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div class="d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center text-white fw-bold fs-5 shadow-sm rounded-3" style="width: 42px; height: 42px; background: linear-gradient(135deg, #C41E3A, #A01830);">
+        <div class="brand-badge me-3" style="width: 46px; height: 46px; background: linear-gradient(135deg, #C5A059 0%, #A6823C 100%); color: #FFFFFF; font-weight: 900; font-size: 22px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
           AP
         </div>
         <div>
-          <div class="app-title" style="color: #1B2A4A; font-weight: 800;">
-            AN PHƯỚC <span class="badge-gold">StoreVisit Pro</span>
+          <div class="app-title" style="color: #FFFFFF !important; font-weight: 800; font-size: 20px; letter-spacing: 0.5px; line-height: 1.2; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">
+            AN PHƯỚC <span style="background: linear-gradient(135deg, #C5A059 0%, #A6823C 100%); color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 3px 9px; border-radius: 6px; margin-left: 6px; border: 1px solid rgba(255,255,255,0.4); vertical-align: middle; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">StoreVisit Pro</span>
           </div>
-          <div class="text-muted small">Hệ thống khảo sát & đánh giá vận hành cửa hàng</div>
+          <div style="color: rgba(255, 255, 255, 0.9) !important; font-size: 12px; font-weight: 500; margin-top: 3px;">Hệ thống khảo sát & đánh giá vận hành chuỗi cửa hàng</div>
         </div>
       </div>
-      <div id="userHeaderBar" class="d-none text-end p-2 px-3 rounded-3 shadow-sm d-flex align-items-center gap-2" style="background-color: #f8fafc !important; border: 1px solid #e2e8f0 !important;">
-        <span id="userDisplayName" class="fw-bold me-1" style="color: #1B2A4A !important; font-size: 14px;">👤 ASM Khôi</span>
+      <div id="userHeaderBar" class="d-none text-end p-2 px-3 rounded-3 shadow-sm d-flex align-items-center gap-2" style="background: rgba(255, 255, 255, 0.18) !important; border: 1.5px solid rgba(197, 160, 89, 0.5) !important; color: #FFFFFF !important; backdrop-filter: blur(8px);">
+        <span id="userDisplayName" class="fw-bold me-1" style="color: #FFFFFF !important; font-size: 14px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">👤 ASM Khôi</span>
         <span id="userRoleBadge" class="badge bg-warning text-dark me-2" style="font-weight: 700;">Master</span>
                 <button type="button" class="btn btn-sm btn-info text-dark fw-bold me-1 shadow-sm" onclick="openAsmGuideModal()" title="Xem hướng dẫn sử dụng nhanh dành cho ASM">
           <i class="bi bi-book-half me-1"></i> Hướng Dẫn ASM
