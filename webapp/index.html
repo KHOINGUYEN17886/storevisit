@@ -730,6 +730,12 @@
   window.renderAllChecklists = renderAllChecklists;
 
   function showMainAppUI(user) {
+    // Safeguard: Ensure no orphaned modal-backdrops darken the screen on startup
+    document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+
     if (typeof window.initFormState === 'function') {
       window.initFormState();
     } else if (typeof initFormState === 'function') {
@@ -1059,7 +1065,7 @@
       if (tabsContent) tabsContent.classList.remove('d-none');
       if (qpContainer) qpContainer.classList.add('d-none');
       if (raContainer) raContainer.classList.add('d-none');
-      if (descText) descText.innerHTML = '<i class="bi bi-info-circle text-primary me-1"></i> <strong>Đại kiểm tra toàn diện:</strong> Đầy đủ 9 tabs với 65 tiêu chí đánh giá chuẩn mực.';
+      if (descText) descText.innerHTML = '<i class="bi bi-info-circle text-primary me-1"></i> <strong>Kiểm tra toàn diện:</strong> Đầy đủ 9 tabs với 65 tiêu chí đánh giá chuẩn mực.';
     }
   };
 
@@ -1784,7 +1790,7 @@
             <i class="bi bi-shield-fill-exclamation text-danger"></i> 🎯 Cứu Target
           </button>
           <button type="button" class="ios-mode-btn active" data-mode="deep_audit" onclick="switchInspectionMode('deep_audit')">
-            <i class="bi bi-clipboard2-check-fill text-primary"></i> 🏢 Đại Kiểm Tra
+            <i class="bi bi-clipboard2-check-fill text-primary"></i> 🏢 Kiểm Tra Toàn Diện
           </button>
           <button type="button" class="ios-mode-btn" data-mode="cross" onclick="switchInspectionMode('cross')">
             <i class="bi bi-arrow-left-right text-success"></i> 🔄 Kiểm Tra Chéo
@@ -2163,12 +2169,12 @@
                 <i class="bi bi-compass-fill me-1" style="color: #C5A059;"></i> Mục Đích & Hình Thức Thực Địa Của ASM
               </label>
               <select class="form-select fw-semibold" id="inspectionProfileSelect" name="inspectionProfileSelect" onchange="switchInspectionProfile(this.value)" style="border: 1.5px solid #C5A059; background-color: #FFFFFF;">
-                <option value="full_audit" selected>🏢 1. Đại Kiểm Tra Định Kỳ (Full 9 Tabs — Đầy đủ 65 tiêu chí)</option>
+                <option value="full_audit" selected>🏢 1. Kiểm Tra Toàn Diện Định Kỳ (Full 9 Tabs — Đầy đủ 65 tiêu chí)</option>
                 <option value="quick_pulse">⚡ 2. Kiểm Tra Nhanh (Quick Pulse 15 Phút — Dành cho CH HCM Cũ / Ổn Định)</option>
                 <option value="red_alert">🚨 3. Thực Địa Cửa Hàng Báo Động Đỏ (Cứu Doanh Thu — 5 Trụ Cột + 1)</option>
               </select>
               <div class="small text-muted mt-2" id="profileDescriptionText">
-                <i class="bi bi-info-circle me-1"></i> <strong>Đại kiểm tra toàn diện:</strong> Đánh giá toàn bộ 9 tabs cơ sở vật chất, trưng bày VM 4 brands, nhân sự, đối thủ và vận hành.
+                <i class="bi bi-info-circle me-1"></i> <strong>Kiểm tra toàn diện:</strong> Đánh giá toàn bộ 9 tabs cơ sở vật chất, trưng bày VM 4 brands, nhân sự, đối thủ và vận hành.
               </div>
             </div>
 
@@ -3917,6 +3923,8 @@
         </div>
       </div>
     </div>
+  </div>
+
   <!-- MODAL: XÁC NHẬN GỬI EMAIL BÁO CÁO (PREVIEW & EDIT RECIPIENTS) -->
   <div class="modal fade" id="confirmSendEmailModal" tabindex="-1" aria-hidden="true" style="z-index: 1055;">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -10509,7 +10517,7 @@ function submitTargetRescueVisit() {
                   <span class="badge bg-success rounded-circle p-2 px-3 fw-bold">3</span>
                   <h6 class="fw-bold text-white mb-0">Chọn chế độ & Bấm Gửi Báo Cáo</h6>
                 </div>
-                <p class="small text-white-50 mb-0">Ghé nhanh bấm <strong>Quick Pulse</strong>; Chậm số bấm <strong>Cứu Target</strong>; Chấm điểm định kỳ bấm <strong>Đại Kiểm Tra</strong>. Bấm Gửi là HOÀN TẤT, không cần gõ lại máy tính!</p>
+                <p class="small text-white-50 mb-0">Ghé nhanh bấm <strong>Quick Pulse</strong>; Chậm số bấm <strong>Cứu Target</strong>; Chấm điểm định kỳ bấm <strong>Kiểm Tra Toàn Diện</strong>. Bấm Gửi là HOÀN TẤT, không cần gõ lại máy tính!</p>
               </div>
             </div>
 
@@ -12091,10 +12099,7 @@ function submitTargetRescueVisit() {
   }
 
   function checkAndPromptResumeDraft() {
-    const userDrafts = getDraftsForCurrentUser();
-    if (userDrafts && userDrafts.length > 0) {
-      openMultiDraftHub();
-    }
+    if (typeof refreshDraftCounters === 'function') refreshDraftCounters();
   }
 
   function resumeDraftConfirmed() {
@@ -12146,6 +12151,12 @@ function submitTargetRescueVisit() {
   window.renderAllChecklists = renderAllChecklists;
 
   function showMainAppUI(user) {
+    // Safeguard: Ensure no orphaned modal-backdrops darken the screen on startup
+    document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+
     if (typeof window.initFormState === 'function') {
       window.initFormState();
     } else if (typeof initFormState === 'function') {
@@ -12161,13 +12172,7 @@ function submitTargetRescueVisit() {
     applyUserSession(user);
     refreshDraftCounters();
 
-    // Check if user has active drafts on login
-    setTimeout(() => {
-      const userDrafts = getDraftsForCurrentUser();
-      if (userDrafts.length > 0 && !activeDraftId) {
-        openMultiDraftHub();
-      }
-    }, 400);
+    // Drafts available in status bar & header button
   }
 
   // 2. MULTI-DRAFT STORAGE REGISTRY
@@ -12890,7 +12895,7 @@ function submitTargetRescueVisit() {
       if (tabsContent) tabsContent.classList.remove('d-none');
       if (qpContainer) qpContainer.classList.add('d-none');
       if (raContainer) raContainer.classList.add('d-none');
-      if (descText) descText.innerHTML = '<i class="bi bi-info-circle text-primary me-1"></i> <strong>Đại kiểm tra toàn diện:</strong> Đầy đủ 9 tabs với 65 tiêu chí đánh giá chuẩn mực.';
+      if (descText) descText.innerHTML = '<i class="bi bi-info-circle text-primary me-1"></i> <strong>Kiểm tra toàn diện:</strong> Đầy đủ 9 tabs với 65 tiêu chí đánh giá chuẩn mực.';
     }
   };
 
@@ -13309,6 +13314,12 @@ function submitTargetRescueVisit() {
   window.renderAllChecklists = renderAllChecklists;
 
   function showMainAppUI(user) {
+    // Safeguard: Ensure no orphaned modal-backdrops darken the screen on startup
+    document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+
     if (typeof window.initFormState === 'function') {
       window.initFormState();
     } else if (typeof initFormState === 'function') {
@@ -13324,14 +13335,7 @@ function submitTargetRescueVisit() {
     applyUserSession(user);
     if (typeof refreshDraftCounters === 'function') refreshDraftCounters();
 
-    setTimeout(() => {
-      if (typeof getDraftsForCurrentUser === 'function') {
-        const userDrafts = getDraftsForCurrentUser();
-        if (userDrafts.length > 0 && typeof activeDraftId !== 'undefined' && !activeDraftId) {
-          if (typeof openMultiDraftHub === 'function') openMultiDraftHub();
-        }
-      }
-    }, 400);
+
   }
 
   function logoutUser() {

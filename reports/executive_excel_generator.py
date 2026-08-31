@@ -104,7 +104,7 @@ class ExecutiveExcelGenerator:
         # 5 Modes Breakdown
         ws.cell(row=9, column=2, value="2. PHÂN BỔ LƯỢT KIỂM TRA THEO 5 CHẾ ĐỘ").font = Font(name="Calibri", size=12, bold=True, color="1B2A4A")
         m_counts = kpis.get("mode_counts", {})
-        h_modes = ["⚡ Quick Pulse", "🎯 Cứu Target", "🏢 Đại Kiểm Tra", "🔄 Kiểm Tra Chéo", "🎊 Khai Trương"]
+        h_modes = ["⚡ Quick Pulse", "🎯 Cứu Target", "🏢 Kiểm Tra Toàn Diện", "🔄 Kiểm Tra Chéo", "🎊 Khai Trương"]
         v_modes = [
             f"{m_counts.get('quick_pulse', 0)} lượt",
             f"{m_counts.get('target_rescue', 0)} lượt",
@@ -226,7 +226,7 @@ class ExecutiveExcelGenerator:
         self._auto_fit_columns(ws, max_cols=6)
 
     def _build_audit_tab(self, ws, data):
-        ws.cell(row=2, column=2, value="BẢNG ĐÁNH GIÁ ĐẠI KIỂM TRA 52 CHECKLIST").font = self.title_font
+        ws.cell(row=2, column=2, value="BẢNG ĐÁNH GIÁ KIỂM TRA TOÀN DIỆN 52 CHECKLIST").font = self.title_font
         ws.cell(row=3, column=2, value="Chi tiết các hạng mục vi phạm và đề xuất khắc phục").font = self.subtitle_font
         
         headers = ["Mã CH", "Tên Cửa Hàng", "ASM", "Ngày Kiểm Tra", "Mặt Tiền", "Không Gian", "Hàng Hóa", "Nhân Sự", "CSVC & PCCC", "Vấn Đề Tồn Đọng", "Kế Hoạch Khắc Phục"]

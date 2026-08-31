@@ -141,7 +141,7 @@ class ExecutivePPTXGenerator:
         m_desc = [
             f"• ⚡ Quick Pulse (Kiểm tra nhanh 2-3 phút): {m_counts.get('quick_pulse', 0)} lượt",
             f"• 🎯 Cứu Target (Target Rescue Action Contract): {m_counts.get('target_rescue', 0)} ca can thiệp",
-            f"• 🏢 Đại Kiểm Tra (52 Checklist Tiêu Chuẩn): {m_counts.get('deep_audit', 0)} lượt",
+            f"• 🏢 Kiểm Tra Toàn Diện (52 Checklist Tiêu Chuẩn): {m_counts.get('deep_audit', 0)} lượt",
             f"• 🔄 Kiểm Tra Chéo (Cross-Region Inspection): {m_counts.get('cross_inspection', 0)} lượt",
             f"• 🎊 Khai Trương / Tái Khai Trương (Opening Audit): {m_counts.get('opening_inspection', 0)} lượt"
         ]
