@@ -1,7 +1,15 @@
 {
-  "pilot_version": "Wave_4_Field_Pilot_v1.0",
+  "pilot_version": "Wave_5_Controlled_Field_Pilot_v1.0",
   "pilot_start_date": "2026-09-01",
   "pilot_duration_days": 7,
+  "data_provenance_mode": "REAL_FIELD_READY",
+  "roster_summary": {
+    "total_pilot_asms": 4,
+    "total_field_asms": 3,
+    "total_master_reviewers": 1,
+    "total_pilot_stores": 16,
+    "reconciliation_delta": 0
+  },
   "governance_kpis": {
     "diagnostic_load_success_target_pct": 99.0,
     "visit_submission_success_target_pct": 99.0,
@@ -11,7 +19,10 @@
     "ghost_records_tolerance": 0,
     "lost_offline_records_tolerance": 0,
     "silent_failures_tolerance": 0,
-    "action_completion_tracking": true
+    "action_commitment_tracking": true,
+    "action_completion_tracking": true,
+    "action_verification_tracking": true,
+    "recovery_effectiveness_tracking": true
   },
   "asms": [
     {
@@ -19,31 +30,38 @@
       "full_name": "Đỗ Thị Hoa Tiên",
       "role": "asm",
       "region": "HCM",
+      "total_assigned_stores": 18,
+      "pilot_store_count": 5,
       "pilot_stores": [
+        {
+          "code": "PTER",
+          "name": "Pasteur",
+          "tier": "PROTECT_ON_TRACK",
+          "region": "HCM"
+        },
+        {
+          "code": "NGA6",
+          "name": "03 Nguyễn Trãi",
+          "tier": "RECOVERY",
+          "region": "HCM"
+        },
         {
           "code": "DIAMOND",
           "name": "Diamond Plaza",
-          "tier": "PROTECT_ON_TRACK"
+          "tier": "RESCUE_CRITICAL",
+          "region": "HCM"
         },
         {
           "code": "LYTT",
           "name": "Lý Tự Trọng",
-          "tier": "WATCH"
-        },
-        {
-          "code": "NGA6",
-          "name": "Ngã Sáu Dân Chủ",
-          "tier": "RECOVERY"
-        },
-        {
-          "code": "PTER",
-          "name": "Pasteur",
-          "tier": "RESCUE_CRITICAL"
+          "tier": "RESCUE_CRITICAL",
+          "region": "HCM"
         },
         {
           "code": "TAKA",
           "name": "Takashimaya",
-          "tier": "UNKNOWN"
+          "tier": "UNKNOWN",
+          "region": "HCM"
         }
       ]
     },
@@ -52,26 +70,38 @@
       "full_name": "Đinh Thị Cát Linh",
       "role": "asm",
       "region": "HCM",
+      "total_assigned_stores": 18,
+      "pilot_store_count": 5,
       "pilot_stores": [
         {
+          "code": "NTMK",
+          "name": "Nguyễn Thị Minh Khai",
+          "tier": "PROTECT_ON_TRACK",
+          "region": "HCM"
+        },
+        {
           "code": "SO1",
-          "name": "Hai Bà Trưng (Số 1)",
-          "tier": "PROTECT_ON_TRACK"
+          "name": "Số 1",
+          "tier": "WATCH",
+          "region": "HCM"
         },
         {
           "code": "HBT",
-          "name": "Hai Bà Trưng (HBT)",
-          "tier": "WATCH"
+          "name": "Hai Bà Trưng",
+          "tier": "WATCH",
+          "region": "HCM"
         },
         {
           "code": "CAOTH",
           "name": "Cao Thắng",
-          "tier": "RECOVERY"
+          "tier": "WATCH",
+          "region": "HCM"
         },
         {
-          "code": "NTMK",
-          "name": "Nguyễn Thị Minh Khai",
-          "tier": "RESCUE_CRITICAL"
+          "code": "NDC",
+          "name": "Nguyễn Đình Chiểu",
+          "tier": "WATCH",
+          "region": "HCM"
         }
       ]
     },
@@ -80,26 +110,38 @@
       "full_name": "Nguyễn Quốc Dũng",
       "role": "asm",
       "region": "HCM, Miền Trung- Tây Nguyên",
+      "total_assigned_stores": 15,
+      "pilot_store_count": 5,
       "pilot_stores": [
+        {
+          "code": "KONTUM",
+          "name": "Kon Tum (Trần Hưng Đạo)",
+          "tier": "PROTECT_ON_TRACK",
+          "region": "Miền Trung- Tây Nguyên"
+        },
+        {
+          "code": "CMT8",
+          "name": "Cách Mạng Tháng 8",
+          "tier": "WATCH",
+          "region": "HCM"
+        },
+        {
+          "code": "QBINH",
+          "name": "Quảng Bình",
+          "tier": "WATCH",
+          "region": "Miền Trung- Tây Nguyên"
+        },
         {
           "code": "CHOA3",
           "name": "454 Cộng Hòa",
-          "tier": "WATCH"
+          "tier": "RECOVERY",
+          "region": "HCM"
         },
         {
-          "code": "Q12",
-          "name": "Quận 12",
-          "tier": "RECOVERY"
-        },
-        {
-          "code": "CM",
-          "name": "Cà Mau",
-          "tier": "RESCUE_CRITICAL"
-        },
-        {
-          "code": "ONLINEWEB",
-          "name": "Cửa Hàng Online - Website",
-          "tier": "UNKNOWN"
+          "code": "LBBICH",
+          "name": "Lũy Bán Bích",
+          "tier": "RECOVERY",
+          "region": "HCM"
         }
       ]
     },
@@ -109,11 +151,13 @@
       "role": "master",
       "region": "GLOBAL",
       "scope": "ALL_185_STORES",
+      "pilot_store_count": 1,
       "pilot_stores": [
         {
-          "code": "ALL",
-          "name": "Toàn hệ thống 185 cửa hàng",
-          "tier": "GLOBAL_SCOPE"
+          "code": "LOTTEQ7",
+          "name": "Lotte Mart Q7",
+          "tier": "RESCUE_CRITICAL",
+          "region": "HCM"
         }
       ]
     }
