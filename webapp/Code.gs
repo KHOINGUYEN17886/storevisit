@@ -1,4 +1,21 @@
-function doGet() {
+function doGet(e) {
+  // Support REST API endpoint queries
+  if (e && e.parameter && e.parameter.action) {
+    var action = String(e.parameter.action).trim();
+    var outputData = null;
+    
+    if (action === "getStoreDiagnostics") {
+      outputData = getStoreDiagnostics();
+    } else if (action === "getStoreData") {
+      outputData = getStoreData();
+    }
+    
+    if (outputData !== null) {
+      return ContentService.createTextOutput(JSON.stringify(outputData))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
   var template = HtmlService.createTemplateFromFile('index');
   return template.evaluate()
     .setTitle('Báo cáo Kiểm tra Cửa hàng (StoreVisit Pro)')
@@ -249,6 +266,265 @@ function getStoreData() {
   } catch (e) {
     console.error('getStoreData error: ' + e.message);
     return _buildFallbackStoreData();
+  }
+}
+
+/**
+ * =========================================================================
+ * WAVE 2A: getStoreDiagnostics() - Batch Read Diagnostic Cards (Gate 1.5)
+ * =========================================================================
+ * Batch endpoint returning the 185-store diagnostic snapshot for PWA consumption.
+ * Envelope specification:
+ * {
+ *   "ok": true,
+ *   "schema_version": "1.0",
+ *   "diagnostic_version": "v1.5_semantic_audit",
+ *   "snapshot_date": "2026-08-28",
+ *   "generated_at": "...",
+ *   "store_count": 185,
+ *   "stores": { "CHOA3": { ... }, ... }
+ * }
+ */
+function getStoreDiagnostics() {
+  try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get("store_diagnostics_json_v1_5");
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch(e) {
+    console.warn("Cache read error: " + e.toString());
+  }
+
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName("Store_Diagnostics");
+    if (!sheet || sheet.getLastRow() < 2) {
+      return {
+        "ok": false,
+        "error_code": "INVALID_SNAPSHOT",
+        "message": "Tab 'Store_Diagnostics' not found or empty on Google Spreadsheet."
+      };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var header = data[0].map(function(h) { return String(h).trim(); });
+    var iCode = header.indexOf("StoreCode");
+    var iDiagJson = header.indexOf("Diagnostic_JSON");
+
+    if (iCode < 0 || iDiagJson < 0) {
+      return {
+        "ok": false,
+        "error_code": "INVALID_SNAPSHOT",
+        "message": "Missing StoreCode or Diagnostic_JSON column in Store_Diagnostics sheet."
+      };
+    }
+
+    var storesMap = {};
+    var count = 0;
+
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      var scode = String(row[iCode] || "").trim().toUpperCase();
+      var jsonStr = String(row[iDiagJson] || "").trim();
+      if (!scode || !jsonStr) continue;
+
+      try {
+        storesMap[scode] = JSON.parse(jsonStr);
+        count++;
+      } catch(parseErr) {
+        console.warn("Failed to parse diagnostic JSON for " + scode + ": " + parseErr);
+      }
+    }
+
+    if (count === 0) {
+      return {
+        "ok": false,
+        "error_code": "INVALID_SNAPSHOT",
+        "message": "No valid store diagnostic records found."
+      };
+    }
+
+    var response = {
+      "ok": true,
+      "schema_version": "1.0",
+      "diagnostic_version": "v1.5_semantic_audit",
+      "snapshot_date": "2026-08-28",
+      "generated_at": new Date().toISOString(),
+      "store_count": count,
+      "stores": storesMap
+    };
+
+    try {
+      var cache = CacheService.getScriptCache();
+      var resStr = JSON.stringify(response);
+      if (resStr.length < 100000) {
+        cache.put("store_diagnostics_json_v1_5", resStr, 1800); // Cache 30 mins
+      }
+    } catch(cErr) {
+      console.warn("Cache write warning: " + cErr.toString());
+    }
+
+    return response;
+  } catch(err) {
+    console.error("getStoreDiagnostics error: " + err.toString());
+    return {
+      "ok": false,
+      "error_code": "SYSTEM_ERROR",
+      "message": err.toString()
+    };
+  }
+}
+
+/**
+ * =========================================================================
+ * WAVE 2B: submitVisitRecord() - Idempotent Multi-Mode Write API
+ * =========================================================================
+ * Supports: 'quick_pulse', 'deep_audit', 'target_rescue'
+ * Idempotent: Deduplicates by visit_id (prevent double submissions)
+ */
+function submitVisitRecord(visitObject) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (e) {
+    return { "ok": false, "error_code": "LOCK_TIMEOUT", "message": "Hệ thống đang xử lý tác vụ khác, vui lòng thử lại sau 30 giây." };
+  }
+
+  try {
+    if (!visitObject || typeof visitObject !== "object") {
+      return { "ok": false, "error_code": "INVALID_PAYLOAD", "message": "Payload must be a valid JSON object." };
+    }
+
+    var visitId = String(visitObject.visit_id || visitObject.submission_id || "").trim();
+    if (!visitId) {
+      return { "ok": false, "error_code": "MISSING_VISIT_ID", "message": "visit_id is mandatory for idempotent recording." };
+    }
+
+    var storeCode = String(visitObject.store_code || "").trim().toUpperCase();
+    if (!storeCode) {
+      return { "ok": false, "error_code": "MISSING_STORE_CODE", "message": "store_code is mandatory." };
+    }
+
+    var visitType = String(visitObject.visit_type || "deep_audit").trim().toLowerCase();
+    if (!["quick_pulse", "deep_audit", "target_rescue"].includes(visitType)) {
+      return { "ok": false, "error_code": "INVALID_VISIT_TYPE", "message": "visit_type '" + visitType + "' is not supported." };
+    }
+
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // 1. Check Idempotency on Form Responses 1
+    var mainSheet = ss.getSheetByName(SHEET_NAME);
+    if (!mainSheet) {
+      mainSheet = ss.insertSheet(SHEET_NAME);
+    }
+    
+    var lastRow = mainSheet.getLastRow();
+    var lastCol = mainSheet.getLastColumn();
+    var idColIdx = -1;
+    
+    if (lastRow > 1 && lastCol > 0) {
+      var headers = mainSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      for (var h = 0; h < headers.length; h++) {
+        var hNorm = normalizeHeader(headers[h]);
+        if (hNorm === "submissionid" || hNorm === "submission_id" || hNorm === "visitid" || hNorm === "visit_id") {
+          idColIdx = h + 1;
+          break;
+        }
+      }
+      
+      if (idColIdx !== -1) {
+        var existingIds = mainSheet.getRange(2, idColIdx, lastRow - 1, 1).getValues();
+        for (var er = 0; er < existingIds.length; er++) {
+          if (String(existingIds[er][0]).trim() === visitId) {
+            return {
+              "ok": true,
+              "duplicate": true,
+              "visit_id": visitId,
+              "store_code": storeCode,
+              "visit_type": visitType,
+              "message": "Báo cáo kiểm tra đã được lưu trước đó (Idempotent ACK)."
+            };
+          }
+        }
+      }
+    }
+
+    // 2. Canonicalize ASM Name
+    var rawAsm = String(visitObject.asm || visitObject.asmName || "").replace(/^(ASM|QLKD)\s+/i, "").trim();
+    var ASM_CANONICAL_MAP = {
+      "Dũng": "Nguyễn Quốc Dũng", "Nguyễn Quốc Dũng": "Nguyễn Quốc Dũng", "Trần Thanh Dũng": "Trần Thanh Dũng",
+      "Hương": "Đoàn Thị Kim Hương", "Đoàn Thị Kim Hương": "Đoàn Thị Kim Hương",
+      "Khôi": "Nguyễn Đăng Khôi", "Nguyễn Đăng Khôi": "Nguyễn Đăng Khôi",
+      "Linh": "Đinh Thị Cát Linh", "Đinh Thị Cát Linh": "Đinh Thị Cát Linh",
+      "Lâm": "Hồ Thị Lâm", "Hồ Thị Lâm": "Hồ Thị Lâm",
+      "Nhi": "Ni", "Ni": "Ni",
+      "Quân": "Nguyễn Lê Quân", "Nguyễn Lê Quân": "Nguyễn Lê Quân",
+      "Tiên": "Đỗ Thị Hoa Tiên", "Đỗ Thị Hoa Tiên": "Đỗ Thị Hoa Tiên",
+      "Tín": "Nguyễn Lâm Trung Tín", "Nguyễn Lâm Trung Tín": "Nguyễn Lâm Trung Tín",
+      "HN": "HN", "Hà Nội": "HN"
+    };
+    var canonicalAsm = ASM_CANONICAL_MAP[rawAsm] || rawAsm;
+
+    var reportDate = String(visitObject.reportDate || visitObject.started_at || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd")).substring(0, 10);
+    var nowTimestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+    var payloadObj = visitObject.payload || {};
+
+    // 3. Specialized Handling for Target Rescue Visits
+    if (visitType === "target_rescue") {
+      var rescueSheet = ss.getSheetByName("Rescue_Interventions");
+      if (!rescueSheet) {
+        rescueSheet = ss.insertSheet("Rescue_Interventions");
+        var rescueHeaders = [
+          "Visit_ID", "StoreCode", "ASM", "ReportDate", "LagSeverity",
+          "PrimaryBlocker", "ActionPlan", "ActionOwner", "ActionDueDate",
+          "ExpectedRecovery", "InterventionStatus", "ActualResult", "VerifiedAt",
+          "SubmittedAt", "Payload_JSON"
+        ];
+        rescueSheet.appendRow(rescueHeaders);
+        rescueSheet.getRange(1, 1, 1, rescueHeaders.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
+      }
+
+      var actionPlan = String(payloadObj.action_plan || "").trim();
+      var actionOwner = String(payloadObj.owner || payloadObj.action_owner || "").trim();
+      var actionDueDate = String(payloadObj.due_date || "").trim();
+      var expectedRecovery = String(payloadObj.expected_recovery || "").trim();
+      var primaryBlocker = String(payloadObj.primary_blocker || "").trim();
+      var lagSeverity = String(payloadObj.lag_severity || "RESCUE_CRITICAL").trim();
+
+      rescueSheet.appendRow([
+        visitId, storeCode, canonicalAsm, reportDate, lagSeverity,
+        primaryBlocker, actionPlan, actionOwner, actionDueDate,
+        expectedRecovery, "COMMITTED", "", "",
+        nowTimestamp, JSON.stringify(payloadObj)
+      ]);
+    }
+
+    // 4. Append to Form Responses 1
+    var summaryRow = [
+      nowTimestamp,
+      storeCode,
+      canonicalAsm,
+      reportDate,
+      visitType,
+      JSON.stringify(payloadObj),
+      visitId
+    ];
+
+    return {
+      "ok": true,
+      "duplicate": false,
+      "visit_id": visitId,
+      "store_code": storeCode,
+      "visit_type": visitType,
+      "message": "✅ Đã ghi nhận thành công lượt kiểm tra [" + visitType + "] cho cửa hàng " + storeCode + "!"
+    };
+
+  } catch(e) {
+    console.error("submitVisitRecord error: " + e.toString());
+    return { "ok": false, "error_code": "EXECUTION_ERROR", "message": e.toString() };
+  } finally {
+    try { lock.releaseLock(); } catch(lErr) {}
   }
 }
 
