@@ -741,10 +741,29 @@ function submitVisitRecord(visitObject) {
       }
     } catch(writeErr) {
       // Compensating action: Rollback Primary Write
+      var rollbackSuccess = false;
       if (appendedMainRowIdx > 1) {
-        try { mainSheet.deleteRow(appendedMainRowIdx); } catch(delErr) {}
+        try { 
+          mainSheet.deleteRow(appendedMainRowIdx); 
+          rollbackSuccess = true;
+        } catch(delErr) {
+          console.error("CRITICAL_RECONCILIATION_ALERT: Primary row deletion failed during rollback! Row: " + appendedMainRowIdx + ", Error: " + delErr.toString());
+        }
       }
-      throw new Error("Lỗi lưu trữ dữ liệu (Transaction Rollback): " + writeErr.toString());
+      if (!rollbackSuccess && appendedMainRowIdx > 1) {
+        return {
+          "ok": false,
+          "error_code": "RECONCILIATION_REQUIRED",
+          "reconciliation_required": true,
+          "appended_row": appendedMainRowIdx,
+          "message": "Lỗi lưu trữ dữ liệu nhánh phụ và thao tác Rollback xóa dòng chính không thành công. Hệ thống đã kích hoạt cờ đối soát (Reconciliation Flag)."
+        };
+      }
+      return {
+        "ok": false,
+        "error_code": "TRANSACTION_ROLLBACK",
+        "message": "Lỗi lưu trữ dữ liệu nhánh phụ (" + writeErr.toString() + "). Đã thực hiện giao dịch đền bù (Rollback) thành công, không tạo bản ghi ma."
+      };
     }
 
     return {

@@ -1,0 +1,121 @@
+{
+  "pilot_version": "Wave_4_Field_Pilot_v1.0",
+  "pilot_start_date": "2026-09-01",
+  "pilot_duration_days": 7,
+  "governance_kpis": {
+    "diagnostic_load_success_target_pct": 99.0,
+    "visit_submission_success_target_pct": 99.0,
+    "duplicate_persistence_tolerance": 0,
+    "unauthorized_write_tolerance": 0,
+    "cross_user_data_leakage_tolerance": 0,
+    "ghost_records_tolerance": 0,
+    "lost_offline_records_tolerance": 0,
+    "silent_failures_tolerance": 0,
+    "action_completion_tracking": true
+  },
+  "asms": [
+    {
+      "username": "tien",
+      "full_name": "Đỗ Thị Hoa Tiên",
+      "role": "asm",
+      "region": "HCM",
+      "pilot_stores": [
+        {
+          "code": "DIAMOND",
+          "name": "Diamond Plaza",
+          "tier": "PROTECT_ON_TRACK"
+        },
+        {
+          "code": "LYTT",
+          "name": "Lý Tự Trọng",
+          "tier": "WATCH"
+        },
+        {
+          "code": "NGA6",
+          "name": "Ngã Sáu Dân Chủ",
+          "tier": "RECOVERY"
+        },
+        {
+          "code": "PTER",
+          "name": "Pasteur",
+          "tier": "RESCUE_CRITICAL"
+        },
+        {
+          "code": "TAKA",
+          "name": "Takashimaya",
+          "tier": "UNKNOWN"
+        }
+      ]
+    },
+    {
+      "username": "linh",
+      "full_name": "Đinh Thị Cát Linh",
+      "role": "asm",
+      "region": "HCM",
+      "pilot_stores": [
+        {
+          "code": "SO1",
+          "name": "Hai Bà Trưng (Số 1)",
+          "tier": "PROTECT_ON_TRACK"
+        },
+        {
+          "code": "HBT",
+          "name": "Hai Bà Trưng (HBT)",
+          "tier": "WATCH"
+        },
+        {
+          "code": "CAOTH",
+          "name": "Cao Thắng",
+          "tier": "RECOVERY"
+        },
+        {
+          "code": "NTMK",
+          "name": "Nguyễn Thị Minh Khai",
+          "tier": "RESCUE_CRITICAL"
+        }
+      ]
+    },
+    {
+      "username": "dung",
+      "full_name": "Nguyễn Quốc Dũng",
+      "role": "asm",
+      "region": "HCM, Miền Trung- Tây Nguyên",
+      "pilot_stores": [
+        {
+          "code": "CHOA3",
+          "name": "454 Cộng Hòa",
+          "tier": "WATCH"
+        },
+        {
+          "code": "Q12",
+          "name": "Quận 12",
+          "tier": "RECOVERY"
+        },
+        {
+          "code": "CM",
+          "name": "Cà Mau",
+          "tier": "RESCUE_CRITICAL"
+        },
+        {
+          "code": "ONLINEWEB",
+          "name": "Cửa Hàng Online - Website",
+          "tier": "UNKNOWN"
+        }
+      ]
+    },
+    {
+      "username": "khoi",
+      "full_name": "Nguyễn Đăng Khôi",
+      "role": "master",
+      "region": "GLOBAL",
+      "scope": "ALL_185_STORES",
+      "pilot_stores": [
+        {
+          "code": "ALL",
+          "name": "Toàn hệ thống 185 cửa hàng",
+          "tier": "GLOBAL_SCOPE"
+        }
+      ]
+    }
+  ]
+}
