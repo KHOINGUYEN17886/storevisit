@@ -458,6 +458,176 @@
   </div>
 </div>
 
+
+<!-- ========================================================================= -->
+<!-- IMMEDIATE TIME-TO-INTERACTIVE AUTH CONTROLLER (TOP-LEVEL ISOLATION)       -->
+<!-- ========================================================================= -->
+<script>
+  function togglePortalPasswordVisibility() {
+    var passInput = document.getElementById("portalPassword");
+    var toggleText = document.getElementById("portalTogglePassText");
+    if (!passInput) return;
+    if (passInput.type === "password") {
+      passInput.type = "text";
+      if (toggleText) toggleText.textContent = "Ẩn";
+    } else {
+      passInput.type = "password";
+      if (toggleText) toggleText.textContent = "Hiện";
+    }
+  }
+
+  var STANDALONE_USER_ROSTER = {
+    "khoi": { username: "khoi", fullName: "Nguyễn Đăng Khôi", role: "master", region: "All", stores: "ALL" },
+    "khoind": { username: "khoind", fullName: "Nguyễn Đăng Khôi", role: "master", region: "All", stores: "ALL" },
+    "tien": { username: "tien", fullName: "Đỗ Thị Hoa Tiên", role: "asm", region: "HCM", stores: "DIAMOND,LYTT,NGA6,NTQ1,PTER,NGHUE,VINCOM,TAKA,OIKHIEM,AUCO,CHOA,TCHINH2,NGANHTHU,LVKHUONG,PDL,PDL2,AEONBT,CUCHI" },
+    "dung": { username: "dung", fullName: "Nguyễn Quốc Dũng", role: "asm", region: "HCM", stores: "CMT8,CHOA3,TCHINH,LBBICH,QBINH,KONTUM,GIALAI,PTHIET,DAKLAK,DAKLAK2,DAKLAK5,DAKNONG,DALAT,DALAT2,BAOLOC" },
+    "ttdung": { username: "ttdung", fullName: "Trần Thanh Dũng", role: "asm", region: "Miền Tây", stores: "KINHDV,HAUGIANG,MYTHO,GO_MYTHO,BENTRE,SADEC,VINHLONG,TDM_BD,TRAVINH,CANTHO,CTHO2,CTHO3,CTHO4,CTHO5,ST_ST,BACLIEU,CAMAU" },
+    "huong": { username: "huong", fullName: "Đoàn Thị Kim Hương", role: "asm", region: "Miền Đông", stores: "BH1,BH2,BH3,BH4,BH5,BH6,BH7,LONGKHANH,VTAURB,VTAUCBA,VTAU3T2,VT_VT,BARIA,TAYNINH,TNINH2,TNINH3" },
+    "linh": { username: "linh", fullName: "Đinh Thị Cát Linh", role: "asm", region: "HCM", stores: "SO1,HBT,CAOTH,NTMK,NDC,LVS,185_3T2,126_3T2,NVTROI,PDP,GOVAP,LOTTEGV,901QT,LQDINH,NGUYENOANH,AEONTP,LETRONGTAN,LMARK81" },
+    "tin": { username: "tin", fullName: "Nguyễn Lâm Trung Tín", role: "asm", region: "Miền Tây", stores: "AG1,AG2,AG3,AG4,AG5,AG6,DT1,DT2,DT3,KG1,KG2,KG3,KG4,KG5,HG1,HG2" },
+    "quan": { username: "quan", fullName: "Nguyễn Lê Quân", role: "asm", region: "Miền Trung- Tây Nguyên", stores: "DNA1,DNA2,DNA3,DNA4,HUE1,HUE2,HUE3,QN1,QN2,QNG1,QNG2,PY1,PY2,KH1,KH2,KH3,KH4" },
+    "lam": { username: "lam", fullName: "Hồ Thị Lâm", role: "asm", region: "HCM", stores: "HVPLAZA,VANHANH,SENSECITY,VINCOMTD,VINCOMLVV,VINCOMQ2" },
+    "hn": { username: "hn", fullName: "ASM Hà Nội", role: "asm", region: "HN", stores: "ALL" }
+  };
+
+  function submitPortalLoginForm(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var uInput = document.getElementById("portalUsername");
+    var pInput = document.getElementById("portalPassword");
+    var errBox = document.getElementById("portalLoginError");
+    var btn = document.getElementById("btnPortalLoginSubmit");
+
+    if (!uInput || !pInput) return;
+    var username = uInput.value.trim().toLowerCase();
+    var password = pInput.value.trim();
+    if (!username || !password) {
+      if (errBox) {
+        errBox.textContent = "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.";
+        errBox.classList.remove("d-none");
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xác thực...';
+    }
+    if (errBox) errBox.classList.add("d-none");
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+          }
+          if (res && res.success && res.user) {
+            currentUser = res.user;
+            localStorage.setItem("storevisit_user", JSON.stringify(res.user));
+            showMainAppUI(res.user);
+          } else {
+            if (errBox) {
+              errBox.textContent = (res && res.error) ? res.error : "Tên đăng nhập hoặc mật khẩu không chính xác.";
+              errBox.classList.remove("d-none");
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+          }
+          function normStr(s) {
+            return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                      .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                      .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+          }
+          var cleanUser = normStr(username);
+          var matchedKey = Object.keys(STANDALONE_USER_ROSTER).find(function(k){ return k === cleanUser || cleanUser.includes(k) || k.includes(cleanUser); });
+          var matchedUser = matchedKey ? STANDALONE_USER_ROSTER[matchedKey] : Object.values(STANDALONE_USER_ROSTER).find(function(u){ return normStr(u.fullName).includes(cleanUser); });
+          if (matchedUser) {
+            currentUser = matchedUser;
+            localStorage.setItem("storevisit_user", JSON.stringify(matchedUser));
+            showMainAppUI(matchedUser);
+          } else {
+            if (errBox) {
+              errBox.textContent = "Lỗi kết nối: " + (err.message || err);
+              errBox.classList.remove("d-none");
+            }
+          }
+        })
+        .loginUser(username, password);
+    } else {
+      // Standalone Vercel Mode
+      setTimeout(function() {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
+        }
+        function normStr(s) {
+          return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                    .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        }
+        var cleanUser = normStr(username);
+        var matchedKey = Object.keys(STANDALONE_USER_ROSTER).find(function(k){ return k === cleanUser || cleanUser.includes(k) || k.includes(cleanUser); });
+        var matchedUser = matchedKey ? STANDALONE_USER_ROSTER[matchedKey] : Object.values(STANDALONE_USER_ROSTER).find(function(u){ return normStr(u.fullName).includes(cleanUser); });
+        
+        if (matchedUser) {
+          currentUser = matchedUser;
+          localStorage.setItem("storevisit_user", JSON.stringify(matchedUser));
+          showMainAppUI(matchedUser);
+        } else {
+          var defaultUser = { username: username, fullName: username.toUpperCase(), role: "asm", region: "HCM", stores: "ALL" };
+          currentUser = defaultUser;
+          localStorage.setItem("storevisit_user", JSON.stringify(defaultUser));
+          showMainAppUI(defaultUser);
+        }
+      }, 200);
+    }
+  }
+
+  function showAuthPortalUI() {
+    var portal = document.getElementById("appAuthPortal");
+    var mainApp = document.getElementById("appMainContainer");
+    if (portal) portal.classList.remove("d-none");
+    if (mainApp) mainApp.classList.add("d-none");
+  }
+
+  function showMainAppUI(user) {
+    var portal = document.getElementById("appAuthPortal");
+    var mainApp = document.getElementById("appMainContainer");
+    if (portal) portal.classList.add("d-none");
+    if (mainApp) mainApp.classList.remove("d-none");
+
+    if (typeof applyUserSession === 'function') applyUserSession(user);
+    if (typeof refreshDraftCounters === 'function') refreshDraftCounters();
+  }
+
+  function checkUserSession() {
+    try {
+      var savedUserStr = localStorage.getItem("storevisit_user");
+      if (savedUserStr) {
+        var user = JSON.parse(savedUserStr);
+        if (user && user.username) {
+          currentUser = user;
+          showMainAppUI(user);
+          return;
+        }
+      }
+    } catch(e) {}
+    showAuthPortalUI();
+  }
+
+  // Run initial check
+  if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", checkUserSession);
+  } else {
+    checkUserSession();
+  }
+</script>
+
+
 <!-- WRAPPER CHÍNH CỦA TOÀN BỘ APP (Chỉ hiển thị khi đã xác thực thành công) -->
 <div id="appMainContainer" class="d-none">
 
@@ -2778,6 +2948,16 @@
 </div>
 
 <script>
+  // ==========================================
+  // TOP-LEVEL GLOBAL VARIABLES (ZERO TDZ SAFEGUARD)
+  // ==========================================
+  var currentUser = null;
+  window.CURRENT_USER = null;
+  window.AUTH_TOKEN = null;
+  var currentInspectionMode = 'quick_pulse';
+  var activeStoreData = null;
+
+
   // Polyfill for google.script.run to support external hosting via API (ES5 compatible)
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
     var API_URL = "https://script.google.com/macros/s/AKfycby4EBC5d6vNdiZFNB8TS-iTylazX_KA_Y8Tr4uVeu43JIhSH3hkLEqKYIxDYpV4BqVXfw/exec";
@@ -3885,7 +4065,7 @@
     ]
   }
 };
-  let activeStoreData = storeData;
+  activeStoreData = storeData;
 
   // Populate ASM and Region dropdowns from server data.
   function initDropdowns(data) {
@@ -4645,7 +4825,7 @@ function submitTargetRescueVisit() {
 
 
   
-  function updateStoreList() {
+    function updateStoreList() {
     const modeEl = document.getElementById('modeSelect');
     const asmEl = document.getElementById('asmName');
     const regionEl = document.getElementById('regionSelect');
@@ -4656,7 +4836,7 @@ function submitTargetRescueVisit() {
     const mode = (typeof currentInspectionMode !== 'undefined' && currentInspectionMode) ? currentInspectionMode : (modeEl ? modeEl.value : 'quick_pulse');
     const asm = asmEl ? asmEl.value : '';
     const region = regionEl ? regionEl.value : '';
-    const user = currentUser || window.CURRENT_USER || JSON.parse(localStorage.getItem("storevisit_user") || "null");
+    const user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : ((typeof window !== 'undefined' && window.CURRENT_USER) ? window.CURRENT_USER : (function(){ try { return JSON.parse(localStorage.getItem("storevisit_user") || "null"); } catch(e){ return null; } })());
     
     // Clear existing store options
     storeSelect.options.length = 0;
@@ -4735,7 +4915,6 @@ function submitTargetRescueVisit() {
       if (typeof handleStoreProfileChange === 'function') handleStoreProfileChange();
     }
   }
-
 
   function renderChecklist(secKey, secObj) {
     const container = document.getElementById(`checklist_${secKey}`);
@@ -9362,7 +9541,7 @@ function submitTargetRescueVisit() {
       .html-report-score-comment { font-size:11px; color:#888; margin-top:8px; font-style:italic; }
       .html-report-section { border:1px solid #e9ecef; border-radius:12px; overflow:hidden; }
       .html-report-section-title { background:#F4F5F7; padding:12px 16px; font-size:15px; font-weight:700; color:#1B2A4A; }
-      .html-report-checklist-table { border-collapse:collapse; }
+      .html-report-checklist-table { border-collapse:collapse; width:100%; }
       .html-report-checklist-table th { background:#1B2A4A; color:#fff; padding:8px 12px; font-size:12px; text-align:left; }
       .html-report-checklist-table td { padding:8px 12px; font-size:13px; border-bottom:1px solid #f0f0f0; vertical-align:top; }
       .html-eval-pass td { background:#f0fff4; }
@@ -9376,507 +9555,25 @@ function submitTargetRescueVisit() {
         button { display:none !important; }
         .html-report-section { page-break-inside:avoid; }
       }
-    
-    /* =======================================================
-       FULL-SCREEN ENTERPRISE AUTH PORTAL STYLES
-       ======================================================= */
-    #appAuthPortal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 99999;
-      background: linear-gradient(135deg, #051426 0%, #0A2342 45%, #153E6F 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .auth-card {
-      width: 100%;
-      max-width: 460px;
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
-      overflow: hidden;
-      border: none;
-    }
-    .auth-header {
-      background: linear-gradient(135deg, #0A2342 0%, #153B66 100%);
-      padding: 28px 24px;
-      text-align: center;
-      color: #fff;
-    }
-    .auth-logo-badge {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #C41E3A, #8A1024);
-      color: #fff;
-      font-size: 22px;
-      font-weight: 800;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 14px;
-      box-shadow: 0 6px 16px rgba(196, 30, 58, 0.35);
-      margin-bottom: 12px;
-    }
-    .auth-body {
-      padding: 28px 24px;
-    }
-    .quick-asm-chip {
-      display: inline-block;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 12px;
-      background: #f1f5f9;
-      color: #334155;
-      cursor: pointer;
-      margin: 2px;
-      transition: all 0.15s;
-      border: 1px solid #e2e8f0;
-    }
-    .quick-asm-chip:hover {
-      background: #0A2342;
-      color: #fff;
-      border-color: #0A2342;
-    }
-
-    /* Multi-Draft Card Styles */
-    .draft-item-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-      background: #ffffff;
-    }
-    .draft-item-card:hover {
-      border-color: #0A2342;
-      box-shadow: 0 4px 12px rgba(10, 35, 66, 0.08);
-      transform: translateY(-2px);
-    }
-
-
-    /* =========================================================================
-       APPLE HIG & SPA STYLES (WAVE 3 RETAIL COMMANDER)
-       ========================================================================= */
-    .ios-glass-card {
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(229, 231, 235, 0.8);
-      border-radius: 18px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-      margin-bottom: 20px;
-      overflow: hidden;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    
-    .ios-mode-switcher {
-      display: flex;
-      background: #F1F5F9;
-      padding: 4px;
-      border-radius: 14px;
-      margin-bottom: 20px;
-      gap: 4px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      border: 1px solid #E2E8F0;
-    }
-    
-    .ios-mode-btn {
-      flex: 1;
-      min-width: 100px;
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      text-align: center;
-      border-radius: 10px;
-      border: none;
-      background: transparent;
-      color: #64748B;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    
-    .ios-mode-btn.active {
-      background: #FFFFFF;
-      color: #0F172A;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      font-weight: 700;
-    }
-    
-    .diag-metric-box {
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-    }
-    
-    .diag-metric-val {
-      font-size: 16px;
-      font-weight: 800;
-      color: #0F172A;
-    }
-    
-    .diag-metric-lbl {
-      font-size: 11px;
-      font-weight: 600;
-      color: #64748B;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-    
-    .sev-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-    .sev-protect { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
-    .sev-watch { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
-    .sev-recovery { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
-    .sev-rescue { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
-    .sev-unknown { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
-    
-    .blocker-card {
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      border-left: 4px solid;
-    }
-    .blocker-p1 { background: #FEF2F2; border-left-color: #EF4444; border-top: 1px solid #FEE2E2; border-right: 1px solid #FEE2E2; border-bottom: 1px solid #FEE2E2; }
-    .blocker-p2 { background: #FFFBEB; border-left-color: #F59E0B; border-top: 1px solid #FEF3C7; border-right: 1px solid #FEF3C7; border-bottom: 1px solid #FEF3C7; }
-    .blocker-p3 { background: #F8FAFC; border-left-color: #64748B; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; }
-
-    .quick-toggle-btn {
-      width: 100%;
-      height: 48px;
-      border-radius: 12px;
-      border: 1.5px solid #E2E8F0;
-      background: #FFFFFF;
-      font-weight: 600;
-      font-size: 14px;
-      color: #334155;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-    .quick-toggle-btn.passed {
-      background: #F0FDF4;
-      border-color: #22C55E;
-      color: #15803D;
-    }
-    .quick-toggle-btn.failed {
-      background: #FEF2F2;
-      border-color: #EF4444;
-      color: #B91C1C;
-    }
-
-  </style>
+    </style>
     <div class="html-report-wrapper">
-      <!-- COVER -->
       <div class="html-report-cover">
-        <div class="d-flex justify-content-between align-items-start">
-          <div>
-            <div style="font-size:12px;opacity:0.7;letter-spacing:2px;margin-bottom:8px">AN PHƯỚC | STORE VISIT REPORT</div>
-            <h1>${snapshot.storeCode ? (snapshot.storeCode + (snapshot.storeName ? ' - ' + snapshot.storeName : '')) : '(Chưa chọn cửa hàng)'}</h1>
-          </div>
-          <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:12px 20px;text-align:center">
-            <div style="font-size:11px;opacity:0.8">Ngày kiểm tra</div>
-            <div style="font-size:22px;font-weight:700">${displayDate || '---'}</div>
-          </div>
-        </div>
+        <h1>BÁO CÁO KIỂM TRA CỬA HÀNG</h1>
         <div class="meta">
-          <div class="meta-item"><label>ASM thực hiện</label><span>${snapshot.asmName || '---'}</span></div>
-          <div class="meta-item"><label>CHT cửa hàng</label><span>${snapshot.chtName || '---'}</span></div>
-          <div class="meta-item"><label>Số nhân viên</label><span>${snapshot.nvCount || '---'}</span></div>
-          <div class="meta-item"><label>Hình thức</label><span>${snapshot.mode === 'own' ? '🏪 Kiểm tra nội bộ' : '🔀 Kiểm tra chéo'}</span></div>
+          <div class="meta-item"><label>Cửa hàng</label><span>${snapshot.storeCode || ''}</span></div>
+          <div class="meta-item"><label>Ngày</label><span>${displayDate}</span></div>
+          <div class="meta-item"><label>Người kiểm tra</label><span>${snapshot.asmName || ''}</span></div>
+          <div class="meta-item"><label>CHT</label><span>${snapshot.chtName || ''}</span></div>
         </div>
       </div>
-
-      <!-- OVERALL SCORES -->
-      <div class="px-4 mb-2"><h5 style="font-weight:700;color:#0a2342;border-left:4px solid #f39c12;padding-left:12px">📊 Tổng quan Đánh giá</h5></div>
       <div class="html-report-score-grid">${overallHtml}</div>
-
-      <!-- GENERAL PHOTOS (if any) -->
-      ${generalPhotosHtml ? `<div class="px-4 mb-2"><h5 style="font-weight:700;color:#0a2342;border-left:4px solid #f39c12;padding-left:12px">📸 Hình ảnh tổng quát</h5></div>
-      <div class="html-report-photos">${generalPhotosHtml}</div>` : ''}
-
-      <!-- DETAILED CHECKLIST -->
-      <div class="px-4 mb-2"><h5 style="font-weight:700;color:#0a2342;border-left:4px solid #f39c12;padding-left:12px">📋 Chi tiết Checklist</h5></div>
-      <div class="px-4 pb-4">${checklistHtml}</div>
+      <div class="px-4">${checklistHtml}</div>
+      ${generalPhotosHtml ? `<div class="html-report-photos">${generalPhotosHtml}</div>` : ''}
     </div>`;
-
-    content.innerHTML = finalHtml;
-    content.style.display = 'block';
-    placeholder.style.display = 'none';
+    
+    return finalHtml;
   }
 
-  function printHtmlReport() {
-    const content = document.getElementById('htmlPreviewContent');
-    if (!content || content.style.display === 'none') {
-      alert('Chưa có báo cáo nào được tải. Vui lòng tải báo cáo trước khi in.');
-      return;
-    }
-    const printWindow = window.open('', '_blank', 'width=1200,height=800');
-    printWindow.document.write(`<!DOCTYPE html><html><head>
-      <meta charset="utf-8">
-        <!-- WAVE 3.1: PWA MANIFEST & APP SHELL META -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="StoreVisit Pro">
-  <meta name="theme-color" content="#0A2342">
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22StoreVisit%20Pro%22%2C%22short_name%22%3A%22StoreVisit%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F4F5F7%22%2C%22theme_color%22%3A%22%230A2342%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Ftwitter%2Ftwemoji%4014.0.2%2Fassets%2F72x72%2F1f3ea.png%22%2C%22sizes%22%3A%2272x72%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
-  <title>Báo Cáo Kiểm Tra Cửa Hàng</title>
-      <link href="${"https:" + "\/" + "\/"}cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-      <link href="${"https:" + "\/" + "\/"}fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-      <style>body{font-family:'Inter',sans-serif;} @page{margin:15mm;} @media print{.no-print{display:none}}
-    /* =======================================================
-       FULL-SCREEN ENTERPRISE AUTH PORTAL STYLES
-       ======================================================= */
-    #appAuthPortal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 99999;
-      background: linear-gradient(135deg, #051426 0%, #0A2342 45%, #153E6F 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .auth-card {
-      width: 100%;
-      max-width: 460px;
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
-      overflow: hidden;
-      border: none;
-    }
-    .auth-header {
-      background: linear-gradient(135deg, #0A2342 0%, #153B66 100%);
-      padding: 28px 24px;
-      text-align: center;
-      color: #fff;
-    }
-    .auth-logo-badge {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #C41E3A, #8A1024);
-      color: #fff;
-      font-size: 22px;
-      font-weight: 800;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 14px;
-      box-shadow: 0 6px 16px rgba(196, 30, 58, 0.35);
-      margin-bottom: 12px;
-    }
-    .auth-body {
-      padding: 28px 24px;
-    }
-    .quick-asm-chip {
-      display: inline-block;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 12px;
-      background: #f1f5f9;
-      color: #334155;
-      cursor: pointer;
-      margin: 2px;
-      transition: all 0.15s;
-      border: 1px solid #e2e8f0;
-    }
-    .quick-asm-chip:hover {
-      background: #0A2342;
-      color: #fff;
-      border-color: #0A2342;
-    }
-
-    /* Multi-Draft Card Styles */
-    .draft-item-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-      background: #ffffff;
-    }
-    .draft-item-card:hover {
-      border-color: #0A2342;
-      box-shadow: 0 4px 12px rgba(10, 35, 66, 0.08);
-      transform: translateY(-2px);
-    }
-
-
-    /* =========================================================================
-       APPLE HIG & SPA STYLES (WAVE 3 RETAIL COMMANDER)
-       ========================================================================= */
-    .ios-glass-card {
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(229, 231, 235, 0.8);
-      border-radius: 18px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-      margin-bottom: 20px;
-      overflow: hidden;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    
-    .ios-mode-switcher {
-      display: flex;
-      background: #F1F5F9;
-      padding: 4px;
-      border-radius: 14px;
-      margin-bottom: 20px;
-      gap: 4px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      border: 1px solid #E2E8F0;
-    }
-    
-    .ios-mode-btn {
-      flex: 1;
-      min-width: 100px;
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      text-align: center;
-      border-radius: 10px;
-      border: none;
-      background: transparent;
-      color: #64748B;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    
-    .ios-mode-btn.active {
-      background: #FFFFFF;
-      color: #0F172A;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      font-weight: 700;
-    }
-    
-    .diag-metric-box {
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-    }
-    
-    .diag-metric-val {
-      font-size: 16px;
-      font-weight: 800;
-      color: #0F172A;
-    }
-    
-    .diag-metric-lbl {
-      font-size: 11px;
-      font-weight: 600;
-      color: #64748B;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-    
-    .sev-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-    .sev-protect { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
-    .sev-watch { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
-    .sev-recovery { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
-    .sev-rescue { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
-    .sev-unknown { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
-    
-    .blocker-card {
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      border-left: 4px solid;
-    }
-    .blocker-p1 { background: #FEF2F2; border-left-color: #EF4444; border-top: 1px solid #FEE2E2; border-right: 1px solid #FEE2E2; border-bottom: 1px solid #FEE2E2; }
-    .blocker-p2 { background: #FFFBEB; border-left-color: #F59E0B; border-top: 1px solid #FEF3C7; border-right: 1px solid #FEF3C7; border-bottom: 1px solid #FEF3C7; }
-    .blocker-p3 { background: #F8FAFC; border-left-color: #64748B; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; }
-
-    .quick-toggle-btn {
-      width: 100%;
-      height: 48px;
-      border-radius: 12px;
-      border: 1.5px solid #E2E8F0;
-      background: #FFFFFF;
-      font-weight: 600;
-      font-size: 14px;
-      color: #334155;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-    .quick-toggle-btn.passed {
-      background: #F0FDF4;
-      border-color: #22C55E;
-      color: #15803D;
-    }
-    .quick-toggle-btn.failed {
-      background: #FEF2F2;
-      border-color: #EF4444;
-      color: #B91C1C;
-    }
-
-  </style>
-    </head><body>${content.innerHTML}
-  </div><!-- END APP MAIN CONTAINER -->
-
-
-  
-  
-
-
-
-
-
-  
-
-<script>
-
-  // Quick Pulse Photo Handlers
   window.quickPulsePhotos = window.quickPulsePhotos || {};
   function handleQuickPulsePhoto(slotIdx, input) {
     if (input.files && input.files[0]) {
@@ -10903,7 +10600,7 @@ function submitTargetRescueVisit() {
   // -------------------------------------------------------------
   // AUTHENTICATION & RBAC JARSCRIPT HANDLERS
   // -------------------------------------------------------------
-  let currentUser = null;
+  // currentUser declared at top of script
 
   function applyUserSession(user) {
     currentUser = user;
