@@ -285,18 +285,33 @@ function getStoreData() {
  *   "stores": { "CHOA3": { ... }, ... }
  * }
  */
-function getStoreDiagnostics() {
+function getStoreDiagnostics(authToken, requesterUsername) {
   try {
-    var cache = CacheService.getScriptCache();
-    var cached = cache.get("store_diagnostics_json_v1_5");
-    if (cached) {
-      return JSON.parse(cached);
+    // Read-side Authorization Gate (P0 Hardened)
+    var authenticatedActor = null;
+    if (authToken || requesterUsername) {
+      authenticatedActor = verifyUserSessionToken(authToken, requesterUsername);
     }
-  } catch(e) {
-    console.warn("Cache read error: " + e.toString());
-  }
 
-  try {
+    // If unauthenticated or invalid session -> Fail-closed
+    if (!authenticatedActor) {
+      return {
+        "ok": false,
+        "error_code": "UNAUTHORIZED_READ",
+        "message": "Yêu cầu xác thực: Vui lòng đăng nhập với tài khoản ASM hợp lệ để xem dữ liệu chẩn đoán."
+      };
+    }
+
+    var actorRole = authenticatedActor.role;
+    var canonicalAsm = authenticatedActor.fullName;
+    var allowedStores = authenticatedActor.stores || [];
+
+    var dynamicStoreData = getStoreData();
+    var asmStoresList = (dynamicStoreData.mapping_by_asm && dynamicStoreData.mapping_by_asm[canonicalAsm]) || [];
+    var asmStoreCodes = asmStoresList.map(function(item) {
+      return String(item).split(" - ")[0].trim().toUpperCase();
+    });
+
     var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     var sheet = ss.getSheetByName("Store_Diagnostics");
     if (!sheet || sheet.getLastRow() < 2) {
@@ -329,6 +344,10 @@ function getStoreDiagnostics() {
       var jsonStr = String(row[iDiagJson] || "").trim();
       if (!scode || !jsonStr) continue;
 
+      // Scoped Read Authorization Check
+      var isAllowed = (actorRole === "master" || actorRole === "admin" || asmStoreCodes.includes(scode) || allowedStores.includes(scode) || allowedStores.includes("ALL"));
+      if (!isAllowed) continue;
+
       try {
         storesMap[scode] = JSON.parse(jsonStr);
         count++;
@@ -337,33 +356,17 @@ function getStoreDiagnostics() {
       }
     }
 
-    if (count === 0) {
-      return {
-        "ok": false,
-        "error_code": "INVALID_SNAPSHOT",
-        "message": "No valid store diagnostic records found."
-      };
-    }
-
     var response = {
       "ok": true,
       "schema_version": "1.0",
       "diagnostic_version": "v1.5_semantic_audit",
       "snapshot_date": "2026-08-28",
       "generated_at": new Date().toISOString(),
+      "authenticated_user": canonicalAsm,
+      "role": actorRole,
       "store_count": count,
       "stores": storesMap
     };
-
-    try {
-      var cache = CacheService.getScriptCache();
-      var resStr = JSON.stringify(response);
-      if (resStr.length < 100000) {
-        cache.put("store_diagnostics_json_v1_5", resStr, 1800); // Cache 30 mins
-      }
-    } catch(cErr) {
-      console.warn("Cache write warning: " + cErr.toString());
-    }
 
     return response;
   } catch(err) {
@@ -392,15 +395,39 @@ function getStoreDiagnostics() {
  * 8. Real Identity Binding (Cryptographic Auth Token Verification)
  * 9. Scope Authorization / ASM x Store Entitlement (Row-Level Access Control)
  */
-var STOREVISIT_DEFAULT_SALT = "STOREVISIT_SECURE_AUTH_2026_ENTERPRISE";
 var SESSION_TTL_SECONDS = 43200; // 12 Hours TTL (H1)
 
 function getAuthSalt() {
+  var secret = "";
   try {
-    var secret = PropertiesService.getScriptProperties().getProperty("STOREVISIT_AUTH_SALT");
-    if (secret && secret.trim().length > 10) return secret.trim();
+    secret = PropertiesService.getScriptProperties().getProperty("STOREVISIT_AUTH_SALT");
   } catch(e) {}
-  return STOREVISIT_DEFAULT_SALT;
+  
+  if (!secret || secret.length < 32) {
+    // Auto-generate cryptographically secure persistent secret if missing in ScriptProperties
+    secret = "SV_SEC_" + Utilities.getUuid() + "_" + (new Date().getTime()) + "_" + Utilities.getUuid().substring(0, 8);
+    try {
+      PropertiesService.getScriptProperties().setProperty("STOREVISIT_AUTH_SALT", secret);
+      console.log("✓ Auto-provisioned secure persistent auth salt in ScriptProperties.");
+    } catch(eProp) {
+      console.error("PropertiesService error:", eProp);
+    }
+  }
+  return secret;
+}
+
+function hashPassword(password, salt) {
+  var raw = String(password).trim() + ":" + salt;
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
+  var hash = "";
+  for (var i = 0; i < bytes.length; i++) {
+    var byteVal = bytes[i];
+    if (byteVal < 0) byteVal += 256;
+    var byteHex = byteVal.toString(16);
+    if (byteHex.length === 1) byteHex = "0" + byteHex;
+    hash += byteHex;
+  }
+  return hash;
 }
 
 function generateUserSessionToken(username, role) {
@@ -4001,18 +4028,19 @@ function loginUser(username, password) {
     var sIdx = headers.indexOf("stores");
     
     function removeAccents(str) {
-      return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      return String(str || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
                 .replace(/đ/g, 'd').replace(/Đ/g, 'D')
                 .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     }
     
     var searchUser = removeAccents(username);
     var searchPass = String(password).trim();
+    var salt = getAuthSalt();
+    var inputHash = hashPassword(searchPass, salt);
     
-    // Multi-Alias Mapping for 11 ASMs
     var ALIAS_MAP = {
       "khoi": "khoi", "khoind": "khoi", "dangkhoi": "khoi", "nguyendangkhoi": "khoi",
-      "dung": "dung", "quocdung": "dung", "nguyenquocdung": "dung", "dungnq": "dung",
+      "dung": "dung", "quocdung": "dung", "nguyenquocdung": "dung",
       "ttdung": "ttdung", "dungtt": "ttdung", "thanhdung": "ttdung", "tranthanhdung": "ttdung",
       "huong": "huong", "kimhuong": "huong", "doanthikimhuong": "huong",
       "linh": "linh", "catlinh": "linh", "dinhthicatlinh": "linh",
@@ -4020,22 +4048,28 @@ function loginUser(username, password) {
       "tin": "tin", "trungtin": "tin", "nguyenlamtrungtin": "tin",
       "quan": "quan", "lequan": "quan", "nguyenlequan": "quan",
       "lam": "lam", "thilam": "lam", "hothilam": "lam",
-      "hn": "hn", "hanoi": "hn", "asmhn": "hn", "asmhanoi": "hn",
-      "ni": "ni", "onlineweb": "ni", "asmni": "ni"
+      "hn": "hn", "hanoi": "hn", "ni": "ni"
     };
-    
     var canonicalTarget = ALIAS_MAP[searchUser] || searchUser;
     
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       var rawUser = String(row[uIdx] || '').trim();
       var uVal = removeAccents(rawUser);
-      var pVal = String(row[pIdx]).trim();
+      var storedPass = String(row[pIdx]).trim();
       var fVal = removeAccents(row[nIdx] || '');
       
-      // Match by exact username, canonical alias, or full name
       if (uVal === searchUser || uVal === canonicalTarget || fVal === searchUser || (searchUser.length >= 4 && fVal.indexOf(searchUser) >= 0)) {
-        if (pVal === searchPass) {
+        // Password Verification: Supports both Hashed (Production) and Legacy plaintext (auto-migrated)
+        var isMatch = (storedPass === inputHash || storedPass === searchPass);
+        if (isMatch) {
+          // Auto-upgrade legacy plaintext password to SHA-256 hash in sheet
+          if (storedPass === searchPass && storedPass !== inputHash) {
+            try {
+              sheet.getRange(i + 1, pIdx + 1).setValue(inputHash);
+            } catch(eMig) {}
+          }
+          
           var userObj = {
             username: rawUser,
             fullName: String(row[nIdx] || row[uIdx]).trim(),

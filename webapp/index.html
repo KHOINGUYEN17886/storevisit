@@ -4,6 +4,12 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- WAVE 3.1: PWA MANIFEST & APP SHELL META -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StoreVisit Pro">
+  <meta name="theme-color" content="#0A2342">
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22StoreVisit%20Pro%22%2C%22short_name%22%3A%22StoreVisit%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F4F5F7%22%2C%22theme_color%22%3A%22%230A2342%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Ftwitter%2Ftwemoji%4014.0.2%2Fassets%2F72x72%2F1f3ea.png%22%2C%22sizes%22%3A%2272x72%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
   <title>Báo cáo Kiểm tra Cửa hàng (StoreVisit Pro)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -611,22 +617,7 @@
           <i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống
         </button>
 
-        <div class="mt-4 pt-3 border-top">
-          <div class="text-muted small fw-semibold mb-1" style="font-size: 11px;">Chọn nhanh tài khoản ASM (Test/Hiện trường):</div>
-          <div class="d-flex flex-wrap">
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('tien', 'tien2026')">Tiên</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('huong', 'huong2026')">Hương</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('ttdung', 'dung2026')">Trần Thanh Dũng</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('dung', 'dung2026')">Quốc Dũng</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('linh', 'linh2026')">Linh</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('tin', 'tin2026')">Tín</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('quan', 'quan2026')">Quân</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('lam', 'lam2026')">Lâm</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('hn', 'hn2026')">Hà Nội</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('ni', 'ni2026')">Ni</span>
-            <span class="quick-asm-chip" onclick="quickFillPortalLogin('khoi', 'khoi6868')">Khôi (Master)</span>
-          </div>
-        </div>
+        
       </form>
     </div>
   </div>
@@ -4076,6 +4067,92 @@
 // =============================================================================
 // WAVE 3: PWA / APPLE HIG SPA CLIENT ENGINE (DIAGNOSTICS, MODES, INDEXEDDB)
 // =============================================================================
+
+// =============================================================================
+// WAVE 3.1: INDEXEDDB PERSISTENT OUTBOX & USER-SCOPED DIAGNOSTIC ENGINE
+// =============================================================================
+const OUTBOX_DB_NAME = "StoreVisit_Outbox_v3";
+const OUTBOX_STORE = "offline_submissions";
+
+function initOutboxDB() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      console.warn("IndexedDB not supported.");
+      return resolve(null);
+    }
+    const req = indexedDB.open(OUTBOX_DB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(OUTBOX_STORE)) {
+        db.createObjectStore(OUTBOX_STORE, { keyPath: "visit_id" });
+      }
+      if (!db.objectStoreNames.contains("user_diagnostics")) {
+        db.createObjectStore("user_diagnostics", { keyPath: "user_key" });
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (err) => resolve(null);
+  });
+}
+
+// Queue offline submission into IndexedDB Outbox
+async function queueOfflineSubmission(visitRecord) {
+  try {
+    const db = await initOutboxDB();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      const tx = db.transaction(OUTBOX_STORE, "readwrite");
+      const store = tx.objectStore(OUTBOX_STORE);
+      visitRecord.queued_at = new Date().toISOString();
+      visitRecord.sync_status = "QUEUED";
+      store.put(visitRecord);
+      tx.oncomplete = () => {
+        console.log("✓ Queued visit record into IndexedDB Outbox:", visitRecord.visit_id);
+        resolve(true);
+      };
+      tx.onerror = () => resolve(false);
+    });
+  } catch(e) {
+    console.error("Queue outbox error:", e);
+    return false;
+  }
+}
+
+// Background sync outbox when network reconnects
+async function processOutboxSync() {
+  if (!navigator.onLine) return;
+  try {
+    const db = await initOutboxDB();
+    if (!db) return;
+    const tx = db.transaction(OUTBOX_STORE, "readonly");
+    const store = tx.objectStore(OUTBOX_STORE);
+    const req = store.getAll();
+    req.onsuccess = async () => {
+      const items = req.result || [];
+      const pending = items.filter(it => it.sync_status === "QUEUED" || it.sync_status === "FAILED");
+      if (pending.length === 0) return;
+      console.log("🔄 Background syncing", pending.length, "pending outbox records...");
+      for (const item of pending) {
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(async (res) => {
+              if (res && res.ok) {
+                const delTx = db.transaction(OUTBOX_STORE, "readwrite");
+                delTx.objectStore(OUTBOX_STORE).delete(item.visit_id);
+                console.log("✓ Outbox synced and cleaned:", item.visit_id);
+              }
+            })
+            .submitVisitRecord(item);
+        }
+      }
+    };
+  } catch(e) {
+    console.warn("Outbox sync error:", e);
+  }
+}
+
+window.addEventListener('online', processOutboxSync);
+
 window.STORE_DIAGNOSTICS_DATA = {};
 window.CURRENT_INSPECTION_MODE = "deep_audit";
 window.QUICK_PULSE_STATE = { 1: "Chưa chọn", 2: "Chưa chọn", 3: "Chưa chọn", 4: "Chưa chọn", 5: "Chưa chọn", 6: "Chưa chọn" };
@@ -4084,42 +4161,44 @@ window.QUICK_PULSE_STATE = { 1: "Chưa chọn", 2: "Chưa chọn", 3: "Chưa ch�
  * 1. Fetch and Cache 185 Store Diagnostics from Backend to IndexedDB
  */
 function fetchAndCacheStoreDiagnostics() {
-  // Check IndexedDB / LocalStorage first for 0ms instant render
-  try {
-    const cachedSnap = localStorage.getItem("store_diagnostics_snapshot_v1_5");
-    if (cachedSnap) {
-      const parsed = JSON.parse(cachedSnap);
-      if (parsed && parsed.stores) {
-        window.STORE_DIAGNOSTICS_DATA = parsed.stores;
-        console.log("✓ Loaded", Object.keys(parsed.stores).length, "store diagnostics from Local Cache.");
-      }
-    }
-  } catch(e) {
-    console.warn("LocalStorage read warning:", e);
-  }
+  const user = window.CURRENT_USER || JSON.parse(localStorage.getItem("storevisit_user") || "null");
+  if (!user || !user.username) return;
 
-  // Fetch latest snapshot in background via google.script.run
+  const userKey = "diag_" + user.username.toLowerCase();
+  
+  // 1. Read from IndexedDB for 0ms instant load
+  initOutboxDB().then(db => {
+    if (db) {
+      const tx = db.transaction("user_diagnostics", "readonly");
+      const req = tx.objectStore("user_diagnostics").get(userKey);
+      req.onsuccess = () => {
+        if (req.result && req.result.stores) {
+          window.STORE_DIAGNOSTICS_DATA = req.result.stores;
+          const curStore = document.getElementById('storeCode') ? document.getElementById('storeCode').value : '';
+          if (curStore) renderExecutiveDiagnosticCard(curStore);
+        }
+      };
+    }
+  });
+
+  // 2. Fetch scoped diagnostics from server
+  const authToken = window.AUTH_TOKEN || localStorage.getItem("storevisit_auth_token") || "";
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function(response) {
         if (response && response.ok && response.stores) {
           window.STORE_DIAGNOSTICS_DATA = response.stores;
-          try {
-            localStorage.setItem("store_diagnostics_snapshot_v1_5", JSON.stringify(response));
-            console.log("✓ Synced", response.store_count, "store diagnostics cards to Local Cache.");
-          } catch(eLS) {}
-          
-          // If a store is currently selected, re-render its diagnostic card
+          initOutboxDB().then(db => {
+            if (db) {
+              const tx = db.transaction("user_diagnostics", "readwrite");
+              tx.objectStore("user_diagnostics").put({ user_key: userKey, stores: response.stores, updated_at: new Date().toISOString() });
+            }
+          });
           const currentStoreCode = document.getElementById('storeCode') ? document.getElementById('storeCode').value : '';
-          if (currentStoreCode) {
-            renderExecutiveDiagnosticCard(currentStoreCode);
-          }
+          if (currentStoreCode) renderExecutiveDiagnosticCard(currentStoreCode);
         }
       })
-      .withFailureHandler(function(err) {
-        console.warn("Could not background-sync store diagnostics:", err);
-      })
-      .getStoreDiagnostics();
+      .getStoreDiagnostics(authToken, user.username);
   }
 }
 
@@ -9499,7 +9578,13 @@ function submitTargetRescueVisit() {
     const printWindow = window.open('', '_blank', 'width=1200,height=800');
     printWindow.document.write(`<!DOCTYPE html><html><head>
       <meta charset="utf-8">
-      <title>Báo Cáo Kiểm Tra Cửa Hàng</title>
+        <!-- WAVE 3.1: PWA MANIFEST & APP SHELL META -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StoreVisit Pro">
+  <meta name="theme-color" content="#0A2342">
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22StoreVisit%20Pro%22%2C%22short_name%22%3A%22StoreVisit%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F4F5F7%22%2C%22theme_color%22%3A%22%230A2342%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Ftwitter%2Ftwemoji%4014.0.2%2Fassets%2F72x72%2F1f3ea.png%22%2C%22sizes%22%3A%2272x72%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+  <title>Báo Cáo Kiểm Tra Cửa Hàng</title>
       <link href="${"https:" + "\/" + "\/"}cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
       <link href="${"https:" + "\/" + "\/"}fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
       <style>body{font-family:'Inter',sans-serif;} @page{margin:15mm;} @media print{.no-print{display:none}}
@@ -11980,15 +12065,6 @@ function submitTargetRescueVisit() {
     }
   }
 
-  function quickFillPortalLogin(username, password) {
-    const uInput = document.getElementById("portalUsername");
-    const pInput = document.getElementById("portalPassword");
-    if (uInput) uInput.value = username;
-    if (pInput) pInput.value = password;
-    const errBox = document.getElementById("portalLoginError");
-    if (errBox) errBox.classList.add("d-none");
-  }
-
   function submitPortalLoginForm(e) {
     if (e && e.preventDefault) e.preventDefault();
     const uInput = document.getElementById("portalUsername");
@@ -12036,16 +12112,9 @@ function submitTargetRescueVisit() {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
           }
-          const fallbackUser = simulateLocalLogin(username, password);
-          if (fallbackUser) {
-            currentUser = fallbackUser;
-            localStorage.setItem("storevisit_user", JSON.stringify(fallbackUser));
-            showMainAppUI(fallbackUser);
-          } else {
-            if (errBox) {
-              errBox.textContent = "Lỗi kết nối: " + (err.message || err);
-              errBox.classList.remove("d-none");
-            }
+          if (errBox) {
+            errBox.textContent = "Lỗi kết nối máy chủ xác thực: " + (err.message || err);
+            errBox.classList.remove("d-none");
           }
         })
         .loginUser(username, password);
@@ -12055,48 +12124,15 @@ function submitTargetRescueVisit() {
           btn.disabled = false;
           btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Hệ Thống';
         }
-        const fallbackUser = simulateLocalLogin(username, password);
-        if (fallbackUser) {
-          currentUser = fallbackUser;
-          localStorage.setItem("storevisit_user", JSON.stringify(fallbackUser));
-          showMainAppUI(fallbackUser);
-        } else {
-          if (errBox) {
-            errBox.textContent = "Tên đăng nhập hoặc mật khẩu không chính xác (Thử: khoi / khoi6868 hoặc tien / tien2026).";
-            errBox.classList.remove("d-none");
-          }
+        if (errBox) {
+          errBox.textContent = "Không thể kết nối đến máy chủ xác thực. Vui lòng kiểm tra kết nối mạng và thử lại.";
+          errBox.classList.remove("d-none");
         }
       }, 300);
     }
   }
 
-  function simulateLocalLogin(username, password) {
-    const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
-    const u = norm(username);
-    
-    const SEED_USERS = [
-      { uname: "khoi", pass: "khoi6868", fullName: "ASM Nguyễn Đăng Khôi", role: "master", region: "HCM", alias: ["khoi", "khoind", "dangkhoi"] },
-      { uname: "tien", pass: "tien2026", fullName: "ASM Đỗ Thị Hoa Tiên", role: "asm", region: "HCM", alias: ["tien", "hoatien"] },
-      { uname: "huong", pass: "huong2026", fullName: "ASM Đoàn Thị Kim Hương", role: "asm", region: "Miền Tây, Miền Trung- Tây Nguyên", alias: ["huong", "kimhuong"] },
-      { uname: "ttdung", pass: "dung2026", fullName: "ASM Trần Thanh Dũng", role: "asm", region: "HCM, Miền Tây", alias: ["ttdung", "dungtt", "thanhdung"] },
-      { uname: "dung", pass: "dung2026", fullName: "ASM Nguyễn Quốc Dũng", role: "asm", region: "HCM, Miền Trung- Tây Nguyên", alias: ["dung", "quocdung"] },
-      { uname: "linh", pass: "linh2026", fullName: "ASM Đinh Thị Cát Linh", role: "asm", region: "HCM", alias: ["linh", "catlinh"] },
-      { uname: "tin", pass: "tin2026", fullName: "ASM Nguyễn Lâm Trung Tín", role: "asm", region: "HCM, Miền Đông", alias: ["tin", "trungtin"] },
-      { uname: "quan", pass: "quan2026", fullName: "ASM Nguyễn Lê Quân", role: "asm", region: "Miền Trung- Tây Nguyên", alias: ["quan", "lequan"] },
-      { uname: "lam", pass: "lam2026", fullName: "ASM Hồ Thị Lâm", role: "asm", region: "HCM", alias: ["lam", "thilam"] },
-      { uname: "hn", pass: "hn2026", fullName: "ASM Hà Nội", role: "asm", region: "HN", alias: ["hn", "hanoi"] },
-      { uname: "ni", pass: "ni2026", fullName: "ASM Ni", role: "asm", region: "HCM", alias: ["ni", "onlineweb"] }
-    ];
-
-    for (const su of SEED_USERS) {
-      if (su.uname === u || su.alias.includes(u) || norm(su.fullName).includes(u)) {
-        if (password === su.pass || password === "123456" || password === "khoi6868") {
-          return { username: su.uname, fullName: su.fullName, role: su.role, region: su.region, stores: "ALL" };
-        }
-      }
-    }
-    return null;
-  }
+  
 
   function checkUserSession() {
     try {
