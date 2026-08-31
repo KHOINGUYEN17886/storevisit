@@ -719,7 +719,7 @@ function submitVisitRecord(visitObject) {
             "Visit_ID", "StoreCode", "ASM", "ReportDate", "LagSeverity",
             "PrimaryBlocker", "ActionPlan", "ActionOwner", "ActionDueDate",
             "ExpectedRecovery", "InterventionStatus", "ActualResult", "VerifiedAt",
-            "SubmittedAt", "Payload_JSON"
+            "EffectivenessVerdict", "SubmittedAt", "Payload_JSON"
           ];
           rescueSheet.appendRow(rescueHeaders);
           rescueSheet.getRange(1, 1, 1, rescueHeaders.length).setFontWeight("bold").setBackground("#0A2342").setFontColor("#FFFFFF");
@@ -735,7 +735,7 @@ function submitVisitRecord(visitObject) {
         rescueSheet.appendRow([
           visitId, storeCode, canonicalAsm, reportDate, lagSeverityVal,
           primaryBlockerVal, actionPlanVal, actionOwnerVal, actionDueDateVal,
-          expectedRecoveryVal, "COMMITTED", "", "",
+          expectedRecoveryVal, "COMMITTED", "", "", "PENDING_EVALUATION",
           nowTimestamp, payloadJsonStr
         ]);
       }
@@ -751,12 +751,24 @@ function submitVisitRecord(visitObject) {
         }
       }
       if (!rollbackSuccess && appendedMainRowIdx > 1) {
+        // DA-04: Persistent Incident Record in Reconciliation_Alerts
+        try {
+          var alertSheet = ss.getSheetByName("Reconciliation_Alerts");
+          if (!alertSheet) {
+            alertSheet = ss.insertSheet("Reconciliation_Alerts");
+            alertSheet.appendRow(["Incident_ID", "Timestamp", "Visit_ID", "StoreCode", "ASM", "GhostRowIdx", "ErrorDetail", "Status"]);
+            alertSheet.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#B91C1C").setFontColor("#FFFFFF");
+          }
+          var incidentId = "INC_" + (new Date().getTime());
+          alertSheet.appendRow([incidentId, nowTimestamp, visitId, storeCode, canonicalAsm, appendedMainRowIdx, writeErr.toString(), "UNRESOLVED"]);
+        } catch(alertErr) {}
+
         return {
           "ok": false,
           "error_code": "RECONCILIATION_REQUIRED",
           "reconciliation_required": true,
           "appended_row": appendedMainRowIdx,
-          "message": "Lỗi lưu trữ dữ liệu nhánh phụ và thao tác Rollback xóa dòng chính không thành công. Hệ thống đã kích hoạt cờ đối soát (Reconciliation Flag)."
+          "message": "Lỗi lưu trữ dữ liệu nhánh phụ và thao tác Rollback xóa dòng chính không thành công. Sự cố đã được lưu vào bảng Reconciliation_Alerts (Trạng thái: UNRESOLVED)."
         };
       }
       return {

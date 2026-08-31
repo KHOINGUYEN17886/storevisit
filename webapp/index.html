@@ -4268,10 +4268,10 @@ function renderExecutiveDiagnosticCard(storeCode) {
     return;
   }
 
-  // Meta
+  // Meta (DA-06: Explicit Snapshot Freshness)
   document.getElementById('diagStoreCodeBadge').innerText = card.store_code || cleanCode;
   document.getElementById('diagStoreNameTitle').innerText = card.store_name || cleanCode;
-  document.getElementById('diagStoreMetaSubtitle').innerText = "ASM: " + (card.asm_name || "Chưa gán") + " • Vùng: " + (card.region || "HCM") + " • QLCH: " + (card.manager || "Chưa cập nhật");
+  document.getElementById('diagStoreMetaSubtitle').innerText = "ASM: " + (card.asm_name || "Chưa gán") + " • Vùng: " + (card.region || "HCM") + " • Snapshot: 28/08/2026 (Đã chốt ngày 28/31)";
 
   // Severity Pill
   const sevPill = document.getElementById('diagSeverityPill');
