@@ -394,6 +394,9 @@
       <div id="userHeaderBar" class="d-none text-end p-2 px-3 rounded-3 shadow-sm d-flex align-items-center gap-2" style="background-color: #f8fafc !important; border: 1px solid #e2e8f0 !important;">
         <span id="userDisplayName" class="fw-bold me-1" style="color: #1B2A4A !important; font-size: 14px;">👤 ASM Khôi</span>
         <span id="userRoleBadge" class="badge bg-warning text-dark me-2" style="font-weight: 700;">Master</span>
+                <button type="button" class="btn btn-sm btn-info text-dark fw-bold me-1 shadow-sm" onclick="openAsmGuideModal()" title="Xem hướng dẫn sử dụng nhanh dành cho ASM">
+          <i class="bi bi-book-half me-1"></i> Hướng Dẫn ASM
+        </button>
         <button type="button" class="btn btn-sm btn-outline-primary fw-bold position-relative me-1 shadow-sm" onclick="openMultiDraftHub()" title="Xem tất cả các bản nháp đang lưu">
           <i class="bi bi-folder-fill me-1"></i> Bản Nháp <span class="badge bg-danger rounded-pill ms-1" id="headerDraftCounterBadge">0</span>
         </button>
@@ -9800,6 +9803,122 @@ function submitTargetRescueVisit() {
   }
 
 </script>
+
+  <!-- MODAL HƯỚNG DẪN THỰC ĐỊA DÀNH CHO ASM (APPLE DARK LUXURY GUIDE) -->
+  <div class="modal fade" id="asmGuideModal" tabindex="-1" aria-labelledby="asmGuideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden; background: #111726; border: 1px solid rgba(255,255,255,0.1) !important;">
+        <div class="modal-header text-white p-3 px-4" style="background: linear-gradient(135deg, #0A192F 0%, #1E293B 100%) !important; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-book-half fs-4 text-warning"></i>
+            <div>
+              <h5 class="modal-title fw-bold mb-0 text-white" id="asmGuideModalLabel">Sổ Tay Hướng Dẫn Thực Địa Dành Cho ASM</h5>
+              <div class="small text-white-50" style="font-size: 12px;">Trợ lý số 1 chạm • Nhanh gọn 2 phút • Thay thế hoàn toàn sổ giấy</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" style="color: #F8FAFC;">
+          <!-- Guide Nav Pills -->
+          <ul class="nav nav-pills mb-3 gap-2" id="guideTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active btn-sm rounded-pill fw-bold" id="gtab1-btn" data-bs-toggle="pill" data-bs-target="#gtab1" type="button">🚀 3 Bước Nhanh</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link btn-sm rounded-pill fw-bold" id="gtab2-btn" data-bs-toggle="pill" data-bs-target="#gtab2" type="button">⚡ Quick Pulse 2 Phút</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link btn-sm rounded-pill fw-bold" id="gtab3-btn" data-bs-toggle="pill" data-bs-target="#gtab3" type="button">🎯 Cứu Target</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link btn-sm rounded-pill fw-bold" id="gtab4-btn" data-bs-toggle="pill" data-bs-target="#gtab4" type="button">📶 Mẹo Mất Mạng 4G</button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="guideTabsContent">
+            <!-- TAB 1: 3 BƯỚC THAO TÁC -->
+            <div class="tab-pane fade show active" id="gtab1" role="tabpanel">
+              <div class="card p-3 mb-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-danger rounded-circle p-2 px-3 fw-bold">1</span>
+                  <h6 class="fw-bold text-white mb-0">Đăng nhập tài khoản ASM</h6>
+                </div>
+                <p class="small text-white-50 mb-0">Mở link trên điện thoại, nhập Username & Mật khẩu được cấp. Hệ thống sẽ tự động nhớ đăng nhập cho các lần sau.</p>
+              </div>
+
+              <div class="card p-3 mb-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-warning text-dark rounded-circle p-2 px-3 fw-bold">2</span>
+                  <h6 class="fw-bold text-white mb-0">Chọn Cửa Hàng đang đứng</h6>
+                </div>
+                <p class="small text-white-50 mb-0">Bấm mục "Mã cửa hàng" -> Chọn cửa hàng của mình. Hệ thống tự động hiện doanh thu MTD, chỉ tiêu ngày và mức độ rủi ro.</p>
+              </div>
+
+              <div class="card p-3" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-success rounded-circle p-2 px-3 fw-bold">3</span>
+                  <h6 class="fw-bold text-white mb-0">Chọn chế độ & Bấm Gửi Báo Cáo</h6>
+                </div>
+                <p class="small text-white-50 mb-0">Ghé nhanh bấm <strong>Quick Pulse</strong>; Chậm số bấm <strong>Cứu Target</strong>; Chấm điểm định kỳ bấm <strong>Đại Kiểm Tra</strong>. Bấm Gửi là HOÀN TẤT, không cần gõ lại máy tính!</p>
+              </div>
+            </div>
+
+            <!-- TAB 2: QUICK PULSE -->
+            <div class="tab-pane fade" id="gtab2" role="tabpanel">
+              <div class="alert alert-info py-2 px-3 small" style="background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); color: #38BDF8;">
+                <i class="bi bi-lightning-charge-fill me-1"></i> Dành cho ASM ghé nhanh qua cửa hàng 2-3 phút, chấm điểm 1 chạm.
+              </div>
+              <ul class="small text-white-50 ps-3 mb-3">
+                <li class="mb-1">Bấm lần 1 vào nút tiêu chuẩn để chọn <strong>Đạt (Xanh)</strong>.</li>
+                <li class="mb-1">Nếu có lỗi, bấm lần 2 để chuyển thành <strong>Không Đạt (Đỏ)</strong>.</li>
+                <li class="mb-1">Khi chọn <strong>Không Đạt</strong>, màn hình tự mở ô nhỏ để nhập lỗi và nút chụp 1 ảnh hiện trường.</li>
+                <li>Chụp thêm 1-2 ảnh tổng quan (Mặt tiền, Quầy POS) nếu cần -> Bấm <strong>Gửi Biên Bản</strong> là xong!</li>
+              </ul>
+            </div>
+
+            <!-- TAB 3: CỨU TARGET -->
+            <div class="tab-pane fade" id="gtab3" role="tabpanel">
+              <div class="alert alert-danger py-2 px-3 small" style="background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.3); color: #FB7185;">
+                <i class="bi bi-shield-fill-exclamation me-1"></i> Áp dụng khi cửa hàng chậm doanh số, cần xin hỗ trợ hàng hóa/CSVC từ Công ty.
+              </div>
+              <ol class="small text-white-50 ps-3 mb-0">
+                <li class="mb-2"><strong>Chọn nguyên nhân chính:</strong> Nhịp độ bán chậm, Đứt hàng Hot, Hàng tồn cũ nhiều, hoặc Kỹ năng nhân viên.</li>
+                <li class="mb-2"><strong>Ghi Kế Hoạch Hành Động:</strong> Ví dụ: <em>Điều chuyển 20 áo sơ mi size 39 từ kho về trước thứ 5; phân ca cứng chốt sale tối cuối tuần.</em></li>
+                <li class="mb-2"><strong>Nhập Hạn chót & Doanh thu kỳ vọng</strong> kéo lại được (ví dụ: 30,000,000 đ).</li>
+                <li>Bấm <strong>Ký Cam Kết & Gửi</strong> -> Báo cáo gửi thẳng lên Quản Lý Kinh Doanh để duyệt hỗ trợ hàng ngay!</li>
+              </ol>
+            </div>
+
+            <!-- TAB 4: MẸO MẤT MẠNG -->
+            <div class="tab-pane fade" id="gtab4" role="tabpanel">
+              <div class="card p-3" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);">
+                <h6 class="fw-bold text-success mb-2"><i class="bi bi-wifi-off me-1"></i> Yên Tâm Tuyệt Đối Khi Vào Tầng Hầm / Mất Mạng 4G:</h6>
+                <p class="small text-white-50 mb-2">• Ứng dụng <strong>tự động lưu vào máy điện thoại của anh/chị</strong> từng chữ vừa gõ.</p>
+                <p class="small text-white-50 mb-2">• Khi có mạng trở lại, ứng dụng sẽ <strong>tự động tải dữ liệu lên máy chủ</strong> mà anh/chị không cần làm lại từ đầu.</p>
+                <p class="small text-white-50 mb-0">• Nếu đang làm dở mà bận tiếp khách, cứ đóng app. Mở lại bấm <strong>"Bản Nháp"</strong> là toàn bộ dữ liệu hiện ra nguyên vẹn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer p-3 d-flex justify-content-between" style="background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.08);">
+          <div class="small text-muted"><i class="bi bi-headset me-1"></i> Hotline kỹ thuật: <strong>Nguyễn Đăng Khôi (Master)</strong></div>
+          <button type="button" class="btn btn-brand btn-sm px-4 fw-bold" data-bs-dismiss="modal">Đã Hiểu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+  function openAsmGuideModal() {
+    const modalEl = document.getElementById("asmGuideModal");
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  }
+
+</script>
 </body></html>`);
     printWindow.document.close();
     printWindow.onload = function() { printWindow.print(); };
@@ -12281,6 +12400,122 @@ function submitTargetRescueVisit() {
         const statusEl = document.getElementById("trPhoto" + stage.charAt(0).toUpperCase() + stage.slice(1) + "Status");
         if (statusEl) statusEl.innerHTML = '<span class="text-success small fw-bold">✓ Đã tải ảnh</span>';
       });
+    }
+  }
+
+</script>
+
+  <!-- MODAL HƯỚNG DẪN THỰC ĐỊA DÀNH CHO ASM (APPLE DARK LUXURY GUIDE) -->
+  <div class="modal fade" id="asmGuideModal" tabindex="-1" aria-labelledby="asmGuideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden; background: #111726; border: 1px solid rgba(255,255,255,0.1) !important;">
+        <div class="modal-header text-white p-3 px-4" style="background: linear-gradient(135deg, #0A192F 0%, #1E293B 100%) !important; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-book-half fs-4 text-warning"></i>
+            <div>
+              <h5 class="modal-title fw-bold mb-0 text-white" id="asmGuideModalLabel">Sổ Tay Hướng Dẫn Thực Địa Dành Cho ASM</h5>
+              <div class="small text-white-50" style="font-size: 12px;">Trợ lý số 1 chạm • Nhanh gọn 2 phút • Thay thế hoàn toàn sổ giấy</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" style="color: #F8FAFC;">
+          <!-- Guide Nav Pills -->
+          <ul class="nav nav-pills mb-3 gap-2" id="guideTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active btn-sm rounded-pill fw-bold" id="gtab1-btn" data-bs-toggle="pill" data-bs-target="#gtab1" type="button">🚀 3 Bước Nhanh</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link btn-sm rounded-pill fw-bold" id="gtab2-btn" data-bs-toggle="pill" data-bs-target="#gtab2" type="button">⚡ Quick Pulse 2 Phút</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link btn-sm rounded-pill fw-bold" id="gtab3-btn" data-bs-toggle="pill" data-bs-target="#gtab3" type="button">🎯 Cứu Target</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link btn-sm rounded-pill fw-bold" id="gtab4-btn" data-bs-toggle="pill" data-bs-target="#gtab4" type="button">📶 Mẹo Mất Mạng 4G</button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="guideTabsContent">
+            <!-- TAB 1: 3 BƯỚC THAO TÁC -->
+            <div class="tab-pane fade show active" id="gtab1" role="tabpanel">
+              <div class="card p-3 mb-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-danger rounded-circle p-2 px-3 fw-bold">1</span>
+                  <h6 class="fw-bold text-white mb-0">Đăng nhập tài khoản ASM</h6>
+                </div>
+                <p class="small text-white-50 mb-0">Mở link trên điện thoại, nhập Username & Mật khẩu được cấp. Hệ thống sẽ tự động nhớ đăng nhập cho các lần sau.</p>
+              </div>
+
+              <div class="card p-3 mb-2" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-warning text-dark rounded-circle p-2 px-3 fw-bold">2</span>
+                  <h6 class="fw-bold text-white mb-0">Chọn Cửa Hàng đang đứng</h6>
+                </div>
+                <p class="small text-white-50 mb-0">Bấm mục "Mã cửa hàng" -> Chọn cửa hàng của mình. Hệ thống tự động hiện doanh thu MTD, chỉ tiêu ngày và mức độ rủi ro.</p>
+              </div>
+
+              <div class="card p-3" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="badge bg-success rounded-circle p-2 px-3 fw-bold">3</span>
+                  <h6 class="fw-bold text-white mb-0">Chọn chế độ & Bấm Gửi Báo Cáo</h6>
+                </div>
+                <p class="small text-white-50 mb-0">Ghé nhanh bấm <strong>Quick Pulse</strong>; Chậm số bấm <strong>Cứu Target</strong>; Chấm điểm định kỳ bấm <strong>Đại Kiểm Tra</strong>. Bấm Gửi là HOÀN TẤT, không cần gõ lại máy tính!</p>
+              </div>
+            </div>
+
+            <!-- TAB 2: QUICK PULSE -->
+            <div class="tab-pane fade" id="gtab2" role="tabpanel">
+              <div class="alert alert-info py-2 px-3 small" style="background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); color: #38BDF8;">
+                <i class="bi bi-lightning-charge-fill me-1"></i> Dành cho ASM ghé nhanh qua cửa hàng 2-3 phút, chấm điểm 1 chạm.
+              </div>
+              <ul class="small text-white-50 ps-3 mb-3">
+                <li class="mb-1">Bấm lần 1 vào nút tiêu chuẩn để chọn <strong>Đạt (Xanh)</strong>.</li>
+                <li class="mb-1">Nếu có lỗi, bấm lần 2 để chuyển thành <strong>Không Đạt (Đỏ)</strong>.</li>
+                <li class="mb-1">Khi chọn <strong>Không Đạt</strong>, màn hình tự mở ô nhỏ để nhập lỗi và nút chụp 1 ảnh hiện trường.</li>
+                <li>Chụp thêm 1-2 ảnh tổng quan (Mặt tiền, Quầy POS) nếu cần -> Bấm <strong>Gửi Biên Bản</strong> là xong!</li>
+              </ul>
+            </div>
+
+            <!-- TAB 3: CỨU TARGET -->
+            <div class="tab-pane fade" id="gtab3" role="tabpanel">
+              <div class="alert alert-danger py-2 px-3 small" style="background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.3); color: #FB7185;">
+                <i class="bi bi-shield-fill-exclamation me-1"></i> Áp dụng khi cửa hàng chậm doanh số, cần xin hỗ trợ hàng hóa/CSVC từ Công ty.
+              </div>
+              <ol class="small text-white-50 ps-3 mb-0">
+                <li class="mb-2"><strong>Chọn nguyên nhân chính:</strong> Nhịp độ bán chậm, Đứt hàng Hot, Hàng tồn cũ nhiều, hoặc Kỹ năng nhân viên.</li>
+                <li class="mb-2"><strong>Ghi Kế Hoạch Hành Động:</strong> Ví dụ: <em>Điều chuyển 20 áo sơ mi size 39 từ kho về trước thứ 5; phân ca cứng chốt sale tối cuối tuần.</em></li>
+                <li class="mb-2"><strong>Nhập Hạn chót & Doanh thu kỳ vọng</strong> kéo lại được (ví dụ: 30,000,000 đ).</li>
+                <li>Bấm <strong>Ký Cam Kết & Gửi</strong> -> Báo cáo gửi thẳng lên Quản Lý Kinh Doanh để duyệt hỗ trợ hàng ngay!</li>
+              </ol>
+            </div>
+
+            <!-- TAB 4: MẸO MẤT MẠNG -->
+            <div class="tab-pane fade" id="gtab4" role="tabpanel">
+              <div class="card p-3" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);">
+                <h6 class="fw-bold text-success mb-2"><i class="bi bi-wifi-off me-1"></i> Yên Tâm Tuyệt Đối Khi Vào Tầng Hầm / Mất Mạng 4G:</h6>
+                <p class="small text-white-50 mb-2">• Ứng dụng <strong>tự động lưu vào máy điện thoại của anh/chị</strong> từng chữ vừa gõ.</p>
+                <p class="small text-white-50 mb-2">• Khi có mạng trở lại, ứng dụng sẽ <strong>tự động tải dữ liệu lên máy chủ</strong> mà anh/chị không cần làm lại từ đầu.</p>
+                <p class="small text-white-50 mb-0">• Nếu đang làm dở mà bận tiếp khách, cứ đóng app. Mở lại bấm <strong>"Bản Nháp"</strong> là toàn bộ dữ liệu hiện ra nguyên vẹn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer p-3 d-flex justify-content-between" style="background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.08);">
+          <div class="small text-muted"><i class="bi bi-headset me-1"></i> Hotline kỹ thuật: <strong>Nguyễn Đăng Khôi (Master)</strong></div>
+          <button type="button" class="btn btn-brand btn-sm px-4 fw-bold" data-bs-dismiss="modal">Đã Hiểu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+  function openAsmGuideModal() {
+    const modalEl = document.getElementById("asmGuideModal");
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
     }
   }
 
