@@ -498,64 +498,218 @@
     }
 
     /* ========================================================================= */
-    /* TOP 0.1% ENTERPRISE MOBILE RESPONSIVE DESIGN SYSTEM (<= 768px & <= 480px) */
+    /* TOP 0.1% ENTERPRISE MOBILE RESPONSIVE (Verified: iPhone 14 Pro Max Chrome) */
     /* ========================================================================= */
+
+    /* === GLOBAL MOBILE SAFE BASE === */
     @media (max-width: 768px) {
-      html, body {
+      /* Step 1: Lock horizontal overflow at body level, NOT html — prevents clip */
+      body {
         overflow-x: hidden !important;
-        width: 100% !important;
-      }
-      .container, .container-fluid {
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-        max-width: 100% !important;
-      }
-      .app-header {
-        padding: 8px 0 !important;
-      }
-      .brand-badge {
-        width: 36px !important;
-        height: 36px !important;
-        font-size: 16px !important;
-      }
-      .brand-title {
-        font-size: 14.5px !important;
-        line-height: 1.2 !important;
-      }
-      .brand-subtitle {
-        font-size: 10px !important;
-        display: none !important; /* Hide subtitle on mobile to give room for buttons */
-      }
-      .app-header .btn {
-        padding: 4px 8px !important;
-        font-size: 11.5px !important;
-      }
-      .app-header .btn-text-label {
-        display: none !important; /* Icon-first on mobile */
+        max-width: 100vw !important;
       }
       
-      /* Sticky Draft Status Bar */
-      #draftStatusBar {
+      /* Step 2: Containers must be true 100% width with reduced padding */
+      .container, .container-fluid, .container-sm, .container-md {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+      
+      /* ======================================================================
+         HEADER: 2-ROW LAYOUT ON MOBILE
+         Row 1: Brand Logo + Title + Subtitle
+         Row 2: User Info + Action Buttons (wrapping, icon-first)
+      ====================================================================== */
+      .app-header {
+        padding: 6px 0 !important;
+      }
+      
+      /* Outer flex becomes vertical stack on mobile */
+      .app-header .container > .d-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+      }
+      
+      /* Brand row: horizontal, compact */
+      .app-header .container > .d-flex > div:first-child {
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+      }
+      
+      /* Brand badge: smaller on mobile */
+      .brand-badge,
+      .app-header [class*="brand-badge"] {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        font-size: 15px !important;
+        margin-right: 8px !important;
+      }
+      
+      /* App title font size */
+      .app-title {
+        font-size: 15px !important;
+        line-height: 1.2 !important;
+      }
+      .app-title span {
         font-size: 11px !important;
-        padding: 6px 10px !important;
+        padding: 2px 6px !important;
+      }
+      
+      /* Subtitle: hide on mobile to save vertical space */
+      .app-header > div > div > div > div > div:last-child,
+      .app-header .container > .d-flex > div:first-child > div > div:last-child {
+        display: none !important;
+      }
+      
+      /* ======================================================================
+         USER HEADER BAR: Full-width row on mobile, wrap action buttons
+      ====================================================================== */
+      #userHeaderBar {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        padding: 6px 8px !important;
+        gap: 4px !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(197, 160, 89, 0.4) !important;
+      }
+      
+      /* User name and role badge: keep on same line, smaller */
+      #userDisplayName {
+        font-size: 12px !important;
+        margin-right: 4px !important;
+      }
+      #userRoleBadge {
+        font-size: 10px !important;
+        padding: 2px 6px !important;
+        margin-right: 6px !important;
+      }
+      
+      /* Action buttons in header: compact icon-text style */
+      #userHeaderBar .btn {
+        font-size: 11px !important;
+        padding: 4px 8px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        margin: 0 2px 0 0 !important;
+      }
+      
+      /* Hide long text labels in header buttons, keep icons */
+      #userHeaderBar .btn .btn-text-label {
+        display: none !important;
+      }
+      
+      /* Sync StoresInfo button: hidden on mobile unless master */
+      #btnSyncStoresInfoMaster {
+        display: none !important;
+      }
+      
+      /* ======================================================================
+         iOS MODE SWITCHER: Horizontal scroll, NOT clipped
+      ====================================================================== */
+      .ios-mode-switcher {
+        /* Remove margin that Bootstrap might add inside container */
+        margin-left: -12px !important;
+        margin-right: -12px !important;
+        padding: 4px 12px !important;
+        border-radius: 0 !important;
+        /* Ensure scroll works: show scrollbar on webkit */
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+      }
+      .ios-mode-switcher::-webkit-scrollbar {
+        display: none !important;
+      }
+      .ios-mode-btn {
+        min-width: 110px !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+        font-size: 12px !important;
+        padding: 8px 10px !important;
+        white-space: nowrap !important;
+      }
+      
+      /* ======================================================================
+         MAIN MENU PILLS: Wrap on mobile
+      ====================================================================== */
+      .main-menu-pills {
         flex-wrap: wrap !important;
         gap: 6px !important;
       }
+      .main-menu-btn {
+        font-size: 12px !important;
+        padding: 7px 12px !important;
+      }
       
-      /* Operational Profile Selector */
-      .inspection-profile-selector {
-        flex-direction: column !important;
+      /* ======================================================================
+         DRAFT STATUS BAR
+      ====================================================================== */
+      #draftStatusBar {
+        font-size: 11px !important;
+        padding: 8px 10px !important;
+        flex-wrap: wrap !important;
         gap: 6px !important;
       }
-      .inspection-profile-selector .segment-btn {
-        width: 100% !important;
-        padding: 10px !important;
-        font-size: 13px !important;
+      #draftStatusBar .btn {
+        font-size: 11px !important;
+        padding: 5px 10px !important;
+        flex: 1 1 auto !important;
+        min-width: 80px !important;
         text-align: center !important;
-        justify-content: center !important;
       }
       
-      /* Executive Diagnostic Layer (5 Pillars) */
+      /* ======================================================================
+         PROFILE SELECT DROPDOWN
+      ====================================================================== */
+      #inspectionProfileSelect {
+        font-size: 12px !important;
+        padding: 6px 8px !important;
+      }
+      
+      /* ======================================================================
+         CHECKLIST TAB NAVIGATION (9 tabs — horizontal scroll, no wrap)
+      ====================================================================== */
+      .nav-tabs-container,
+      .checklist-tabs-wrapper {
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 2px !important;
+        margin-left: -12px !important;
+        margin-right: -12px !important;
+        padding-left: 12px !important;
+      }
+      
+      /* Prevent tab buttons from wrapping */
+      .nav-tabs, .nav-pills {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      .nav-tabs .nav-link,
+      .nav-pills .nav-link {
+        white-space: nowrap !important;
+        font-size: 11.5px !important;
+        padding: 6px 10px !important;
+      }
+      
+      /* ======================================================================
+         EXECUTIVE DIAGNOSTIC LAYER (5 Pillars & Metrics Grid)
+      ====================================================================== */
       .diag-metrics-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 8px !important;
@@ -564,18 +718,21 @@
         padding: 8px 10px !important;
       }
       .diag-metric-val {
-        font-size: 1.15rem !important;
+        font-size: 1.1rem !important;
       }
       .diag-metric-title {
-        font-size: 10.5px !important;
+        font-size: 10px !important;
         word-break: break-word !important;
+        line-height: 1.3 !important;
       }
       .diag-metric-sub {
-        font-size: 10px !important;
+        font-size: 9.5px !important;
         line-height: 1.2 !important;
       }
       
-      /* Red Alert 5 Pillars Cards */
+      /* ======================================================================
+         5 PILLARS RED ALERT CARDS
+      ====================================================================== */
       .pillar-card-header {
         padding: 10px !important;
         font-size: 13px !important;
@@ -584,7 +741,9 @@
         padding: 10px !important;
       }
       
-      /* Checklist Items */
+      /* ======================================================================
+         CHECKLIST ITEMS
+      ====================================================================== */
       .checklist-card {
         margin-bottom: 10px !important;
         padding: 10px !important;
@@ -602,9 +761,9 @@
       }
       .checklist-segmented-group .segment-btn {
         flex: 1 1 0 !important;
-        min-height: 38px !important;
+        min-height: 40px !important;
         padding: 6px 2px !important;
-        font-size: 12px !important;
+        font-size: 11.5px !important;
         text-align: center !important;
         justify-content: center !important;
       }
@@ -613,7 +772,9 @@
         margin-top: 8px !important;
       }
       
-      /* Quick Pulse Grid */
+      /* ======================================================================
+         QUICK PULSE GRID
+      ====================================================================== */
       .quick-pulse-grid {
         grid-template-columns: 1fr !important;
         gap: 8px !important;
@@ -622,54 +783,66 @@
         padding: 10px !important;
       }
       
-      /* Nav Tabs container */
-      .nav-tabs-container {
-        overflow-x: auto !important;
-        white-space: nowrap !important;
-        -webkit-overflow-scrolling: touch !important;
-        padding-bottom: 4px !important;
-      }
-      .nav-tabs-container .nav-link {
-        font-size: 12px !important;
-        padding: 8px 12px !important;
-      }
-      
-      /* Modals on Mobile */
+      /* ======================================================================
+         MODALS: Bottom sheet style on mobile
+      ====================================================================== */
       .modal-dialog {
-        margin: 8px !important;
-        max-width: calc(100% - 16px) !important;
+        margin: 6px !important;
+        max-width: calc(100% - 12px) !important;
       }
       .modal-header {
-        padding: 12px 14px !important;
+        padding: 10px 12px !important;
       }
       .modal-title {
-        font-size: 15px !important;
+        font-size: 14px !important;
       }
       .modal-body {
-        padding: 12px !important;
-        max-height: 75vh !important;
+        padding: 10px 12px !important;
+        max-height: 72vh !important;
+        overflow-y: auto !important;
       }
       .modal-footer {
-        padding: 10px 12px !important;
+        padding: 8px 12px !important;
         flex-direction: column-reverse !important;
-        gap: 8px !important;
+        gap: 6px !important;
       }
       .modal-footer .btn {
         width: 100% !important;
       }
     }
-    
-    @media (max-width: 480px) {
+
+    /* === SMALL MOBILE (<= 430px, iPhone 14 Pro Max actual viewport) === */
+    @media (max-width: 430px) {
+      .app-title {
+        font-size: 13.5px !important;
+      }
+      .ios-mode-btn {
+        min-width: 100px !important;
+        font-size: 11px !important;
+        padding: 7px 8px !important;
+      }
       .diag-metrics-grid {
         grid-template-columns: 1fr 1fr !important;
         gap: 6px !important;
       }
-      .brand-title {
-        font-size: 13.5px !important;
-      }
-      .btn-sm {
+      #userDisplayName {
         font-size: 11px !important;
-        padding: 4px 6px !important;
+        max-width: 80px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+      #userHeaderBar .btn {
+        font-size: 10.5px !important;
+        padding: 3px 6px !important;
+      }
+      .main-menu-btn {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+      }
+      #draftStatusBar .btn {
+        font-size: 10.5px !important;
+        padding: 4px 8px !important;
       }
     }
 
@@ -1637,8 +1810,8 @@
 <div class="container">
 
   <!-- MAIN NAVIGATION MENU -->
-  <div class="nav-tabs-container mb-4">
-    <ul class="main-menu-pills" id="mainMenuTabs">
+  <div class="nav-tabs-container mb-4" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+    <ul class="main-menu-pills" id="mainMenuTabs" style="flex-wrap: nowrap; min-width: max-content;">
       <li class="main-menu-item">
         <button class="main-menu-btn active" id="menu-report-tab" onclick="switchMainMenu('new-report')" type="button"><i class="bi bi-file-earmark-plus"></i> Tạo Báo Cáo Mới</button>
       </li>
@@ -1867,8 +2040,8 @@
     <form id="storeVisitForm" novalidate>
     
     <!-- NAVIGATION TABS -->
-    <div class="nav-tabs-container">
-            <ul class="nav nav-tabs" id="visitTabs" role="tablist">
+    <div class="nav-tabs-container" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+            <ul class="nav nav-tabs" id="visitTabs" role="tablist" style="flex-wrap: nowrap; min-width: max-content;">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab"><i class="bi bi-info-circle me-1"></i> 1. Thông tin chung</button>
         </li>
