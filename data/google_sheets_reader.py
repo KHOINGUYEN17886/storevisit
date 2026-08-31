@@ -5,15 +5,24 @@ import logging
 from typing import List, Dict, Any, Optional
 import gspread
 from google.oauth2.service_account import Credentials
-from data.models import StoreFormResponse, FormPhoto, MarketSurveyResponse, SurveyPhoto
+from data.models import (
+    StoreFormResponse, FormPhoto, MarketSurveyResponse, SurveyPhoto,
+    UnifiedInspectionRecord, CommonInspectionEnvelope,
+    QuickPulsePayload, TargetRescuePayload, DeepAuditPayload,
+    CrossInspectionPayload, OpeningInspectionPayload,
+    DiagnosticCardModel, DiagnosticBlocker,
+    RescueInterventionModel, ReconciliationIncidentModel
+)
 
 logger = logging.getLogger(__name__)
 
 class GoogleSheetsReader:
-    def __init__(self, credentials_path: str, spreadsheet_id: str):
+    def __init__(self, credentials_path: str, spreadsheet_id: str, snapshot_path: Optional[str] = None):
         self.credentials_path = credentials_path
         self.spreadsheet_id = spreadsheet_id
+        self.snapshot_path = snapshot_path or os.path.join(os.path.dirname(__file__), "store_diagnostics_snapshot.json")
         self.client = None
+        self._diagnostics_cache = None
         
     def _authenticate(self):
         if not self.client:
@@ -25,6 +34,258 @@ class GoogleSheetsReader:
             ]
             creds = Credentials.from_service_account_file(self.credentials_path, scopes=scopes)
             self.client = gspread.authorize(creds)
+
+    def load_diagnostic_snapshot(self) -> Dict[str, DiagnosticCardModel]:
+        if self._diagnostics_cache is not None:
+            return self._diagnostics_cache
+            
+        diagnostics = {}
+        if os.path.exists(self.snapshot_path):
+            try:
+                with open(self.snapshot_path, "r", encoding="utf-8") as f:
+                    snap_data = json.load(f)
+                    stores = snap_data.get("stores", {})
+                    for code, s in stores.items():
+                        diag_block = s.get("diagnosis", {})
+                        prim = diag_block.get("primary_blocker")
+                        prim_model = DiagnosticBlocker(**prim) if prim else None
+                        sec_models = [DiagnosticBlocker(**b) for b in diag_block.get("secondary_blockers", [])]
+                        
+                        rev = s.get("revenue", {})
+                        card = DiagnosticCardModel(
+                            store_code=s.get("store_code", code),
+                            store_name=s.get("store_name", code),
+                            region=s.get("region", "HCM"),
+                            asm_name=s.get("asm_name", ""),
+                            manager=s.get("manager", ""),
+                            store_type=s.get("store_type", "Standard"),
+                            data_quality_status=s.get("data_quality_status", "AVAILABLE"),
+                            mtd_actual=float(rev.get("mtd_actual", 0.0) or 0.0),
+                            mtd_target=float(rev.get("mtd_target", 0.0) or 0.0),
+                            achievement_pct=float(rev.get("achievement_pct", 0.0) or 0.0),
+                            pace_index=float(rev.get("pace_index", 1.0) or 1.0),
+                            pace_delta_pct=float(rev.get("pace_delta_pct", 0.0) or 0.0),
+                            gap_amount=float(rev.get("gap_amount", 0.0) or 0.0),
+                            selling_days_in_month=int(rev.get("selling_days_in_month", 31) or 31),
+                            selling_days_elapsed=int(rev.get("selling_days_elapsed", 28) or 28),
+                            selling_days_remaining=int(rev.get("selling_days_remaining", 3) or 3),
+                            expected_progress_pct=float(rev.get("expected_progress_pct", 90.32) or 90.32),
+                            required_daily_runrate=float(rev.get("required_daily_runrate", 0.0) or 0.0),
+                            actual_daily_runrate=float(rev.get("actual_daily_runrate", 0.0) or 0.0),
+                            lag_severity=diag_block.get("lag_severity", "PROTECT_ON_TRACK"),
+                            primary_blocker=prim_model,
+                            secondary_blockers=sec_models
+                        )
+                        diagnostics[code] = card
+            except Exception as e:
+                logger.error(f"Error loading diagnostic snapshot from {self.snapshot_path}: {e}")
+                
+        self._diagnostics_cache = diagnostics
+        return diagnostics
+
+    def get_rescue_interventions(self, sheet_name: str = "Rescue_Interventions") -> Dict[str, RescueInterventionModel]:
+        """Reads secondary Rescue_Interventions sheet tab and maps by visit_id."""
+        self._authenticate()
+        if not self.spreadsheet_id:
+            return {}
+        try:
+            ss = self.client.open_by_key(self.spreadsheet_id)
+            try:
+                sheet = ss.worksheet(sheet_name)
+            except Exception:
+                return {}
+            records = sheet.get_all_records()
+            rescue_map = {}
+            for r in records:
+                vid = str(r.get("Visit_ID", "")).strip()
+                if not vid:
+                    continue
+                exp_rec = None
+                if r.get("ExpectedRecovery"):
+                    try:
+                        exp_rec = float(str(r.get("ExpectedRecovery")).replace(",", ""))
+                    except ValueError:
+                        exp_rec = None
+                act_res = None
+                if r.get("ActualResult"):
+                    try:
+                        act_res = float(str(r.get("ActualResult")).replace(",", ""))
+                    except ValueError:
+                        act_res = None
+                rescue_map[vid] = RescueInterventionModel(
+                    visit_id=vid,
+                    store_code=str(r.get("StoreCode", "")).strip(),
+                    asm_name=str(r.get("ASM", "")).strip(),
+                    report_date=str(r.get("ReportDate", "")).strip(),
+                    lag_severity=str(r.get("LagSeverity", "RESCUE_CRITICAL")).strip(),
+                    primary_blocker=str(r.get("PrimaryBlocker", "")).strip(),
+                    action_plan=str(r.get("ActionPlan", "")).strip(),
+                    action_owner=str(r.get("ActionOwner", "")).strip(),
+                    action_due_date=str(r.get("ActionDueDate", "")).strip(),
+                    expected_recovery=exp_rec,
+                    intervention_status=str(r.get("InterventionStatus", "COMMITTED")).strip(),
+                    actual_result=act_res,
+                    verified_at=str(r.get("VerifiedAt", "")).strip() or None,
+                    effectiveness_verdict=str(r.get("EffectivenessVerdict", "PENDING_EVALUATION")).strip(),
+                    effectiveness_evidence_id=str(r.get("EffectivenessEvidenceID", "")).strip() or None,
+                    submitted_at=str(r.get("SubmittedAt", "")).strip(),
+                    payload_json=str(r.get("Payload_JSON", "")).strip()
+                )
+            return rescue_map
+        except Exception as e:
+            logger.warning(f"Could not load Rescue_Interventions: {e}")
+            return {}
+
+    def get_reconciliation_incidents(self, sheet_name: str = "Reconciliation_Alerts") -> List[ReconciliationIncidentModel]:
+        """Reads Reconciliation_Alerts incident sheet."""
+        self._authenticate()
+        if not self.spreadsheet_id:
+            return []
+        try:
+            ss = self.client.open_by_key(self.spreadsheet_id)
+            try:
+                sheet = ss.worksheet(sheet_name)
+            except Exception:
+                return []
+            records = sheet.get_all_records()
+            incidents = []
+            for r in records:
+                inc_id = str(r.get("Incident_ID", "")).strip()
+                if not inc_id:
+                    continue
+                incidents.append(ReconciliationIncidentModel(
+                    incident_id=inc_id,
+                    detected_at=str(r.get("Timestamp", "") or r.get("Detected_At", "")).strip(),
+                    visit_id=str(r.get("Visit_ID", "")).strip(),
+                    store_code=str(r.get("StoreCode", "")).strip(),
+                    asm_name=str(r.get("ASM", "")).strip(),
+                    ghost_row_idx=int(r.get("GhostRowIdx", 0) or 0),
+                    failure_type=str(r.get("FailureType", "ROLLBACK_DELETION_FAILED")).strip(),
+                    owner=str(r.get("Owner", "SYSTEM_ADMIN")).strip(),
+                    status=str(r.get("Status", "UNRESOLVED")).strip(),
+                    resolution=str(r.get("Resolution", "")).strip(),
+                    resolved_at=str(r.get("Resolved_At", "")).strip() or None
+                ))
+            return incidents
+        except Exception as e:
+            logger.warning(f"Could not load Reconciliation_Alerts: {e}")
+            return []
+
+    def get_unified_inspection_records(self, sheet_name: str = "Form Responses 1") -> List[UnifiedInspectionRecord]:
+        """
+        Wave 6 Unified Ingestion:
+        Reads Form Responses 1, merges with Rescue_Interventions by visit_id,
+        and binds DiagnosticCardModel from Data Lake snapshot by store_code.
+        """
+        self._authenticate()
+        diag_map = self.load_diagnostic_snapshot()
+        rescue_map = self.get_rescue_interventions()
+        
+        try:
+            sheet = self.client.open_by_key(self.spreadsheet_id).worksheet(sheet_name)
+            records = sheet.get_all_records()
+        except Exception as e:
+            logger.error(f"Error opening sheet {sheet_name}: {e}")
+            raise e
+            
+        unified_records = []
+        for i, row in enumerate(records):
+            row_idx = i + 2
+            resp = self._parse_row(row, str(row_idx))
+            if not resp:
+                continue
+                
+            code = resp.store_code
+            diag_card = diag_map.get(code)
+            vid = resp.visit_id or resp.response_id or f"visit_{row_idx}"
+            rescue_item = rescue_map.get(vid)
+            
+            envelope = CommonInspectionEnvelope(
+                visit_id=vid,
+                store_code=code,
+                asm_name=resp.asm_name,
+                report_date=resp.report_date,
+                inspection_mode=resp.inspection_mode,
+                data_class=resp.data_class,
+                timestamp=resp.time_start,
+                cht_name=resp.cht_name,
+                status=resp.status,
+                diagnostic_snapshot_id="SNAPSHOT_2026_08_28"
+            )
+            
+            # Build mode payload
+            qp_payload = None
+            tr_payload = None
+            da_payload = None
+            ci_payload = None
+            oi_payload = None
+            
+            mode = resp.inspection_mode
+            if mode == "quick_pulse":
+                qp_payload = resp.quick_pulse_payload or QuickPulsePayload(photos=resp.photos)
+            elif mode == "target_rescue":
+                tr_payload = resp.rescue_payload or TargetRescuePayload(
+                    lag_severity=rescue_item.lag_severity if rescue_item else (diag_card.lag_severity if diag_card else "RESCUE_CRITICAL"),
+                    primary_blocker=rescue_item.primary_blocker if rescue_item else (diag_card.primary_blocker.title if diag_card and diag_card.primary_blocker else ""),
+                    action_plan=rescue_item.action_plan if rescue_item else resp.action_plan,
+                    action_owner=rescue_item.action_owner if rescue_item else resp.asm_name,
+                    action_due_date=rescue_item.action_due_date if rescue_item else resp.action_deadline,
+                    expected_recovery=rescue_item.expected_recovery if rescue_item else None,
+                    intervention_status=rescue_item.intervention_status if rescue_item else "COMMITTED",
+                    actual_result=rescue_item.actual_result if rescue_item else None,
+                    verified_at=rescue_item.verified_at if rescue_item else None,
+                    effectiveness_verdict=rescue_item.effectiveness_verdict if rescue_item else "PENDING_EVALUATION",
+                    effectiveness_evidence_id=rescue_item.effectiveness_evidence_id if rescue_item else None,
+                    photos=resp.photos
+                )
+            elif mode == "opening_inspection":
+                oi_payload = OpeningInspectionPayload(
+                    opening_type=resp.opening_type or "new",
+                    opening_phase=resp.opening_phase or "day",
+                    opening_date=resp.opening_date or resp.report_date,
+                    opening_readiness=resp.opening_readiness or "ready"
+                )
+            elif mode == "cross_inspection":
+                ci_payload = CrossInspectionPayload(
+                    home_asm=resp.asm_name,
+                    cross_notes=resp.pending_issues
+                )
+            else: # deep_audit / standard
+                da_payload = DeepAuditPayload(
+                    nv_count=resp.nv_count,
+                    time_start=resp.time_start,
+                    time_end=resp.time_end,
+                    rating_frontage=resp.rating_frontage,
+                    rating_inner=resp.rating_inner,
+                    rating_merch=resp.rating_merch,
+                    rating_staff=resp.rating_staff,
+                    rating_csvc=resp.rating_csvc,
+                    comment_frontage=resp.comment_frontage,
+                    comment_inner=resp.comment_inner,
+                    comment_merch=resp.comment_merch,
+                    comment_staff=resp.comment_staff,
+                    comment_csvc=resp.comment_csvc,
+                    pending_issues=resp.pending_issues,
+                    action_plan=resp.action_plan,
+                    action_deadline=resp.action_deadline,
+                    store_recommendation=resp.store_recommendation,
+                    checklist_json=resp.checklist_json,
+                    photos=resp.photos
+                )
+                
+            unified = UnifiedInspectionRecord(
+                envelope=envelope,
+                quick_pulse=qp_payload,
+                target_rescue=tr_payload,
+                deep_audit=da_payload,
+                cross_inspection=ci_payload,
+                opening_inspection=oi_payload,
+                diagnostic=diag_card,
+                rescue_intervention=rescue_item
+            )
+            unified_records.append(unified)
+            
+        return unified_records
             
     def get_pending_responses(self, sheet_name: str = "Form Responses 1") -> List[StoreFormResponse]:
         self._authenticate()
@@ -42,9 +303,7 @@ class GoogleSheetsReader:
         
         responses = []
         for i, row in enumerate(records):
-            # Row index in sheet (1-based, plus header row, so records[i] corresponds to row i + 2)
             row_idx = i + 2
-            
             status = str(row.get("Status", "")).strip().lower()
             if status in ["done", "draft"]:
                 continue
@@ -75,7 +334,6 @@ class GoogleSheetsReader:
             raise e
         
     def _parse_row(self, row: Dict[str, Any], row_id: str) -> Optional[StoreFormResponse]:
-        import json
         def find_val(keywords: List[str], default: Any = "") -> Any:
             for k, v in row.items():
                 k_lower = k.lower()
@@ -83,18 +341,35 @@ class GoogleSheetsReader:
                     return v
             return default
 
-        store_code = str(find_val(["Mã cửa hàng", "Ma cua hang", "Store Code"])).strip()
+        store_code = str(find_val(["Mã cửa hàng", "Ma cua hang", "Store Code", "storeCode", "StoreCode"])).strip()
         if not store_code:
             return None
             
         if " - " in store_code:
             store_code = store_code.split(" - ")[0].strip()
             
-        report_date = str(find_val(["Ngày kiểm tra", "Ngay kiem tra", "Date"])).strip()
-        asm_name = str(find_val(["QLKD/ASM", "ASM", "Người kiểm tra", "Nguoi kiem tra"])).strip()
-        cht_name = str(find_val(["Tên CHT", "Ten CHT", "Cửa hàng trưởng"])).strip()
-        time_start = str(find_val(["Giờ bắt đầu", "Gio bat dau", "Time start"])).strip()
+        report_date = str(find_val(["Ngày kiểm tra", "Ngay kiem tra", "Date", "reportDate", "ReportDate"])).strip()
+        asm_name = str(find_val(["QLKD/ASM", "ASM", "Người kiểm tra", "Nguoi kiem tra", "asmName", "asm"])).strip()
+        cht_name = str(find_val(["Tên CHT", "Ten CHT", "Cửa hàng trưởng", "chtName"])).strip()
+        time_start = str(find_val(["Giờ bắt đầu", "Gio bat dau", "Time start", "timestamp", "Timestamp"])).strip()
         time_end = str(find_val(["Giờ kết thúc", "Gio ket thuc", "Time end"])).strip()
+        
+        # Inspection Mode Detection
+        mode_val = str(find_val(["Loại kiểm tra", "Phân loại", "inspection_mode", "inspectionMode", "visit_type", "VisitType", "Mode"], "deep_audit")).strip().lower()
+        if "pulse" in mode_val or "nhanh" in mode_val:
+            canonical_mode = "quick_pulse"
+        elif "rescue" in mode_val or "cứu" in mode_val or "cuu" in mode_val or "target" in mode_val:
+            canonical_mode = "target_rescue"
+        elif "cross" in mode_val or "chéo" in mode_val or "cheo" in mode_val:
+            canonical_mode = "cross_inspection"
+        elif "opening" in mode_val or "khai trương" in mode_val or "khai truong" in mode_val:
+            canonical_mode = "opening_inspection"
+        else:
+            canonical_mode = "deep_audit"
+            
+        # Data class & visit_id
+        visit_id = str(find_val(["Visit_ID", "visit_id", "visitId", "ID", "Mã lượt ghé", "SubmissionID"], "")).strip() or f"visit_{row_id}"
+        data_class = str(find_val(["DATA_CLASS", "data_class", "DataClass", "EvidenceClass"], "REAL_FIELD")).strip()
         
         nv_count_raw = find_val(["Số NV", "So NV", "Nhân viên có mặt"], 0)
         try:
@@ -114,269 +389,37 @@ class GoogleSheetsReader:
         comment_staff = str(find_val(["Nhận xét nhân sự", "Nhan xet nhan su", "Staff comments"])).strip()
         comment_csvc = str(find_val(["Nhận xét CSVC", "Nhan xet csvc", "CSVC comments"])).strip()
         
-        pending_issues = str(find_val(["Vấn đề tồn đọng", "Van de ton dong", "Issues"])).strip()
-        action_plan = str(find_val(["Kế hoạch khắc phục", "Ke hoach khac phuc", "Action plan"])).strip()
-        action_deadline = str(find_val(["Thời hạn xử lý", "Thoi han xu ly", "Deadline"])).strip()
+        pending_issues = str(find_val(["Vấn đề tồn đọng", "Van de ton dong", "Issues", "pending_issues"])).strip()
+        action_plan = str(find_val(["Kế hoạch khắc phục", "Ke hoach khac phuc", "Action plan", "action_plan", "ActionPlan"])).strip()
+        action_deadline = str(find_val(["Thời hạn xử lý", "Thoi han xu ly", "Deadline", "due_date", "action_deadline"])).strip()
         store_recommendation = str(find_val(["Đề xuất phát triển", "store_recommendation", "storeRecommendation"], "")).strip()
-
-        # Đồng bộ webapp 30-07: phân loại lượt kiểm tra + field riêng cho khai trương
-        inspection_mode = str(find_val(["inspection_mode"], "own")).strip().lower() or "own"
-        opening_type = str(find_val(["opening_type"], "")).strip() or None
-        opening_phase = str(find_val(["opening_phase"], "")).strip() or None
-        opening_date = str(find_val(["opening_date"], "")).strip() or None
-        opening_readiness = str(find_val(["opening_readiness"], "")).strip() or None
-
-        # Parse checklist_json if present in the row
-        checklist_json_val = find_val(["checklist_json", "checklist"], "")
-        checklist_json_str = str(checklist_json_val).strip() if checklist_json_val else ""
-        if checklist_json_str:
-            checklist_json_str = re.sub(r"\[object\s+Object\]", "", checklist_json_str, flags=re.IGNORECASE)
-            checklist_json_str = re.sub(r"\s*\[o\]?\s*(?=\\n|\"|\'|,)", "", checklist_json_str, flags=re.IGNORECASE)
-        checklist_data = {}
-        if checklist_json_str:
-            try:
-                checklist_data = json.loads(checklist_json_str)
-                # Sanitize any nested survey answers
-                if isinstance(checklist_data, dict) and "survey" in checklist_data:
-                    for s_k, s_v in checklist_data["survey"].items():
-                        if isinstance(s_v, dict) and "answer" in s_v:
-                            ans = str(s_v["answer"])
-                            ans = re.sub(r"\[object\s+Object\]", "", ans, flags=re.IGNORECASE).strip()
-                            ans = re.sub(r"\s*\[o\]?\s*$", "", ans, flags=re.IGNORECASE).strip()
-                            s_v["answer"] = ans
-                    checklist_json_str = json.dumps(checklist_data, ensure_ascii=False)
-            except Exception as e:
-                logger.error(f"Error parsing checklist_json for row {row_id}: {e}")
-
-        if checklist_data:
-            sections = checklist_data.get("sections", {})
-            
-             # 1. Frontage override
-            f_sec = sections.get("frontage", {})
-            if f_sec.get("rating"):
-                rating_frontage = f_sec.get("rating")
-            if f_sec.get("comment"):
-                comment_frontage = f_sec.get("comment")
-                
-            # 1.5. Inner override
-            inner_sec = sections.get("inner", {})
-            if inner_sec.get("rating"):
-                rating_inner = inner_sec.get("rating")
-            if inner_sec.get("comment"):
-                comment_inner = inner_sec.get("comment")
-                
-            # 2. Merchandise override (combine from merch_ap, merch_pie, merch_ab, merch_anamai, merch_bonjour, merch_pk)
-            m_ratings = []
-            m_comments = []
-            for m_key in ["merch_ap", "merch_pie", "merch_ab", "merch_anamai", "merch_bonjour", "merch_pk"]:
-                m_sec = sections.get(m_key, {})
-                if m_sec.get("rating"):
-                    m_ratings.append(m_sec.get("rating"))
-                if m_sec.get("comment"):
-                    label_map = {
-                        "merch_ap": "An Phước",
-                        "merch_pie": "Pierre Cardin",
-                        "merch_ab": "Anamai/Bonjour",
-                        "merch_anamai": "Anamai",
-                        "merch_bonjour": "Bonjour",
-                        "merch_pk": "Phụ kiện"
-                    }
-                    m_comments.append(f"{label_map.get(m_key)}: {m_sec.get('comment')}")
-            if m_ratings:
-                if "Chưa đạt" in m_ratings:
-                    rating_merch = "Chưa đạt"
-                elif all(r == "Tốt" for r in m_ratings):
-                    rating_merch = "Tốt"
-                else:
-                    rating_merch = "Đạt"
-            if m_comments:
-                comment_merch = " | ".join(m_comments)
-                
-            # 3. Staff override
-            s_sec = sections.get("staff", {})
-            if s_sec.get("rating"):
-                rating_staff = s_sec.get("rating")
-            if s_sec.get("comment"):
-                comment_staff = s_sec.get("comment")
-                
-            # 4. CSVC override (combine from warehouse, cashier, stockroom, fitting_room, toilet, fire_safety, packaging_security)
-            c_ratings = []
-            c_comments = []
-            for c_key in ["warehouse", "cashier", "stockroom", "fitting_room", "toilet", "fire_safety", "packaging_security"]:
-                c_sec = sections.get(c_key, {})
-                if c_sec.get("rating"):
-                    c_ratings.append(c_sec.get("rating"))
-                if c_sec.get("comment"):
-                    c_comments.append(f"{c_key.upper()}: {c_sec.get('comment')}")
-            if c_ratings:
-                if "Chưa đạt" in c_ratings:
-                    rating_csvc = "Chưa đạt"
-                elif all(r == "Tốt" for r in c_ratings):
-                    rating_csvc = "Tốt"
-                else:
-                    rating_csvc = "Đạt"
-            if c_comments:
-                comment_csvc = " | ".join(c_comments)
-
+        
+        # Photos parser
         photos = []
-
-        def _normalize_drive_url(raw: str) -> str:
-            """Normalize a Drive file ID or URL to a canonical https URL."""
-            raw = raw.strip()
-            if raw.startswith("http"):
-                return raw
-            # bare file-ID (no slashes, no dots, length >= 15)
-            if len(raw) >= 15 and " " not in raw and "/" not in raw and "." not in raw:
-                return f"https://drive.google.com/open?id={raw}"
-            return ""
-
-        def _is_valid_drive_ref(raw: str) -> bool:
-            if not raw:
-                return False
-            raw = raw.strip()
-            if raw.startswith("http"):
-                return True
-            if len(raw) >= 15 and " " not in raw and "/" not in raw and "." not in raw:
-                return True
-            return False
-
-        def _get_drive_refs(raw: str) -> list:
-            if not raw or not isinstance(raw, str):
-                return []
-            parts = []
-            for part in raw.replace("\n", ",").split(","):
-                part = part.strip()
-                if not part:
-                    continue
-                if _is_valid_drive_ref(part):
-                    parts.append(part)
-            return parts
-
-        if checklist_data:
-            # ── SOURCE A: general_photos (canonical positions for frontage / inner / CSVC) ──
-            g_photos = checklist_data.get("general_photos", {})
-            g_mapping = [
-                ("frontage_main",  "frontage",    1),
-                ("frontage_left",  "frontage",    2),
-                ("frontage_right", "frontage",    3),
-                ("inner_entrance", "inner",        1),
-                ("inner_left",     "inner",        2),
-                ("inner_right",    "inner",        3),
-                ("stockroom",      "stockroom",    1),
-                ("fitting_room",   "fitting_room", 1),
-                ("cashier",        "cashier",      1),
-                # Đồng bộ 30-07: ảnh trước/sau sửa chữa cho báo cáo khai trương (tái khai trương)
-                ("opening_before", "opening_before", 1),
-                ("opening_after",  "opening_after",  1),
-            ]
-            seen_urls: set = set()
-            for g_key, sec, idx in g_mapping:
-                na_key = f"{g_key}_na"
-                if g_photos.get(na_key) is True:
-                    continue
-                val = g_photos.get(g_key, "")
-                refs = _get_drive_refs(val)
-                for ref_idx, ref in enumerate(refs):
-                    url = _normalize_drive_url(ref)
-                    if url and url not in seen_urls:
-                        seen_urls.add(url)
-                        photos.append(FormPhoto(section=sec, index=idx + ref_idx, drive_url=url))
-
-            # ── SOURCE B: VM photos from checklist item photo_before / photo_after ──
-            sections_data = checklist_data.get("sections", {})
-            vm_sec_map = {
-                "merch_ap":      "vm_ap",
-                "merch_pie":     "vm_pie",
-                "merch_ab":      "vm_ab",
-                "merch_anamai":  "vm_ab",
-                "merch_bonjour": "vm_ab",
-                "merch_pk":      "vm_pk",
-            }
-            for sec_key, sec_val in sections_data.items():
-                p_sec = vm_sec_map.get(sec_key)
-                if not p_sec:
-                    continue
-                for item in sec_val.get("items", []):
-                    for p_type, p_idx in [("photo_before", 1), ("photo_after", 2), ("photo_detail", 3)]:
-                        raw = item.get(p_type, "")
-                        refs = _get_drive_refs(raw)
-                        for ref_idx, ref in enumerate(refs):
-                            url = _normalize_drive_url(ref)
-                            if url and url not in seen_urls:
-                                seen_urls.add(url)
-                                photos.append(FormPhoto(section=p_sec, index=p_idx + ref_idx, drive_url=url))
-
-            # ── SOURCE C: Competitor photos ──
-            comp_sec = checklist_data.get("competitor", {})
-            for p_key, p_idx in [("photo1", 1), ("photo2", 2), ("photo3", 3)]:
-                raw = comp_sec.get(p_key, "")
-                refs = _get_drive_refs(raw)
-                for ref_idx, ref in enumerate(refs):
-                    url = _normalize_drive_url(ref)
-                    if url and url not in seen_urls:
-                        seen_urls.add(url)
-                        photos.append(FormPhoto(section="competitor", index=p_idx + ref_idx, drive_url=url))
-
-            # ── SOURCE D: Issue photos (pending_issues[].photo_before / photo_after) ──
-            for issue in checklist_data.get("pending_issues", []):
-                src_sec = issue.get("source_section", "inner")
-                
-                # Before photos
-                raw_before = issue.get("photo_before", "")
-                refs_before = _get_drive_refs(raw_before)
-                for ref_idx, ref in enumerate(refs_before):
-                    url = _normalize_drive_url(ref)
-                    if url and url not in seen_urls:
-                        seen_urls.add(url)
-                        photos.append(FormPhoto(section=f"issue_{src_sec}_before", index=1 + ref_idx, drive_url=url))
-                        
-                # After photos
-                raw_after = issue.get("photo_after", "")
-                refs_after = _get_drive_refs(raw_after)
-                for ref_idx, ref in enumerate(refs_after):
-                    url = _normalize_drive_url(ref)
-                    if url and url not in seen_urls:
-                        seen_urls.add(url)
-                        photos.append(FormPhoto(section=f"issue_{src_sec}_after", index=1 + ref_idx, drive_url=url))
-
-        else:
-            # ── FALLBACK: No checklist_json — parse from old Google Sheet columns ──
-            sections_mapping = {
-                "frontage":    ["Ảnh mặt tiền",  "Anh mat tien",  "Exterior photo"],
-                "inner":       ["Ảnh bên trong",  "Anh ben trong",  "Inner photo"],
-                "merchandise": ["Ảnh hàng hóa",   "Anh hang hoa",   "Merchandise photo"],
-                "staff":       ["Ảnh nhân sự",    "Anh nhan su",    "Staff photo"],
-                "csvc":        ["Ảnh CSVC",        "Anh CSVC",       "CSVC photo"],
-            }
-            seen_urls = set()
-            for section, keywords in sections_mapping.items():
-                matching_keys = [k for k in row.keys() if any(kw.lower() in k.lower() for kw in keywords)]
-                matching_keys.sort()
+        photo_fields = [
+            ("frontage", ["Ảnh mặt tiền", "Anh mat tien", "Frontage photo", "photo_frontage"]),
+            ("merchandise", ["Ảnh hàng hóa", "Anh hang hoa", "Merch photo", "photo_merch"]),
+            ("staff", ["Ảnh nhân sự", "Anh nhan su", "Staff photo", "photo_staff"]),
+            ("csvc", ["Ảnh CSVC", "Anh CSVC", "CSVC photo", "photo_csvc"]),
+            ("rescue", ["Ảnh cứu target", "photo_rescue", "rescue_photo"]),
+            ("pulse", ["Ảnh kiểm tra nhanh", "photo_pulse", "pulse_photo"])
+        ]
+        
+        for section, keywords in photo_fields:
+            val = str(find_val(keywords)).strip()
+            if val:
                 idx = 1
-                for k in matching_keys:
-                    urls_raw = str(row[k]).strip()
-                    if not urls_raw:
-                        continue
-                    for url in urls_raw.replace("\n", ",").split(","):
-                        url = url.strip()
-                        if url and _is_valid_drive_ref(url):
-                            norm = _normalize_drive_url(url)
-                            if norm and norm not in seen_urls:
-                                seen_urls.add(norm)
-                                photos.append(FormPhoto(section=section, index=idx, drive_url=norm))
-                                idx += 1
-                                if idx > 3:
-                                    break
-                    if idx > 3:
-                        break
-
-        # ── Re-index within each section to ensure consecutive 1-based indices ──
-        for sec in ["frontage", "inner", "competitor", "stockroom", "fitting_room", "cashier", "csvc",
-                    "vm_ap", "vm_pie", "vm_ab", "vm_pk"]:
-            sec_photos = [p for p in photos if p.section == sec]
-            for i, p in enumerate(sec_photos):
-                p.index = i + 1
-
+                for url in val.replace("\r", "\n").split("\n"):
+                    for u in url.split(","):
+                        u = u.strip()
+                        if u.startswith("http") or "/" in u or "id=" in u:
+                            photos.append(FormPhoto(section=section, index=idx, drive_url=u))
+                            idx += 1
+                            if idx > 2:
+                                break
+                            
+        checklist_json = str(find_val(["Checklist_JSON", "checklist_json", "ChecklistData", "payload_json", "Payload_JSON"], "")).strip() or None
+        
         return StoreFormResponse(
             response_id=row_id,
             store_code=store_code,
@@ -401,75 +444,31 @@ class GoogleSheetsReader:
             action_deadline=action_deadline,
             store_recommendation=store_recommendation,
             photos=photos,
-            status=str(row.get("Status", "pending")).strip(),
-            checklist_json=checklist_json_str,
-            inspection_mode=inspection_mode,
-            opening_type=opening_type,
-            opening_phase=opening_phase,
-            opening_date=opening_date,
-            opening_readiness=opening_readiness,
+            status=str(row.get("Status", "pending")).strip().lower(),
+            checklist_json=checklist_json,
+            inspection_mode=canonical_mode,
+            data_class=data_class,
+            visit_id=visit_id
         )
 
-    def get_pending_survey_responses(self, sheet_name: str = "MarketSurvey_Responses") -> List[MarketSurveyResponse]:
+    def get_market_surveys(self, sheet_name: str = "MarketSurvey_Responses") -> List[MarketSurveyResponse]:
         self._authenticate()
         if not self.spreadsheet_id:
-            logger.warning("Spreadsheet ID is empty. Returning empty list.")
             return []
-        
         try:
             sheet = self.client.open_by_key(self.spreadsheet_id).worksheet(sheet_name)
+            records = sheet.get_all_records()
         except Exception as e:
-            logger.error(f"Error opening sheet {sheet_name}: {e}")
-            raise e
+            logger.warning(f"MarketSurvey sheet not available: {e}")
+            return []
             
-        records = sheet.get_all_records()
-        
-        responses = []
+        surveys = []
         for i, row in enumerate(records):
             row_idx = i + 2
-            status = str(row.get("Status", "")).strip().lower()
-            if status in ["done", "processing", "ignored"]:
-                continue
-                
-            resp = self._parse_survey_row(row, str(row_idx))
-            if resp:
-                responses.append(resp)
-        return responses
-
-    def update_row_status(self, row_idx: str, status: str, sheet_name: str, error_msg: str = None):
-        self._authenticate()
-        if not self.spreadsheet_id:
-            return
-        try:
-            sheet = self.client.open_by_key(self.spreadsheet_id).worksheet(sheet_name)
-            headers = [h.strip() for h in sheet.row_values(1)]
-            
-            def ensure_col(name: str) -> int:
-                if name not in headers:
-                    c_idx = len(headers) + 1
-                    sheet.update_cell(1, c_idx, name)
-                    headers.append(name)
-                    return c_idx
-                return headers.index(name) + 1
-                
-            status_col = ensure_col("Status")
-            sheet.update_cell(int(row_idx), status_col, status)
-            
-            if error_msg is not None:
-                err_col = ensure_col("Error_Message")
-                sheet.update_cell(int(row_idx), err_col, error_msg)
-                
-            if status == "done":
-                from datetime import datetime
-                time_col = ensure_col("Processed_At")
-                sheet.update_cell(int(row_idx), time_col, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                err_col = ensure_col("Error_Message")
-                sheet.update_cell(int(row_idx), err_col, "")
-                
-            logger.info(f"Successfully updated row {row_idx} to status={status} in sheet {sheet_name}")
-        except Exception as e:
-            logger.error(f"Error updating row {row_idx} status in sheet {sheet_name}: {e}")
-            raise e
+            survey = self._parse_survey_row(row, str(row_idx))
+            if survey:
+                surveys.append(survey)
+        return surveys
 
     def _parse_survey_row(self, row: Dict[str, Any], row_id: str) -> Optional[MarketSurveyResponse]:
         columns_map = {
@@ -540,16 +539,17 @@ class GoogleSheetsReader:
         photo_urls_raw = str(find_val(columns_map["support_photos"])).strip()
         if photo_urls_raw:
             idx = 1
-            for url in photo_urls_raw.replace("\n", ",").split(","):
-                url = url.strip()
-                if url.startswith("http") or "/" in url or "id=" in url:
-                    photos.append(SurveyPhoto(
-                        index=idx,
-                        drive_url=url
-                    ))
-                    idx += 1
-                    if idx > 2:
-                        break
+            for url in photo_urls_raw.replace("\r", "\n").split("\n"):
+                for u in url.split(","):
+                    u = u.strip()
+                    if u.startswith("http") or "/" in u or "id=" in u:
+                        photos.append(SurveyPhoto(
+                            index=idx,
+                            drive_url=u
+                        ))
+                        idx += 1
+                        if idx > 2:
+                            break
                         
         local_opportunity = str(find_val(columns_map["local_opportunity"])).strip()
         need_before_date = str(find_val(columns_map["need_before_date"])).strip()

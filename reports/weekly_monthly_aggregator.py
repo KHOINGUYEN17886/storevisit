@@ -3,21 +3,22 @@ import json
 import re
 from datetime import datetime, timedelta
 import pandas as pd
-from typing import Dict, List, Any, Tuple, Union
+from typing import Dict, List, Any, Tuple, Union, Optional
+from data.models import UnifiedInspectionRecord, CommonInspectionEnvelope, DiagnosticCardModel
 
 class WeeklyMonthlyAggregator:
     """
-    Top 0.1% Data Aggregation Engine for Weekly & Monthly Executive Reports.
-    Features:
-      - Smart Auto Date Anchor (_get_latest_data_date)
-      - Support for AUTO, PREV, TODAY, and custom reference dates
-      - Store Code & ASM Filtering
-      - Accent-insensitive & Fuzzy Name Normalization
-      - Global Retail Risk-Based Scoring System
+    Wave 6 Executive Semantic Aggregation Engine.
+    Computes Canonical Metrics for CEO Board Pack (Excel & PPTX):
+      - Network Pacing, Gap Amount, Revenue at Risk
+      - 5-Mode Inspection Volume & Compliance Breakdown
+      - 4 Canonical Action Effectiveness Metrics
+      - Quick Pulse 6-Toggle Operational Health Matrix
+      - Deep Audit Top 5 Systemic Failures
     """
-    def __init__(self, loader):
+    def __init__(self, loader=None):
         self.loader = loader
-        self.dim_store = loader.load_dim_store()
+        self.dim_store = loader.load_dim_store() if loader else {}
 
     @staticmethod
     def remove_accents(str_val: str) -> str:
@@ -41,327 +42,170 @@ class WeeklyMonthlyAggregator:
         s = re.sub(r'[^a-zA-Z0-9]', '', s)
         return s.lower()
 
-    def get_latest_data_date(self) -> datetime:
-        """Scan form_cache.json for the maximum report_date available."""
-        form_cache_path = os.path.join(self.loader.root_dir, "data", "form_cache.json")
-        latest_dt = None
-        if os.path.exists(form_cache_path):
-            try:
-                with open(form_cache_path, "r", encoding="utf-8") as f:
-                    cache_data = json.load(f)
-                    for _, sub in cache_data.items():
-                        rdate_str = sub.get("report_date", "")
-                        dt = self._parse_date(rdate_str)
-                        if dt:
-                            if latest_dt is None or dt > latest_dt:
-                                latest_dt = dt
-            except Exception as e:
-                print(f"[Aggregator] Error finding latest date: {e}")
-        
-        return latest_dt or datetime.now()
-
-    def get_period_date_range(self, period_type: str, reference_date: Union[str, datetime] = None) -> Tuple[datetime, datetime]:
-        ref_dt = None
-        mode = "AUTO"
-
-        if isinstance(reference_date, datetime):
-            ref_dt = reference_date
-        elif isinstance(reference_date, str) and reference_date.strip():
-            mode_upper = reference_date.strip().upper()
-            if mode_upper in ["AUTO", "LATEST"]:
-                ref_dt = self.get_latest_data_date()
-                mode = "AUTO"
-            elif mode_upper == "PREV":
-                latest = self.get_latest_data_date()
-                if period_type == "weekly":
-                    ref_dt = latest - timedelta(days=7)
-                else: # monthly / quarterly
-                    # Go back to previous month
-                    first_curr = latest.replace(day=1)
-                    ref_dt = first_curr - timedelta(days=15)
-                mode = "PREV"
-            elif mode_upper == "TODAY":
-                ref_dt = datetime.now()
-                mode = "TODAY"
-            else:
-                ref_dt = self._parse_date(reference_date)
-                if not ref_dt:
-                    ref_dt = self.get_latest_data_date()
-
-        if ref_dt is None:
-            ref_dt = self.get_latest_data_date()
-
-        if period_type == "weekly":
-            # Closest Saturday -> Friday range
-            offset = (ref_dt.weekday() + 2) % 7
-            start_date = (ref_dt - timedelta(days=offset)).replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = (start_date + timedelta(days=6)).replace(hour=23, minute=59, second=59, microsecond=999999)
-        elif period_type == "monthly":
-            start_date = ref_dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            if start_date.month == 12:
-                next_month = start_date.replace(year=start_date.year + 1, month=1, day=1)
-            else:
-                next_month = start_date.replace(month=start_date.month + 1, day=1)
-            end_date = (next_month - timedelta(seconds=1))
-        else: # quarterly
-            curr_quarter = (ref_dt.month - 1) // 3 + 1
-            first_month_of_q = (curr_quarter - 1) * 3 + 1
-            start_date = ref_dt.replace(month=first_month_of_q, day=1, hour=0, minute=0, second=0, microsecond=0)
-            last_month_of_q = first_month_of_q + 2
-            if last_month_of_q == 12:
-                next_q = start_date.replace(year=start_date.year + 1, month=1, day=1)
-            else:
-                next_q = start_date.replace(month=last_month_of_q + 1, day=1)
-            end_date = (next_q - timedelta(seconds=1))
-
-        return start_date, end_date
-
-    def aggregate_data(
+    def aggregate_unified_records(
         self,
-        period_type: str = "weekly",
+        records: List[UnifiedInspectionRecord],
+        period_name: str = "Tháng 08/2026",
         asm_filter: str = "ALL",
-        store_filter: List[str] = None,
-        reference_date: Union[str, datetime] = None
+        region_filter: str = "ALL"
     ) -> Dict[str, Any]:
-        start_date, end_date = self.get_period_date_range(period_type, reference_date)
-        start_str = start_date.strftime("%d/%m/%Y")
-        end_str = end_date.strftime("%d/%m/%Y")
+        """
+        Aggregates UnifiedInspectionRecords into an Executive Data Structure for Excel & PPTX Generators.
+        """
+        filtered_records = []
+        for r in records:
+            if asm_filter != "ALL" and self.remove_accents(r.envelope.asm_name) != self.remove_accents(asm_filter):
+                continue
+            if region_filter != "ALL" and r.diagnostic and r.diagnostic.region.upper() != region_filter.upper():
+                continue
+            filtered_records.append(r)
+            
+        total_visits = len(filtered_records)
         
-        if period_type == "weekly":
-            period_name = f"Tuần ({start_str} - {end_str})"
-        elif period_type == "monthly":
-            period_name = f"Tháng {start_date.strftime('%m/%Y')}"
-        else:
-            q_num = (start_date.month - 1) // 3 + 1
-            period_name = f"Quý {q_num}/{start_date.year}"
-
-        asm_filter_norm = self.remove_accents(asm_filter)
-        clean_store_filter = [s.strip().upper() for s in store_filter] if store_filter else ["ALL"]
-
-        # 1. Load StoreVisit Submissions from cache
-        form_cache_path = os.path.join(self.loader.root_dir, "data", "form_cache.json")
-        submissions = []
-        if os.path.exists(form_cache_path):
-            try:
-                with open(form_cache_path, "r", encoding="utf-8") as f:
-                    cache_data = json.load(f)
-                    for _, sub in cache_data.items():
-                        rdate_str = sub.get("report_date", "")
-                        dt = self._parse_date(rdate_str)
-                        if dt and start_date <= dt <= end_date:
-                            store_code = sub.get("store_code", "").upper()
-                            asm_name = sub.get("asm_name", "")
-                            asm_norm = self.remove_accents(asm_name)
-                            
-                            # Match ASM filter
-                            asm_match = (asm_filter == "ALL" or asm_filter_norm in asm_norm or asm_norm in asm_filter_norm)
-                            # Match Store filter
-                            store_match = ("ALL" in clean_store_filter or store_code in clean_store_filter)
-
-                            if asm_match and store_match:
-                                submissions.append(sub)
-            except Exception as e:
-                print(f"[Aggregator] Error loading form cache: {e}")
-
-        # 2. Load Market Survey Responses from cache
-        survey_cache_path = os.path.join(self.loader.root_dir, "data", "survey_cache.json")
-        surveys = []
-        if os.path.exists(survey_cache_path):
-            try:
-                with open(survey_cache_path, "r", encoding="utf-8") as f:
-                    surv_data = json.load(f)
-                    for _, s in surv_data.items():
-                        sdate_str = s.get("timestamp", "")
-                        dt = self._parse_date(sdate_str)
-                        if dt and start_date <= dt <= end_date:
-                            store_code = s.get("store_code", "").upper()
-                            if "ALL" in clean_store_filter or store_code in clean_store_filter:
-                                surveys.append(s)
-            except Exception as e:
-                print(f"[Aggregator] Error loading survey cache: {e}")
-
-        # 3. Calculate Store Health Matrix
-        store_matrix = []
-        systemic_issues = {}
-        total_critical_violations = 0
-
-        for sub in submissions:
-            store_code = sub.get("store_code", "").upper()
-            store_name = sub.get("store_name", store_code)
-            asm_name = sub.get("asm_name", "Khác")
-            checklist_json = sub.get("checklist_json", "{}")
-            
-            try:
-                checklist = json.loads(checklist_json) if isinstance(checklist_json, str) else checklist_json
-            except Exception:
-                checklist = {}
-
-            total_items = 0
-            passed_items = 0
-            failed_items = 0
-            na_items = 0
-            critical_count = 0
-            open_issues = []
-
-            sections = checklist.get("sections", {})
-            for sec_key, sec in sections.items():
-                items = sec.get("items", [])
-                for item in items:
-                    eval_val = str(item.get("eval", "")).strip()
-                    severity = str(item.get("severity", "")).strip()
-                    label = str(item.get("label", item.get("id", ""))).strip()
-                    sev_lower = severity.lower()
-
-                    if eval_val == "Đạt":
-                        passed_items += 1
-                        total_items += 1
-                    elif eval_val == "Không đạt":
-                        failed_items += 1
-                        total_items += 1
-                        
-                        # Robust Critical Detection (Case & Keyword Insensitive)
-                        is_critical = (
-                            sev_lower in ["khẩn cấp", "cao", "nghiêm trọng", "critical", "high"] or
-                            sec_key in ["security_guard", "cash", "fire_safety"] or
-                            "pccc" in label.lower() or "quầy thu ngân" in label.lower()
-                        )
-                        if is_critical:
-                            critical_count += 1
-                            total_critical_violations += 1
-                        
-                        systemic_issues[label] = systemic_issues.get(label, 0) + 1
-                        open_issues.append({
-                            "store_code": store_code,
-                            "store_name": store_name,
-                            "asm_name": asm_name,
-                            "issue_label": label,
-                            "severity": severity or ("Khẩn cấp" if is_critical else "Bình thường"),
-                            "assignee": item.get("assignee", "CHT"),
-                            "deadline": item.get("deadline", "---"),
-                            "note": item.get("note", "")
-                        })
-                    elif eval_val == "Không áp dụng":
-                        na_items += 1
-
-            base_pass_rate = (passed_items / total_items * 100.0) if total_items > 0 else 100.0
-            health_score = max(0.0, round(base_pass_rate - (critical_count * 15.0), 1))
-            
-            if health_score >= 90.0 and critical_count == 0:
-                status_label = "Tốt"
-            elif health_score >= 80.0 and critical_count == 0:
-                status_label = "Đạt"
-            else:
-                status_label = "Chưa Đạt"
-
-            store_matrix.append({
-                "submission_id": sub.get("submission_id", ""),
-                "report_date": sub.get("report_date", ""),
-                "store_code": store_code,
-                "store_name": store_name,
-                "asm_name": asm_name,
-                "passed_items": passed_items,
-                "failed_items": failed_items,
-                "na_items": na_items,
-                "total_applicable": total_items,
-                "base_pass_rate": round(base_pass_rate, 1),
-                "critical_violations": critical_count,
-                "health_score": health_score,
-                "status_label": status_label,
-                "open_issues": open_issues
-            })
-
-        # Sort store matrix by health score descending
-        store_matrix.sort(key=lambda x: x["health_score"], reverse=True)
-
-        # 4. Calculate ASM Leaderboard with Normalized Name Matching
-        asm_store_counts = {}
-        if not self.dim_store.empty:
-            for _, r in self.dim_store.iterrows():
-                raw_asm = str(r.get("ASM", "")).strip()
-                scode = str(r.get("StoreCode", "")).strip().upper()
-                if "ALL" in clean_store_filter or scode in clean_store_filter:
-                    if raw_asm:
-                        norm = self.remove_accents(raw_asm)
-                        asm_store_counts[norm] = asm_store_counts.get(norm, 0) + 1
-
-        asm_leaderboard = {}
-        for row in store_matrix:
-            raw_asm = row["asm_name"]
-            norm_asm = self.remove_accents(raw_asm)
-            
-            if norm_asm not in asm_leaderboard:
-                asm_leaderboard[norm_asm] = {
-                    "display_name": raw_asm,
-                    "total_assigned_stores": asm_store_counts.get(norm_asm, 0),
-                    "visited_count": 0,
-                    "scores": [],
-                    "critical_count": 0,
-                    "passed_stores": 0
-                }
-            asm_leaderboard[norm_asm]["visited_count"] += 1
-            asm_leaderboard[norm_asm]["scores"].append(row["health_score"])
-            asm_leaderboard[norm_asm]["critical_count"] += row["critical_violations"]
-            if row["status_label"] in ["Tốt", "Đạt"]:
-                asm_leaderboard[norm_asm]["passed_stores"] += 1
-
-        leaderboard_list = []
-        for norm, data in asm_leaderboard.items():
-            tot = data["total_assigned_stores"]
-            vis = data["visited_count"]
-            coverage_pct = round((vis / tot * 100.0), 1) if tot > 0 else 100.0
-            avg_score = round(sum(data["scores"]) / len(data["scores"]), 1) if data["scores"] else 0.0
-            leaderboard_list.append({
-                "asm_name": data["display_name"],
-                "assigned_stores": tot,
-                "visited_stores": vis,
-                "coverage_pct": coverage_pct,
-                "avg_health_score": avg_score,
-                "critical_violations": data["critical_count"],
-                "pass_rate_pct": round((data["passed_stores"] / vis * 100.0), 1) if vis > 0 else 0.0
-            })
-
-        leaderboard_list.sort(key=lambda x: (x["avg_health_score"], x["coverage_pct"]), reverse=True)
-
-        # 5. Top 5 Systemic Issues
-        sorted_systemic = sorted(systemic_issues.items(), key=lambda x: x[1], reverse=True)[:5]
-        top_systemic_issues = [{"label": k, "count": v} for k, v in sorted_systemic]
-
-        # Overall Summary KPIs
-        total_visited = len(store_matrix)
-        avg_network_score = round(sum(s["health_score"] for s in store_matrix) / total_visited, 1) if total_visited > 0 else 0.0
-        good_count = sum(1 for s in store_matrix if s["status_label"] == "Tốt")
-        pass_count = sum(1 for s in store_matrix if s["status_label"] == "Đạt")
-        fail_count = sum(1 for s in store_matrix if s["status_label"] == "Chưa Đạt")
-
-        return {
-            "period_type": period_type,
-            "period_name": period_name,
-            "start_date": start_str,
-            "end_date": end_str,
-            "asm_filter": asm_filter,
-            "store_filter": clean_store_filter,
-            "kpis": {
-                "total_visited": total_visited,
-                "avg_network_score": avg_network_score,
-                "good_stores_count": good_count,
-                "pass_stores_count": pass_count,
-                "fail_stores_count": fail_count,
-                "critical_violations": total_critical_violations,
-                "market_surveys_count": len(surveys)
-            },
-            "store_matrix": store_matrix,
-            "asm_leaderboard": leaderboard_list,
-            "top_systemic_issues": top_systemic_issues,
-            "market_surveys": surveys
+        # 1. Mode Volume Breakdown
+        mode_counts = {
+            "quick_pulse": sum(1 for r in filtered_records if r.envelope.inspection_mode == "quick_pulse"),
+            "target_rescue": sum(1 for r in filtered_records if r.envelope.inspection_mode == "target_rescue"),
+            "deep_audit": sum(1 for r in filtered_records if r.envelope.inspection_mode in ["deep_audit", "own"]),
+            "cross_inspection": sum(1 for r in filtered_records if r.envelope.inspection_mode in ["cross_inspection", "cross"]),
+            "opening_inspection": sum(1 for r in filtered_records if r.envelope.inspection_mode in ["opening_inspection", "opening"])
         }
+        
+        # 2. Diagnostic & Network Pacing Metrics
+        distinct_stores = {}
+        for r in filtered_records:
+            code = r.envelope.store_code
+            if r.diagnostic and code not in distinct_stores:
+                distinct_stores[code] = r.diagnostic
+                
+        total_actual = sum(d.mtd_actual for d in distinct_stores.values())
+        total_target = sum(d.mtd_target for d in distinct_stores.values())
+        attainment_pct = (total_actual / total_target * 100) if total_target > 0 else 0.0
+        gap_total = max(0.0, total_target - total_actual)
+        
+        # Severity tiers count
+        sev_counts = {
+            "PROTECT_ON_TRACK": sum(1 for d in distinct_stores.values() if d.lag_severity == "PROTECT_ON_TRACK"),
+            "WATCH": sum(1 for d in distinct_stores.values() if d.lag_severity == "WATCH"),
+            "RECOVERY": sum(1 for d in distinct_stores.values() if d.lag_severity == "RECOVERY"),
+            "RESCUE_CRITICAL": sum(1 for d in distinct_stores.values() if d.lag_severity == "RESCUE_CRITICAL"),
+            "UNKNOWN": sum(1 for d in distinct_stores.values() if d.lag_severity == "UNKNOWN")
+        }
+        
+        # 3. Action Lifecycle KPIs (Canonical Denominators DA-07 / INV-05)
+        rescue_records = [r for r in filtered_records if r.target_rescue or r.rescue_intervention]
+        total_committed = len(rescue_records)
+        total_completed = sum(1 for r in rescue_records if (r.target_rescue and r.target_rescue.intervention_status in ["COMPLETED", "VERIFIED", "EFFECTIVE"]) or (r.rescue_intervention and r.rescue_intervention.intervention_status in ["COMPLETED", "VERIFIED", "EFFECTIVE"]))
+        total_verified = sum(1 for r in rescue_records if (r.target_rescue and r.target_rescue.intervention_status in ["VERIFIED", "EFFECTIVE"]) or (r.rescue_intervention and r.rescue_intervention.intervention_status in ["VERIFIED", "EFFECTIVE"]))
+        
+        total_effective = 0
+        total_expected_recovery = 0.0
+        total_actual_recovery = 0.0
+        
+        for r in rescue_records:
+            tr = r.target_rescue or r.rescue_intervention
+            if tr:
+                if tr.expected_recovery:
+                    total_expected_recovery += tr.expected_recovery
+                if tr.actual_result:
+                    total_actual_recovery += tr.actual_result
+                if tr.effectiveness_verdict == "EFFECTIVE":
+                    total_effective += 1
+                elif tr.actual_result and tr.expected_recovery and tr.actual_result >= tr.expected_recovery and tr.intervention_status in ["VERIFIED", "EFFECTIVE"]:
+                    total_effective += 1
 
-    def _parse_date(self, dstr: str) -> datetime:
-        if not dstr:
-            return None
-        dstr = str(dstr).strip()
-        for fmt in ["%Y-%m-%d", "%d/%m/%Y", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]:
-            try:
-                return datetime.strptime(dstr.split("T")[0], fmt.split("T")[0])
-            except Exception:
-                pass
-        return None
+        action_completion_rate = (total_completed / total_committed * 100) if total_committed > 0 else 100.0
+        action_verification_rate = (total_verified / total_committed * 100) if total_committed > 0 else 100.0
+        recovery_effectiveness_rate = (total_effective / total_verified * 100) if total_verified > 0 else 100.0
+        effective_action_rate = (total_effective / total_committed * 100) if total_committed > 0 else 100.0
+        
+        # 4. Quick Pulse Health Matrix
+        pulse_records = [r for r in filtered_records if r.quick_pulse]
+        pulse_count = max(1, len(pulse_records))
+        pulse_stats = {
+            "staff_on_duty_pct": round(sum(1 for r in pulse_records if r.quick_pulse.staff_on_duty) / pulse_count * 100, 1),
+            "uniform_grooming_pct": round(sum(1 for r in pulse_records if r.quick_pulse.uniform_grooming) / pulse_count * 100, 1),
+            "customer_present_pct": round(sum(1 for r in pulse_records if r.quick_pulse.customer_present) / pulse_count * 100, 1),
+            "cleanliness_lighting_pct": round(sum(1 for r in pulse_records if r.quick_pulse.cleanliness_lighting) / pulse_count * 100, 1),
+            "hot_skus_available_pct": round(sum(1 for r in pulse_records if r.quick_pulse.hot_skus_available) / pulse_count * 100, 1),
+            "pos_system_ok_pct": round(sum(1 for r in pulse_records if r.quick_pulse.pos_system_ok) / pulse_count * 100, 1)
+        }
+        
+        # 5. Top Systemic Failures (Deep Audit)
+        audit_records = [r for r in filtered_records if r.deep_audit]
+        issue_categories = {}
+        for r in audit_records:
+            da = r.deep_audit
+            if da.rating_frontage in ["Chưa đạt", "Không đạt"]:
+                issue_categories["Mặt tiền & Biển hiệu"] = issue_categories.get("Mặt tiền & Biển hiệu", 0) + 1
+            if da.rating_inner in ["Chưa đạt", "Không đạt"]:
+                issue_categories["Không gian bên trong"] = issue_categories.get("Không gian bên trong", 0) + 1
+            if da.rating_merch in ["Chưa đạt", "Không đạt"]:
+                issue_categories["Trưng bày hàng hóa"] = issue_categories.get("Trưng bày hàng hóa", 0) + 1
+            if da.rating_staff in ["Chưa đạt", "Không đạt"]:
+                issue_categories["Tác phong nhân sự"] = issue_categories.get("Tác phong nhân sự", 0) + 1
+            if da.rating_csvc in ["Chưa đạt", "Không đạt"]:
+                issue_categories["Cơ sở vật chất & PCCC"] = issue_categories.get("Cơ sở vật chất & PCCC", 0) + 1
+                
+        sorted_issues = sorted(issue_categories.items(), key=lambda x: x[1], reverse=True)
+        top_systemic_issues = [{"category": k, "count": v} for k, v in sorted_issues[:5]]
+        
+        # 6. Detailed Store List for Excel Tables
+        store_rows = []
+        for r in filtered_records:
+            code = r.envelope.store_code
+            diag = r.diagnostic
+            tr = r.target_rescue or r.rescue_intervention
+            store_rows.append({
+                "visit_id": r.envelope.visit_id,
+                "store_code": code,
+                "store_name": diag.store_name if diag else code,
+                "region": diag.region if diag else "HCM",
+                "asm_name": r.envelope.asm_name,
+                "report_date": r.envelope.report_date,
+                "mode": r.envelope.inspection_mode,
+                "data_class": r.envelope.data_class,
+                "mtd_actual": diag.mtd_actual if diag else 0.0,
+                "mtd_target": diag.mtd_target if diag else 0.0,
+                "achievement_pct": diag.achievement_pct if diag else 0.0,
+                "pace_delta_pct": diag.pace_delta_pct if diag else 0.0,
+                "lag_severity": tr.lag_severity if tr else (diag.lag_severity if diag else "UNKNOWN"),
+                "primary_blocker": tr.primary_blocker if tr else (diag.primary_blocker.title if diag and diag.primary_blocker else ""),
+                "action_plan": tr.action_plan if tr else (r.deep_audit.action_plan if r.deep_audit else ""),
+                "action_owner": tr.action_owner if tr else r.envelope.asm_name,
+                "action_due_date": tr.action_due_date if tr else (r.deep_audit.action_deadline if r.deep_audit else ""),
+                "expected_recovery": tr.expected_recovery if tr else None,
+                "actual_result": tr.actual_result if tr else None,
+                "intervention_status": tr.intervention_status if tr else "N/A",
+                "effectiveness_verdict": tr.effectiveness_verdict if tr else "N/A"
+            })
+            
+        return {
+            "period_name": period_name,
+            "asm_filter": asm_filter,
+            "region_filter": region_filter,
+            "generated_at": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "kpis": {
+                "total_visited": total_visits,
+                "unique_stores_count": len(distinct_stores),
+                "mode_counts": mode_counts,
+                "network_revenue_actual": total_actual,
+                "network_revenue_target": total_target,
+                "network_attainment_pct": round(attainment_pct, 1),
+                "network_gap_total": gap_total,
+                "severity_counts": sev_counts,
+                "total_committed_actions": total_committed,
+                "total_completed_actions": total_completed,
+                "total_verified_actions": total_verified,
+                "total_effective_actions": total_effective,
+                "action_completion_rate_pct": round(action_completion_rate, 1),
+                "action_verification_rate_pct": round(action_verification_rate, 1),
+                "recovery_effectiveness_rate_pct": round(recovery_effectiveness_rate, 1),
+                "effective_action_rate_pct": round(effective_action_rate, 1),
+                "total_expected_recovery": total_expected_recovery,
+                "total_actual_recovery": total_actual_recovery,
+                "pulse_stats": pulse_stats,
+                "top_systemic_issues": top_systemic_issues
+            },
+            "store_rows": store_rows
+        }
