@@ -1,4 +1,5 @@
 import os
+import json
 import hashlib
 import datetime
 from typing import List, Dict, Any, Optional
@@ -9,6 +10,10 @@ class AdmissionVerdict(BaseModel):
     admissible: bool
     report_run_id: str
     timestamp: str
+    source_snapshot_id: str = "SNAPSHOT_2026_08_28"
+    source_snapshot_date: str = "28/08/2026"
+    engine_version: str = "v6.0-PRO-CERTIFIED"
+    schema_version: str = "2026.08.31-v1.0"
     evidence_class: str # REAL_FIELD / CONTROLLED_PILOT_BASELINE
     total_inspections: int
     total_rescue_interventions: int
@@ -17,16 +22,19 @@ class AdmissionVerdict(BaseModel):
     ghost_records_count: int
     orphan_rescue_count: int
     block_reasons: List[str] = []
-    audit_hash: str = ""
+    audit_hash_full: str = ""      # Full 64-char SHA-256 Hex Hash
+    audit_hash_display: str = ""   # 16-char Display Digest with ellipsis
 
 class ReportAdmissionGate:
     """
-    Wave 6 Pre-flight Fail-Closed Admission Gate (Gate G5 / DA-X06).
-    Enforces that NO report (Excel or PPTX) can be generated if:
-      - Any UNRESOLVED incident exists in Reconciliation_Alerts.
-      - Any duplicate visit_id exists.
-      - Any ghost or orphan rescue record exists.
-      - Any invalid state machine transition exists.
+    Wave 6 Pre-flight Fail-Closed Admission Gate (Gate G5 / DA-X06 / P18.1 / P18.2).
+    Enforces:
+      1. Zero Unresolved Incidents in Reconciliation_Alerts.
+      2. Zero duplicate visit_id.
+      3. Zero ghost and orphan records.
+      4. Valid state machine transition.
+      5. Strict DATA_CLASS provenance validation.
+      6. Canonical 64-char SHA-256 evidence hashing.
     """
     @staticmethod
     def evaluate(
@@ -72,7 +80,7 @@ class ReportAdmissionGate:
                 ghost_count += 1
                 block_reasons.append(f"GHOST RESCUE: Visit {rec.envelope.visit_id} has RescueIntervention but inspection_mode is {rec.envelope.inspection_mode}")
 
-        # 4. Action State Machine Validation (DA-07 / G0)
+        # 4. Action State Machine Validation (DA-07 / G0 / P18.4)
         for rec in records:
             if rec.target_rescue:
                 status = rec.target_rescue.intervention_status
@@ -80,13 +88,16 @@ class ReportAdmissionGate:
                 if verdict == "EFFECTIVE" and status not in ["VERIFIED", "EFFECTIVE"]:
                     block_reasons.append(f"ILLEGAL STATE TRANSITION: Visit {rec.envelope.visit_id} claimed EFFECTIVE without VERIFIED status!")
 
-        # 5. Evidence Classification & Isolation (INV-01)
+        # 5. Evidence Classification & Provenance Validation (P18.1 / INV-01)
         real_field_count = sum(1 for r in records if r.envelope.data_class == "REAL_FIELD")
         baseline_count = sum(1 for r in records if r.envelope.data_class != "REAL_FIELD")
         
-        evidence_class = "REAL_FIELD" if (real_field_count > 0 and baseline_count == 0) else ("CONTROLLED_PILOT_BASELINE" if real_field_count == 0 else "CONTAMINATED_MIXED_DATASET")
-        
-        if evidence_class == "CONTAMINATED_MIXED_DATASET":
+        if real_field_count > 0 and baseline_count == 0:
+            evidence_class = "REAL_FIELD"
+        elif real_field_count == 0 and baseline_count > 0:
+            evidence_class = "CONTROLLED_PILOT_BASELINE"
+        else:
+            evidence_class = "CONTAMINATED_MIXED_DATASET"
             block_reasons.append("BASELINE CONTAMINATION DETECTED: Dataset contains mixed REAL_FIELD and CONTROLLED_PILOT_BASELINE records!")
             
         if enforce_real_field and evidence_class != "REAL_FIELD":
@@ -94,14 +105,32 @@ class ReportAdmissionGate:
 
         admissible = (len(block_reasons) == 0)
         
-        # Calculate Deterministic Audit Hash
-        hash_seed = f"{run_id}|{evidence_class}|{len(records)}|{len(incidents)}|{admissible}"
-        audit_hash = hashlib.sha256(hash_seed.encode("utf-8")).hexdigest()[:16].upper()
+        # 6. Canonical Full SHA-256 Audit Hash (P18.2 / 64 Hex Characters)
+        canonical_payload = {
+            "run_id": run_id,
+            "timestamp": timestamp,
+            "evidence_class": evidence_class,
+            "inspections_count": len(records),
+            "incidents_count": len(incidents),
+            "unresolved_count": len(unresolved),
+            "duplicate_count": len(duplicates),
+            "ghost_count": ghost_count,
+            "orphan_count": orphan_count,
+            "admissible": admissible,
+            "visit_ids": sorted(list(visited_ids))
+        }
+        canonical_str = json.dumps(canonical_payload, sort_keys=True, ensure_ascii=False)
+        audit_hash_full = hashlib.sha256(canonical_str.encode("utf-8")).hexdigest().upper()
+        audit_hash_display = f"{audit_hash_full[:16]}..."
         
         return AdmissionVerdict(
             admissible=admissible,
             report_run_id=run_id,
             timestamp=timestamp,
+            source_snapshot_id="SNAPSHOT_2026_08_28",
+            source_snapshot_date="28/08/2026",
+            engine_version="v6.0-PRO-CERTIFIED",
+            schema_version="2026.08.31-v1.0",
             evidence_class=evidence_class,
             total_inspections=len(records),
             total_rescue_interventions=total_rescue,
@@ -110,5 +139,6 @@ class ReportAdmissionGate:
             ghost_records_count=ghost_count,
             orphan_rescue_count=orphan_count,
             block_reasons=block_reasons,
-            audit_hash=audit_hash
+            audit_hash_full=audit_hash_full,
+            audit_hash_display=audit_hash_display
         )

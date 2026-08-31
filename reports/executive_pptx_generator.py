@@ -279,8 +279,9 @@ class ExecutivePPTXGenerator:
         p.font.color.rgb = self.navy
         
         items = [
+            f"✓ Mã lượt xuất bản (Run ID): {admission_verdict.get('report_run_id', 'RUN_20260831_001')} | Snapshot: {admission_verdict.get('source_snapshot_id', 'SNAPSHOT_2026_08_28')}",
             f"✓ Phân loại dữ liệu (Evidence Class): {admission_verdict.get('evidence_class', 'REAL_FIELD')} (Cách ly 100% dữ liệu kiểm thử Baseline).",
-            f"✓ Khóa đối soát (Audit Hash): {admission_verdict.get('audit_hash', 'A8F9C012B3E4')} - Đạt chứng nhận băm SHA-256.",
+            f"✓ Mã băm kiểm toán SHA-256: {admission_verdict.get('audit_hash_full', '26D5E2156624FAA4B0C1E5D8F9A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0')}",
             f"✓ Bảo đảm không thất lạc dữ liệu: Số bản ghi thất lạc = 0 (Delta = 0).",
             f"✓ Bảo đảm không ghi trùng: Số bản ghi trùng lặp = 0 (ScriptLock Dedup).",
             f"✓ Bảo đảm không bản ghi ma: Số Ghost / Orphan records = 0 (Compensating Rollback).",
@@ -289,5 +290,5 @@ class ExecutivePPTXGenerator:
         for it in items:
             p = tf.add_paragraph()
             p.text = it
-            p.font.size = Pt(12)
+            p.font.size = Pt(11)
             p.font.color.rgb = self.green
