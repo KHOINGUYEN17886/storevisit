@@ -15,6 +15,7 @@ class StoreDiagnosticPipeline:
     """
     Enterprise Data Pipeline for Retail Commander Store Diagnostic Cards.
     Reads ground-truth datasets from Data Lake and produces a versioned diagnostic snapshot.
+    Compliant with Gate 1.5 Semantic Audit & Strict Data Contract.
     """
 
     def __init__(self, config_path: str = "config/app_config.yaml"):
@@ -64,7 +65,7 @@ class StoreDiagnosticPipeline:
         return store_meta
 
     def generate_snapshot(self) -> Dict[str, Any]:
-        """Generate 185 Store Diagnostic Snapshot with versioning and quality status."""
+        """Generate 185 Store Diagnostic Snapshot with versioning, 4-tier severity and priority blockers."""
         store_meta = self.load_ssot_stores()
         store_codes = list(store_meta.keys())
         
@@ -77,14 +78,29 @@ class StoreDiagnosticPipeline:
         curr_day = latest_rev_date.day
         _, total_days_in_month = calendar.monthrange(curr_year, curr_month)
         
+        # Date & Selling Days Semantics (Gate 1.5 Audit)
+        selling_days_elapsed = curr_day # Last closed trading day
+        selling_days_remaining = total_days_in_month - selling_days_elapsed # Days 29, 30, 31 = 3 days
+        expected_progress_pct = round((selling_days_elapsed / total_days_in_month) * 100, 2) # 90.32%
+
         df_rev_curr = df_rev[(df_rev["Date"].dt.year == curr_year) & (df_rev["Date"].dt.month == curr_month)]
         rev_mtd_by_store = df_rev_curr.groupby(df_rev_curr["StoreCode"].str.strip().str.upper())["Revenue"].sum().to_dict()
 
-        # 2. Target
+        # 2. Target (Accurate Store_Total Filtering - avoiding double count)
         tgt_path = self.paths.get("target", r"C:\All_Report\2_CleanData\Target\TargetMonthly.csv")
         df_tgt = pd.read_csv(tgt_path)
         df_tgt_curr = df_tgt[(df_tgt["Year"] == curr_year) & (df_tgt["MonthNo"] == curr_month)]
-        tgt_mtd_by_store = df_tgt_curr.groupby(df_tgt_curr["StoreCode"].astype(str).str.strip().str.upper())["Target"].sum().to_dict()
+        
+        # Primary: BrandGroup == 'Store' (Store_Total). Fallback: Sum of sub-brands (APPI + AB)
+        store_total_tgt = df_tgt_curr[df_tgt_curr["BrandGroup"] == "Store"].groupby(df_tgt_curr["StoreCode"].astype(str).str.strip().str.upper())["Target"].sum().to_dict()
+        sub_brands_tgt = df_tgt_curr[df_tgt_curr["BrandGroup"].isin(["APPI", "AB"])].groupby(df_tgt_curr["StoreCode"].astype(str).str.strip().str.upper())["Target"].sum().to_dict()
+
+        tgt_mtd_by_store = {}
+        for scode, s_tgt in store_total_tgt.items():
+            tgt_mtd_by_store[scode] = s_tgt
+        for scode, sub_tgt in sub_brands_tgt.items():
+            if scode not in tgt_mtd_by_store or tgt_mtd_by_store[scode] <= 0:
+                tgt_mtd_by_store[scode] = sub_tgt
 
         # 3. Stock & Health
         stock_path = self.paths.get("stock", r"C:\All_Report\2_CleanData\Stocks\MART_Stock_Final_v89.csv")
@@ -110,9 +126,6 @@ class StoreDiagnosticPipeline:
         health_path = self.paths.get("health_master", r"C:\All_Report\8_RETAIL_COMMANDER\OutPut\02_Merchandising_Master\MART_HEALTH_MASTER_PERFECT.csv")
         df_health = pd.read_csv(health_path, dtype=str, low_memory=False)
 
-        selling_days_remaining = max(1, total_days_in_month - curr_day + 1)
-        expected_pace_pct = round((curr_day / total_days_in_month) * 100, 1)
-
         stores_dict = {}
 
         for code in store_codes:
@@ -124,17 +137,20 @@ class StoreDiagnosticPipeline:
             rev_status = "AVAILABLE" if (rev_mtd is not None and tgt_mtd is not None) else ("MISSING" if (rev_mtd is None and tgt_mtd is None) else "PARTIAL")
             
             if rev_mtd is not None and tgt_mtd is not None and tgt_mtd > 0:
-                achieve_pct = round((rev_mtd / tgt_mtd) * 100, 1)
+                actual_progress_pct = round((rev_mtd / tgt_mtd) * 100, 2)
+                pace_index = round((actual_progress_pct / expected_progress_pct), 4)
+                pace_delta_pct = round(actual_progress_pct - expected_progress_pct, 2)
+                
                 gap = max(0.0, tgt_mtd - rev_mtd)
-                req_daily = round(gap / selling_days_remaining, 0)
-                actual_daily = round(rev_mtd / curr_day, 0)
-                pace_vs_expected = round(achieve_pct - expected_pace_pct, 1)
+                req_daily = round(gap / selling_days_remaining, 0) if selling_days_remaining > 0 else 0.0
+                actual_daily = round(rev_mtd / selling_days_elapsed, 0) if selling_days_elapsed > 0 else 0.0
             else:
-                achieve_pct = None
+                actual_progress_pct = None
+                pace_index = None
+                pace_delta_pct = None
                 gap = None
                 req_daily = None
                 actual_daily = None
-                pace_vs_expected = None
 
             stk = stock_summary.get(code, None)
             stk_status = "AVAILABLE" if stk is not None else "MISSING"
@@ -155,45 +171,63 @@ class StoreDiagnosticPipeline:
                 except Exception:
                     pass
 
-            # Blockers
-            is_lagging = False
-            lag_severity = "ON_TRACK"
+            # 4-Tier Severity Classification (Gate 1.5)
+            if pace_index is not None:
+                if pace_index >= 0.95:
+                    severity = "PROTECT_ON_TRACK"
+                    is_lagging = False
+                elif pace_index >= 0.80:
+                    severity = "WATCH"
+                    is_lagging = True
+                elif pace_index >= 0.65:
+                    severity = "RECOVERY"
+                    is_lagging = True
+                else:
+                    severity = "RESCUE_CRITICAL"
+                    is_lagging = True
+            else:
+                severity = "UNKNOWN"
+                is_lagging = False
+
+            # Top Blockers with Priority Scoring (Gate 1.5)
             blockers = []
             
-            if achieve_pct is not None:
-                if achieve_pct < 65.0:
-                    is_lagging = True
-                    lag_severity = "CRITICAL"
-                elif achieve_pct < 85.0:
-                    is_lagging = True
-                    lag_severity = "HIGH"
-                elif achieve_pct < 95.0:
-                    is_lagging = True
-                    lag_severity = "MODERATE"
-                    
-                if pace_vs_expected is not None and pace_vs_expected < -5.0:
-                    blockers.append({
-                        "code": "PACE_DROP",
-                        "category": "revenue",
-                        "title": f"Tiến độ bán hàng chậm {abs(pace_vs_expected)}%",
-                        "detail": f"Đạt {achieve_pct}% so với mốc kỳ vọng {expected_pace_pct}% của ngày {curr_day}"
-                    })
-                    
+            # 1. Pace drop blocker
+            if pace_delta_pct is not None and pace_delta_pct < -5.0:
+                p_level = 1 if pace_delta_pct < -20.0 else 2
+                blockers.append({
+                    "priority": p_level,
+                    "code": "PACE_DROP",
+                    "category": "revenue",
+                    "title": f"Tiến độ bán hàng chậm {abs(pace_delta_pct):.1f}%",
+                    "detail": f"Đạt {actual_progress_pct}% (Pace Index: {pace_index*100:.1f}%) so với mốc kỳ vọng {expected_progress_pct}% của ngày {selling_days_elapsed}",
+                    "severity": "CRITICAL" if p_level == 1 else "HIGH"
+                })
+                
+            # 2. Stockout blocker
             if stockouts:
                 blockers.append({
+                    "priority": 1 if severity in ["RESCUE_CRITICAL", "RECOVERY"] else 2,
                     "code": "STOCKOUT_CORE",
                     "category": "inventory",
                     "title": f"Cảnh báo thiếu {len(stockouts)} mã hàng chủ lực",
-                    "detail": f"Nguy cơ đứt hàng ở các mã: {', '.join([s['name'][:25] for s in stockouts])}"
+                    "detail": f"Nguy cơ đứt hàng ở các mã: {', '.join([s['name'][:25] for s in stockouts])}",
+                    "severity": "HIGH"
                 })
                 
+            # 3. Aging stock blocker
             if stk and stk["aging_pct"] > 20.0:
                 blockers.append({
+                    "priority": 2 if stk["aging_pct"] > 50.0 else 3,
                     "code": "AGING_STOCK",
                     "category": "inventory",
                     "title": f"Tồn kho chậm luân chuyển cao ({stk['aging_pct']}%)",
-                    "detail": f"Có {stk['aging_qty']} sản phẩm phân phối từ năm trước"
+                    "detail": f"Có {stk['aging_qty']:,} sản phẩm phân phối từ năm trước chiếm {stk['aging_pct']}% tổng tồn",
+                    "severity": "HIGH" if stk["aging_pct"] > 50.0 else "MEDIUM"
                 })
+                
+            # Sort blockers by priority ascending (1 = Primary, 2 = Secondary, 3 = Watch)
+            blockers.sort(key=lambda b: b["priority"])
 
             card = {
                 "store_code": code,
@@ -207,14 +241,16 @@ class StoreDiagnosticPipeline:
                     "status": rev_status,
                     "mtd_actual": rev_mtd,
                     "mtd_target": tgt_mtd,
-                    "achievement_pct": achieve_pct,
+                    "achievement_pct": actual_progress_pct,
+                    "pace_index": pace_index,
+                    "pace_delta_pct": pace_delta_pct,
                     "gap_amount": gap,
                     "selling_days_in_month": total_days_in_month,
-                    "selling_days_elapsed": curr_day,
+                    "selling_days_elapsed": selling_days_elapsed,
                     "selling_days_remaining": selling_days_remaining,
+                    "expected_progress_pct": expected_progress_pct,
                     "required_daily_runrate": req_daily,
-                    "actual_daily_runrate": actual_daily,
-                    "pace_vs_expected_pct": pace_vs_expected
+                    "actual_daily_runrate": actual_daily
                 },
                 "inventory": {
                     "status": stk_status,
@@ -230,7 +266,8 @@ class StoreDiagnosticPipeline:
                 },
                 "diagnosis": {
                     "is_lagging": is_lagging,
-                    "lag_severity": lag_severity,
+                    "lag_severity": severity,
+                    "primary_blocker": blockers[0] if blockers else None,
                     "top_blockers": blockers
                 }
             }
@@ -241,13 +278,14 @@ class StoreDiagnosticPipeline:
             "snapshot_metadata": {
                 "generated_at": now_str,
                 "snapshot_date": latest_rev_date.strftime("%Y-%m-%d"),
-                "source_version": f"{latest_rev_date.strftime('%Y.%m.%d')}_v1",
-                "diagnostic_version": "v1.0_enterprise",
+                "source_version": f"{latest_rev_date.strftime('%Y.%m.%d')}_v1.5",
+                "diagnostic_version": "v1.5_semantic_audit",
                 "total_stores": len(stores_dict),
                 "active_month": f"{curr_year}-{curr_month:02d}",
                 "selling_days_in_month": total_days_in_month,
-                "selling_days_elapsed": curr_day,
-                "selling_days_remaining": selling_days_remaining
+                "selling_days_elapsed": selling_days_elapsed,
+                "selling_days_remaining": selling_days_remaining,
+                "expected_progress_pct": expected_progress_pct
             },
             "stores": stores_dict
         }
@@ -285,10 +323,10 @@ class StoreDiagnosticPipeline:
             rows = []
             headers = [
                 "StoreCode", "StoreName", "Region", "ASM", "Manager", "StoreType",
-                "DataStatus", "MTD_Actual", "MTD_Target", "Achievement_Pct", "Gap_Amount",
-                "SellingDaysRemaining", "RequiredDailyRunRate", "ActualDailyRunRate", "PaceVsExpected_Pct",
+                "DataStatus", "MTD_Actual", "MTD_Target", "Achievement_Pct", "Pace_Index", "Pace_Delta_Pct", "Gap_Amount",
+                "SellingDaysRemaining", "RequiredDailyRunRate", "ActualDailyRunRate", "ExpectedProgress_Pct",
                 "Stock_TotalQty", "Stock_TotalVal", "Stock_AgingPct", "StockoutCount",
-                "TargetHeadcount", "IsLagging", "LagSeverity", "TopBlockers_JSON", "Diagnostic_JSON"
+                "TargetHeadcount", "IsLagging", "LagSeverity", "PrimaryBlocker_Title", "TopBlockers_JSON", "Diagnostic_JSON"
             ]
             
             for code, card in stores.items():
@@ -296,6 +334,7 @@ class StoreDiagnosticPipeline:
                 i = card["inventory"]
                 s = card["staff"]
                 d = card["diagnosis"]
+                pb = d.get("primary_blocker")
                 
                 row = [
                     code,
@@ -308,18 +347,21 @@ class StoreDiagnosticPipeline:
                     r.get("mtd_actual", 0) if r.get("mtd_actual") is not None else "",
                     r.get("mtd_target", 0) if r.get("mtd_target") is not None else "",
                     r.get("achievement_pct", "") if r.get("achievement_pct") is not None else "",
+                    r.get("pace_index", "") if r.get("pace_index") is not None else "",
+                    r.get("pace_delta_pct", "") if r.get("pace_delta_pct") is not None else "",
                     r.get("gap_amount", 0) if r.get("gap_amount") is not None else "",
                     r.get("selling_days_remaining", ""),
                     r.get("required_daily_runrate", "") if r.get("required_daily_runrate") is not None else "",
                     r.get("actual_daily_runrate", "") if r.get("actual_daily_runrate") is not None else "",
-                    r.get("pace_vs_expected_pct", "") if r.get("pace_vs_expected_pct") is not None else "",
+                    r.get("expected_progress_pct", ""),
                     i.get("total_qty", "") if i.get("total_qty") is not None else "",
                     i.get("total_value", "") if i.get("total_value") is not None else "",
                     i.get("aging_pct", "") if i.get("aging_pct") is not None else "",
                     len(i.get("top_stockout_skus", [])),
                     s.get("target_headcount", ""),
                     "YES" if d.get("is_lagging") else "NO",
-                    d.get("lag_severity", "ON_TRACK"),
+                    d.get("lag_severity", "PROTECT_ON_TRACK"),
+                    pb.get("title", "") if pb else "",
                     json.dumps(d.get("top_blockers", []), ensure_ascii=False),
                     json.dumps(card, ensure_ascii=False)
                 ]
