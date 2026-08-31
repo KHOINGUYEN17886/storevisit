@@ -12178,7 +12178,11 @@ function submitTargetRescueVisit() {
   function logoutUser() {
     if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
       currentUser = null;
+      window.CURRENT_USER = null;
+      window.AUTH_TOKEN = null;
+      window.STORE_DIAGNOSTICS_DATA = {};
       localStorage.removeItem("storevisit_user");
+      localStorage.removeItem("storevisit_auth_token");
       activeDraftId = null;
       showAuthPortalUI();
     }
