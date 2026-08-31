@@ -690,7 +690,30 @@
     }, 200);
   }
 
+  
+  // =========================================================================
+  // GUARANTEED CHECKLIST RENDER ENGINE (CALLED ON INIT & LOGIN)
+  // =========================================================================
+  function renderAllChecklists() {
+    try {
+      if (typeof checklistSchema === 'object' && checklistSchema) {
+        var schemaKeys = Object.keys(checklistSchema);
+        for (var sk = 0; sk < schemaKeys.length; sk++) {
+          var k = schemaKeys[sk];
+          if (typeof renderChecklist === 'function') {
+            renderChecklist(k, checklistSchema[k]);
+          }
+        }
+      }
+    } catch(e) {
+      console.warn("renderAllChecklists error:", e);
+    }
+  }
+  window.renderAllChecklists = renderAllChecklists;
+
   function showMainAppUI(user) {
+    renderAllChecklists();
+
     currentUser = user;
     window.CURRENT_USER = user;
     try {
@@ -1269,33 +1292,33 @@
     
     <!-- NAVIGATION TABS -->
     <div class="nav-tabs-container">
-      <ul class="nav nav-tabs" id="visitTabs" role="tablist">
+            <ul class="nav nav-tabs" id="visitTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab">1. Thông tin chung</button>
+          <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab"><i class="bi bi-info-circle me-1"></i> 1. Thông tin chung</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="frontage-tab" data-bs-toggle="tab" data-bs-target="#tab-frontage" type="button" role="tab">2. Mặt tiền</button>
+          <button class="nav-link" id="frontage-tab" data-bs-toggle="tab" data-bs-target="#tab-frontage" type="button" role="tab"><i class="bi bi-shop-window me-1"></i> 2. Mặt tiền</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="inner-tab" data-bs-toggle="tab" data-bs-target="#tab-inner" type="button" role="tab">3. Không gian trong</button>
+          <button class="nav-link" id="inner-tab" data-bs-toggle="tab" data-bs-target="#tab-inner" type="button" role="tab"><i class="bi bi-door-open me-1"></i> 3. Không gian trong</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="merch-tab" data-bs-toggle="tab" data-bs-target="#tab-merch" type="button" role="tab">4. Trưng bày VM</button>
+          <button class="nav-link" id="merch-tab" data-bs-toggle="tab" data-bs-target="#tab-merch" type="button" role="tab"><i class="bi bi-tags me-1"></i> 4. Trưng bày VM</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="warehouse-tab" data-bs-toggle="tab" data-bs-target="#tab-warehouse" type="button" role="tab">5. Kho & Quầy kệ</button>
+          <button class="nav-link" id="warehouse-tab" data-bs-toggle="tab" data-bs-target="#tab-warehouse" type="button" role="tab"><i class="bi bi-boxes me-1"></i> 5. Kho & Quầy kệ</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="staff-tab" data-bs-toggle="tab" data-bs-target="#tab-staff" type="button" role="tab">6. Nhân sự</button>
+          <button class="nav-link" id="staff-tab" data-bs-toggle="tab" data-bs-target="#tab-staff" type="button" role="tab"><i class="bi bi-people me-1"></i> 6. Nhân sự</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="competitor-tab" data-bs-toggle="tab" data-bs-target="#tab-competitor" type="button" role="tab">7. Đối thủ</button>
+          <button class="nav-link" id="competitor-tab" data-bs-toggle="tab" data-bs-target="#tab-competitor" type="button" role="tab"><i class="bi bi-crosshair me-1"></i> 7. Đối thủ</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="survey-tab" data-bs-toggle="tab" data-bs-target="#tab-survey" type="button" role="tab">8. Khảo sát QLKD</button>
+          <button class="nav-link" id="survey-tab" data-bs-toggle="tab" data-bs-target="#tab-survey" type="button" role="tab"><i class="bi bi-clipboard-data me-1"></i> 8. Khảo sát QLKD</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#tab-summary" type="button" role="tab">9. Tổng hợp lỗi</button>
+          <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#tab-summary" type="button" role="tab"><i class="bi bi-check2-circle me-1"></i> 9. Tổng hợp lỗi</button>
         </li>
       </ul>
     </div>
@@ -1863,7 +1886,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>2.1. Đánh giá Ngoại quan & Mặt tiền</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_frontage">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_frontage"></div>
@@ -1974,7 +1997,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>2.2. Đánh giá Không gian bên trong</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_inner">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_inner"></div>
@@ -2111,7 +2134,7 @@
             <div class="card" id="card_merch_ap">
               <div class="card-header-custom">
                 <span class="fw-bold" style="color: #6E1E1E !important; font-size: 16px;"><i class="bi bi-tag-fill me-2" style="color: #C5A059;"></i> 1. Tiêu Chuẩn Trưng Bày An Phước (AP)</span>
-                <span class="score-badge chưa_đánh_giá" id="score_badge_merch_ap">Chưa đánh giá</span>
+                
               </div>
               <div class="card-body">
                 <div id="checklist_merch_ap"></div>
@@ -2143,7 +2166,7 @@
             <div class="card" id="card_merch_pie">
               <div class="card-header-custom">
                 <span class="fw-bold" style="color: #1E3A8A !important; font-size: 16px;"><i class="bi bi-gem me-2" style="color: #3B82F6;"></i> 2. Tiêu Chuẩn Trưng Bày Pierre Cardin (PIE)</span>
-                <span class="score-badge chưa_đánh_giá" id="score_badge_merch_pie">Chưa đánh giá</span>
+                
               </div>
               <div class="card-body">
                 <div id="checklist_merch_pie"></div>
@@ -2175,7 +2198,7 @@
             <div class="card mb-3" id="card_merch_anamai">
               <div class="card-header-custom">
                 <span class="fw-bold" style="color: #9D174D !important; font-size: 16px;"><i class="bi bi-flower1 me-2" style="color: #EC4899;"></i> 3. Tiêu Chuẩn Trưng Bày Anamai (AN)</span>
-                <span class="score-badge chưa_đánh_giá" id="score_badge_merch_anamai">Chưa đánh giá</span>
+                
               </div>
               <div class="card-body">
                 <div id="checklist_merch_anamai"></div>
@@ -2204,7 +2227,7 @@
             <div class="card" id="card_merch_bonjour">
               <div class="card-header-custom">
                 <span class="fw-bold" style="color: #065F46 !important; font-size: 16px;"><i class="bi bi-stars me-2" style="color: #10B981;"></i> 4. Tiêu Chuẩn Trưng Bày Bonjour (BJ)</span>
-                <span class="score-badge chưa_đánh_giá" id="score_badge_merch_bonjour">Chưa đánh giá</span>
+                
               </div>
               <div class="card-body">
                 <div id="checklist_merch_bonjour"></div>
@@ -2236,7 +2259,7 @@
             <div class="card">
               <div class="card-header-custom">
                 <span>Trưng bày Khu Phụ Kiện</span>
-                <span class="score-badge chưa_đánh_giá" id="score_badge_merch_pk">Chưa đánh giá</span>
+                
               </div>
               <div class="card-body">
                 <div id="checklist_merch_pk"></div>
@@ -2303,7 +2326,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>CSVC - Kho hàng (Stockroom)</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_stockroom">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_stockroom"></div>
@@ -2333,7 +2356,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>CSVC - Phòng thử đồ (Fitting Room)</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_fitting_room">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_fitting_room"></div>
@@ -2363,7 +2386,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>CSVC - Nhà vệ sinh (Toilet)</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_toilet">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_toilet"></div>
@@ -2393,7 +2416,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>CSVC - PCCC & Lối thoát hiểm</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_fire_safety">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_fire_safety"></div>
@@ -2423,7 +2446,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>CSVC - Quầy thu ngân</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_cashier">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_cashier"></div>
@@ -2453,7 +2476,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>CSVC - Bao bì & An ninh</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_packaging_security">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_packaging_security"></div>
@@ -2483,7 +2506,7 @@
         <div class="card mb-3" id="card_security_guard">
           <div class="card-header-custom">
             <span>VẬN HÀNH NGOÀI — NHÂN VIÊN BẢO VỆ</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_security_guard">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_security_guard"></div>
@@ -2573,7 +2596,7 @@
         <div class="card mb-3">
           <div class="card-header-custom">
             <span>Tác phong & Đồng phục Nhân sự</span>
-            <span class="score-badge chưa_đánh_giá" id="score_badge_staff">Chưa đánh giá</span>
+            
           </div>
           <div class="card-body">
             <div id="checklist_staff"></div>
@@ -4023,6 +4046,7 @@
   // SCHEMA DEFINITIONS
   // -------------------------------------------------------------
   const checklistSchema = {
+
     "frontage": {
       "title": "Ngoại quan & Mặt tiền cửa hàng",
       "items": [
@@ -4164,6 +4188,8 @@
       ]
     }
   };
+  window.checklistSchema = checklistSchema;
+
 
   // -------------------------------------------------------------
   // STATE MANAGEMENT
@@ -5299,7 +5325,25 @@ function submitTargetRescueVisit() {
 }
 
 
+    function ensureFullAuditModeActive() {
+    var tabsNav = document.querySelector('.nav-tabs-container');
+    if (tabsNav) tabsNav.classList.remove('d-none');
+    var tabsContent = document.getElementById('visitTabsContent');
+    if (tabsContent) tabsContent.classList.remove('d-none');
+    var formEl = document.getElementById('storeVisitForm');
+    if (formEl) formEl.classList.remove('d-none');
+    
+    var qp = document.getElementById('quickPulseSection');
+    if (qp) qp.classList.add('d-none');
+    var tr = document.getElementById('targetRescueSection');
+    if (tr) tr.classList.add('d-none');
+  }
+  window.ensureFullAuditModeActive = ensureFullAuditModeActive;
+
   function initApp() {
+
+    ensureFullAuditModeActive();
+
     fetchAndCacheStoreDiagnostics();
     debugLog("initApp: Bắt đầu khởi tạo hệ thống...");
     try {
@@ -5528,7 +5572,9 @@ function submitTargetRescueVisit() {
     }
   }
 
+  window.renderChecklist = renderChecklist;
   function renderChecklist(secKey, secObj) {
+    window.renderChecklist = renderChecklist;
     const container = document.getElementById(`checklist_${secKey}`);
     if (!container) return;
     
@@ -11891,7 +11937,30 @@ function submitTargetRescueVisit() {
     if (mainApp) mainApp.classList.add("d-none");
   }
 
+  
+  // =========================================================================
+  // GUARANTEED CHECKLIST RENDER ENGINE (CALLED ON INIT & LOGIN)
+  // =========================================================================
+  function renderAllChecklists() {
+    try {
+      if (typeof checklistSchema === 'object' && checklistSchema) {
+        var schemaKeys = Object.keys(checklistSchema);
+        for (var sk = 0; sk < schemaKeys.length; sk++) {
+          var k = schemaKeys[sk];
+          if (typeof renderChecklist === 'function') {
+            renderChecklist(k, checklistSchema[k]);
+          }
+        }
+      }
+    } catch(e) {
+      console.warn("renderAllChecklists error:", e);
+    }
+  }
+  window.renderAllChecklists = renderAllChecklists;
+
   function showMainAppUI(user) {
+    renderAllChecklists();
+
     const portal = document.getElementById("appAuthPortal");
     const mainApp = document.getElementById("appMainContainer");
     if (portal) portal.classList.add("d-none");
@@ -12839,7 +12908,30 @@ function submitTargetRescueVisit() {
     if (mainApp) mainApp.classList.add("d-none");
   }
 
+  
+  // =========================================================================
+  // GUARANTEED CHECKLIST RENDER ENGINE (CALLED ON INIT & LOGIN)
+  // =========================================================================
+  function renderAllChecklists() {
+    try {
+      if (typeof checklistSchema === 'object' && checklistSchema) {
+        var schemaKeys = Object.keys(checklistSchema);
+        for (var sk = 0; sk < schemaKeys.length; sk++) {
+          var k = schemaKeys[sk];
+          if (typeof renderChecklist === 'function') {
+            renderChecklist(k, checklistSchema[k]);
+          }
+        }
+      }
+    } catch(e) {
+      console.warn("renderAllChecklists error:", e);
+    }
+  }
+  window.renderAllChecklists = renderAllChecklists;
+
   function showMainAppUI(user) {
+    renderAllChecklists();
+
     const portal = document.getElementById("appAuthPortal");
     const mainApp = document.getElementById("appMainContainer");
     if (portal) portal.classList.add("d-none");
@@ -14584,7 +14676,30 @@ function submitTargetRescueVisit() {
     if (mainApp) mainApp.classList.add("d-none");
   }
 
+  
+  // =========================================================================
+  // GUARANTEED CHECKLIST RENDER ENGINE (CALLED ON INIT & LOGIN)
+  // =========================================================================
+  function renderAllChecklists() {
+    try {
+      if (typeof checklistSchema === 'object' && checklistSchema) {
+        var schemaKeys = Object.keys(checklistSchema);
+        for (var sk = 0; sk < schemaKeys.length; sk++) {
+          var k = schemaKeys[sk];
+          if (typeof renderChecklist === 'function') {
+            renderChecklist(k, checklistSchema[k]);
+          }
+        }
+      }
+    } catch(e) {
+      console.warn("renderAllChecklists error:", e);
+    }
+  }
+  window.renderAllChecklists = renderAllChecklists;
+
   function showMainAppUI(user) {
+    renderAllChecklists();
+
     const portal = document.getElementById("appAuthPortal");
     const mainApp = document.getElementById("appMainContainer");
     if (portal) portal.classList.add("d-none");
@@ -15532,7 +15647,30 @@ function submitTargetRescueVisit() {
     if (mainApp) mainApp.classList.add("d-none");
   }
 
+  
+  // =========================================================================
+  // GUARANTEED CHECKLIST RENDER ENGINE (CALLED ON INIT & LOGIN)
+  // =========================================================================
+  function renderAllChecklists() {
+    try {
+      if (typeof checklistSchema === 'object' && checklistSchema) {
+        var schemaKeys = Object.keys(checklistSchema);
+        for (var sk = 0; sk < schemaKeys.length; sk++) {
+          var k = schemaKeys[sk];
+          if (typeof renderChecklist === 'function') {
+            renderChecklist(k, checklistSchema[k]);
+          }
+        }
+      }
+    } catch(e) {
+      console.warn("renderAllChecklists error:", e);
+    }
+  }
+  window.renderAllChecklists = renderAllChecklists;
+
   function showMainAppUI(user) {
+    renderAllChecklists();
+
     const portal = document.getElementById("appAuthPortal");
     const mainApp = document.getElementById("appMainContainer");
     if (portal) portal.classList.add("d-none");
