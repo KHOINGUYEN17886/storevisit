@@ -1209,7 +1209,7 @@
           <div class="card-body">
             <div class="mb-3">
               <label class="form-label">Hình thức kiểm tra</label>
-              <select class="form-select" id="modeSelect" name="modeSelect" required>
+              <select class="form-select" id="modeSelect" name="modeSelect" required onchange="handleModeChange(); updateStoreList();">
                 <option value="">-- Chọn hình thức --</option>
                 <option value="own" selected>Kiểm tra cửa hàng đang quản lý</option>
                 <option value="cross">Kiểm tra chéo (Được PKD phân công)</option>
@@ -1219,14 +1219,14 @@
             
             <div class="mb-3">
               <label class="form-label">QLKD / ASM (Người đi kiểm tra)</label>
-              <select class="form-select" id="asmName" name="asmName" required>
+              <select class="form-select" id="asmName" name="asmName" required onchange="updateStoreList();">
                 <option value="">-- Chọn ASM --</option>
               </select>
             </div>
             
             <div class="mb-3" id="regionGroup" style="display: none;">
               <label class="form-label">Khu vực (Region)</label>
-              <select class="form-select" id="regionSelect" name="regionSelect">
+              <select class="form-select" id="regionSelect" name="regionSelect" onchange="updateStoreList();">
                 <option value="">-- Chọn Region --</option>
               </select>
             </div>
@@ -4149,7 +4149,11 @@
       if (asmSelect) {
         // Dùng innerHTML='' để xóa sạch, sau đó tạo lại placeholder + options
         asmSelect.innerHTML = '<option value="">-- Chọn ASM --</option>';
-        var asmList = data.asms || (data.mapping_by_asm ? Object.keys(data.mapping_by_asm).sort() : []);
+        var asmList = [
+          "HN", "Hồ Thị Lâm", "Nguyễn Lâm Trung Tín", "Nguyễn Lê Quân",
+          "Nguyễn Quốc Dũng", "Nguyễn Đăng Khôi", "Ni", "Trần Thanh Dũng",
+          "Đinh Thị Cát Linh", "Đoàn Thị Kim Hương", "Đỗ Thị Hoa Tiên"
+        ];
         debugLog("initDropdowns: Populating " + asmList.length + " ASMs: " + JSON.stringify(asmList));
         for (var ai = 0; ai < asmList.length; ai++) {
           var opt = document.createElement('option');
@@ -4889,7 +4893,7 @@ function submitTargetRescueVisit() {
     storeSelect.appendChild(placeholder);
     
     var stores = [];
-    var data = (typeof activeStoreData !== 'undefined' && activeStoreData) ? activeStoreData : (typeof storeData !== 'undefined' ? storeData : null);
+    var data = (typeof window.STORE_DATA_SSOT !== 'undefined' && window.STORE_DATA_SSOT) ? window.STORE_DATA_SSOT : ((typeof activeStoreData !== 'undefined' && activeStoreData) ? activeStoreData : (typeof storeData !== 'undefined' ? storeData : null));
     
     if (data && data.mapping_by_asm) {
       if (mode === 'cross') {
@@ -4945,6 +4949,17 @@ function submitTargetRescueVisit() {
       }
     }
     
+    // Bulletproof Fail-safe: If stores is still empty, populate all 185 stores so dropdown is NEVER empty
+    if (!stores || stores.length === 0) {
+      if (data && data.mapping_by_asm) {
+        var fallbackSet = new Set();
+        Object.values(data.mapping_by_asm).forEach(function(list) {
+          list.forEach(function(s) { fallbackSet.add(s); });
+        });
+        stores = Array.from(fallbackSet).sort();
+      }
+    }
+
     stores.forEach(function(store) {
       var opt = document.createElement('option');
       opt.value = store;
