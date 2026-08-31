@@ -392,12 +392,21 @@ function getStoreDiagnostics() {
  * 8. Real Identity Binding (Cryptographic Auth Token Verification)
  * 9. Scope Authorization / ASM x Store Entitlement (Row-Level Access Control)
  */
-var STOREVISIT_AUTH_SALT = "STOREVISIT_SECURE_AUTH_2026_ENTERPRISE";
+var STOREVISIT_DEFAULT_SALT = "STOREVISIT_SECURE_AUTH_2026_ENTERPRISE";
+var SESSION_TTL_SECONDS = 43200; // 12 Hours TTL (H1)
+
+function getAuthSalt() {
+  try {
+    var secret = PropertiesService.getScriptProperties().getProperty("STOREVISIT_AUTH_SALT");
+    if (secret && secret.trim().length > 10) return secret.trim();
+  } catch(e) {}
+  return STOREVISIT_DEFAULT_SALT;
+}
 
 function generateUserSessionToken(username, role) {
   var ts = Math.floor(new Date().getTime() / 1000);
   var raw = String(username).trim().toLowerCase() + ":" + String(role).trim().toLowerCase() + ":" + ts;
-  var signature = Utilities.base64Encode(Utilities.computeHmacSha256Signature(raw, STOREVISIT_AUTH_SALT)).substring(0, 16);
+  var signature = Utilities.base64Encode(Utilities.computeHmacSha256Signature(raw, getAuthSalt())).substring(0, 16);
   return String(username).trim().toLowerCase() + "." + ts + "." + signature;
 }
 
@@ -421,8 +430,15 @@ function verifyUserSessionToken(token, fallbackUsername) {
       var parts = token.split(".");
       if (parts.length === 3) {
         var u = parts[0];
-        var ts = parts[1];
+        var ts = parseInt(parts[1], 10);
         var sig = parts[2];
+        var nowTs = Math.floor(new Date().getTime() / 1000);
+
+        // H1: Token Expiry Check (12 Hours)
+        if (isNaN(ts) || (nowTs - ts) > SESSION_TTL_SECONDS || (ts - nowTs) > 300) {
+          console.warn("Session token expired for user: " + u);
+          return null; // Expired session
+        }
         
         for (var i = 1; i < data.length; i++) {
           var rowUser = String(data[i][uIdx] || "").trim().toLowerCase();
@@ -430,7 +446,7 @@ function verifyUserSessionToken(token, fallbackUsername) {
           if (rowUser === u && rowStatus.toLowerCase() === "active") {
             var rowRole = String(data[i][rIdx] || "asm").trim().toLowerCase();
             var raw = u + ":" + rowRole + ":" + ts;
-            var expectedSig = Utilities.base64Encode(Utilities.computeHmacSha256Signature(raw, STOREVISIT_AUTH_SALT)).substring(0, 16);
+            var expectedSig = Utilities.base64Encode(Utilities.computeHmacSha256Signature(raw, getAuthSalt())).substring(0, 16);
             if (sig === expectedSig) {
               return {
                 username: u,

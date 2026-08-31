@@ -420,7 +420,138 @@
       transform: translateY(-2px);
     }
 
-</style>
+
+    /* =========================================================================
+       APPLE HIG & SPA STYLES (WAVE 3 RETAIL COMMANDER)
+       ========================================================================= */
+    .ios-glass-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(229, 231, 235, 0.8);
+      border-radius: 18px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      margin-bottom: 20px;
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .ios-mode-switcher {
+      display: flex;
+      background: #F1F5F9;
+      padding: 4px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      gap: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid #E2E8F0;
+    }
+    
+    .ios-mode-btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: #64748B;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .ios-mode-btn.active {
+      background: #FFFFFF;
+      color: #0F172A;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
+    
+    .diag-metric-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .diag-metric-val {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    
+    .diag-metric-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748B;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    
+    .sev-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .sev-protect { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
+    .sev-watch { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
+    .sev-recovery { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
+    .sev-rescue { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
+    .sev-unknown { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
+    
+    .blocker-card {
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border-left: 4px solid;
+    }
+    .blocker-p1 { background: #FEF2F2; border-left-color: #EF4444; border-top: 1px solid #FEE2E2; border-right: 1px solid #FEE2E2; border-bottom: 1px solid #FEE2E2; }
+    .blocker-p2 { background: #FFFBEB; border-left-color: #F59E0B; border-top: 1px solid #FEF3C7; border-right: 1px solid #FEF3C7; border-bottom: 1px solid #FEF3C7; }
+    .blocker-p3 { background: #F8FAFC; border-left-color: #64748B; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; }
+
+    .quick-toggle-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      border: 1.5px solid #E2E8F0;
+      background: #FFFFFF;
+      font-weight: 600;
+      font-size: 14px;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .quick-toggle-btn.passed {
+      background: #F0FDF4;
+      border-color: #22C55E;
+      color: #15803D;
+    }
+    .quick-toggle-btn.failed {
+      background: #FEF2F2;
+      border-color: #EF4444;
+      color: #B91C1C;
+    }
+
+  </style>
 </head>
 <body>
 
@@ -702,6 +833,231 @@
     </div>
 
     <!-- TAB CONTENT -->
+    
+        <!-- ============================================================= -->
+        <!-- WAVE 3: PERSISTENT EXECUTIVE DIAGNOSTIC LAYER (APPLE HIG)     -->
+        <!-- ============================================================= -->
+        <div id="executiveDiagnosticLayer" class="ios-glass-card d-none mb-4 p-3 p-md-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-dark text-white rounded-pill px-2" id="diagStoreCodeBadge">CHOA3</span>
+                <h5 class="fw-bold text-dark mb-0" id="diagStoreNameTitle">454 Cộng Hòa</h5>
+              </div>
+              <small class="text-muted" id="diagStoreMetaSubtitle">ASM: Nguyễn Quốc Dũng • Vùng: HCM</small>
+            </div>
+            <div id="diagSeverityPillContainer" class="mt-2 mt-md-0">
+              <span class="sev-pill sev-watch" id="diagSeverityPill">
+                <i class="bi bi-exclamation-triangle-fill"></i> <span id="diagSeverityText">WATCH</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- 4 Metric KPI Cards -->
+          <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3">
+              <div class="diag-metric-box">
+                <div class="diag-metric-val" id="diagMtdProgress">74.2%</div>
+                <div class="diag-metric-lbl">Tiến độ MTD</div>
+                <small class="text-muted d-block text-truncate" id="diagMtdValDetail">6.1B / 8.2B</small>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="diag-metric-box">
+                <div class="diag-metric-val text-danger" id="diagPaceDelta">-16.1%</div>
+                <div class="diag-metric-lbl">Độ lệch Pace</div>
+                <small class="text-muted d-block text-truncate" id="diagPaceIndexDetail">Pace Index: 82.2%</small>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="diag-metric-box">
+                <div class="diag-metric-val text-primary" id="diagRequiredDaily">710.5M</div>
+                <div class="diag-metric-lbl">Chỉ tiêu / Ngày</div>
+                <small class="text-muted d-block text-truncate" id="diagDaysLeftDetail">Còn 3 ngày bán</small>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="diag-metric-box">
+                <div class="diag-metric-val" id="diagStockAging">24.5%</div>
+                <div class="diag-metric-lbl">Tồn kho cũ</div>
+                <small class="text-muted d-block text-truncate" id="diagStockQtyDetail">Tồn: 12,450 sp</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Blockers Alert Box -->
+          <div id="diagBlockersContainer">
+            <!-- Dynamically populated blockers -->
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- WAVE 3: APPLE HIG SEGMENTED MODE SWITCHER (5 MODES)           -->
+        <!-- ============================================================= -->
+        <div class="ios-mode-switcher mb-4" id="iosModeSwitcher">
+          <button type="button" class="ios-mode-btn" data-mode="quick_pulse" onclick="switchInspectionMode('quick_pulse')">
+            <i class="bi bi-lightning-charge-fill text-warning"></i> ⚡ Quick Pulse
+          </button>
+          <button type="button" class="ios-mode-btn" data-mode="target_rescue" onclick="switchInspectionMode('target_rescue')">
+            <i class="bi bi-shield-fill-exclamation text-danger"></i> 🎯 Cứu Target
+          </button>
+          <button type="button" class="ios-mode-btn active" data-mode="deep_audit" onclick="switchInspectionMode('deep_audit')">
+            <i class="bi bi-clipboard2-check-fill text-primary"></i> 🏢 Đại Kiểm Tra
+          </button>
+          <button type="button" class="ios-mode-btn" data-mode="cross" onclick="switchInspectionMode('cross')">
+            <i class="bi bi-arrow-left-right text-success"></i> 🔄 Kiểm Tra Chéo
+          </button>
+          <button type="button" class="ios-mode-btn" data-mode="opening" onclick="switchInspectionMode('opening')">
+            <i class="bi bi-balloon-fill text-info"></i> 🎊 Khai Trương
+          </button>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- MODE 1: QUICK PULSE VIEW (2-3 PHÚT)                           -->
+        <!-- ============================================================= -->
+        <div id="quickPulseSection" class="ios-glass-card d-none p-3 p-md-4 mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+            <div>
+              <h5 class="fw-bold text-dark mb-0">⚡ Kiểm Tra Nhanh Hiện Trường (Quick Pulse)</h5>
+              <small class="text-muted">Dành cho ASM đi cửa hàng nội thành HCM (Thao tác nhanh 2-3 phút, 1 chạm)</small>
+            </div>
+            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Thời gian: 2-3 phút</span>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <!-- 6 Quick Toggles -->
+            <div class="col-12 col-md-6">
+              <button type="button" class="quick-toggle-btn" id="qBtn1" onclick="toggleQuickItem(1)">
+                <span>👕 1. Tác phong, Đồng phục & Năng lượng NV</span>
+                <span class="badge bg-secondary" id="qBadge1">Chưa chọn</span>
+              </button>
+            </div>
+            <div class="col-12 col-md-6">
+              <button type="button" class="quick-toggle-btn" id="qBtn2" onclick="toggleQuickItem(2)">
+                <span>❄️ 2. Máy lạnh, Ánh sáng & Vệ sinh CH</span>
+                <span class="badge bg-secondary" id="qBadge2">Chưa chọn</span>
+              </button>
+            </div>
+            <div class="col-12 col-md-6">
+              <button type="button" class="quick-toggle-btn" id="qBtn3" onclick="toggleQuickItem(3)">
+                <span>👔 3. Mặt tiền & Trưng bày hàng hóa bắt mắt</span>
+                <span class="badge bg-secondary" id="qBadge3">Chưa chọn</span>
+              </button>
+            </div>
+            <div class="col-12 col-md-6">
+              <button type="button" class="quick-toggle-btn" id="qBtn4" onclick="toggleQuickItem(4)">
+                <span>📦 4. Kho hàng gọn gàng & Quầy thu ngân chuẩn</span>
+                <span class="badge bg-secondary" id="qBadge4">Chưa chọn</span>
+              </button>
+            </div>
+            <div class="col-12 col-md-6">
+              <button type="button" class="quick-toggle-btn" id="qBtn5" onclick="toggleQuickItem(5)">
+                <span>🎯 5. Tiến độ khắc phục các tồn đọng lần trước</span>
+                <span class="badge bg-secondary" id="qBadge5">Chưa chọn</span>
+              </button>
+            </div>
+            <div class="col-12 col-md-6">
+              <button type="button" class="quick-toggle-btn" id="qBtn6" onclick="toggleQuickItem(6)">
+                <span>💬 6. Đã trao đổi & Hướng dẫn CHT ca trực</span>
+                <span class="badge bg-secondary" id="qBadge6">Chưa chọn</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Note -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Ghi chú nhanh của ASM (nếu có)</label>
+            <textarea class="form-control" id="quickPulseNote" rows="2" placeholder="Nhập nhanh nhận xét nổi bật hoặc chỉ đạo nóng cho Cửa hàng trưởng..."></textarea>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="button" class="btn btn-warning btn-lg fw-bold py-3 text-dark rounded-3" onclick="submitQuickPulseVisit()">
+              <i class="bi bi-send-fill me-2"></i> Gửi Biên Bản Quick Pulse
+            </button>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- MODE 2: TARGET RESCUE VIEW (CAN THIỆP CỨU DOANH SỐ)           -->
+        <!-- ============================================================= -->
+        <div id="targetRescueSection" class="ios-glass-card d-none p-3 p-md-4 mb-4 border-danger">
+          <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+            <div>
+              <h5 class="fw-bold text-danger mb-0">🎯 Chuyên Đề Cứu Doanh Số & Cam Kết Can Thiệp</h5>
+              <small class="text-muted">Áp dụng cho cửa hàng chậm tiến độ (Phân tích WHY & Khóa Action Plan)</small>
+            </div>
+            <span class="badge bg-danger text-white px-3 py-2 rounded-pill">Target Rescue</span>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">1. Xác định nguyên nhân gốc rễ chính (Primary Blocker):</label>
+            <div class="d-flex flex-column gap-2" id="rescueBlockerChoiceGroup">
+              <div class="form-check p-2 bg-light rounded border">
+                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason1" value="PACE_DROP" checked>
+                <label class="form-check-label ms-2 fw-semibold" for="rsReason1">
+                  🔴 Nhịp độ bán hàng chậm sút (Pace Drop) - Cần đẩy mạnh bán hàng & ca tối
+                </label>
+              </div>
+              <div class="form-check p-2 bg-light rounded border">
+                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason2" value="STOCKOUT_CORE">
+                <label class="form-check-label ms-2 fw-semibold" for="rsReason2">
+                  📦 Thiếu hụt mã hàng chủ lực / Đứt size bán chạy (Core Stockout)
+                </label>
+              </div>
+              <div class="form-check p-2 bg-light rounded border">
+                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason3" value="AGING_STOCK">
+                <label class="form-check-label ms-2 fw-semibold" for="rsReason3">
+                  ⚠️ Tồn kho cơ cấu chưa chuẩn / Hàng cũ chậm luân chuyển cao
+                </label>
+              </div>
+              <div class="form-check p-2 bg-light rounded border">
+                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason4" value="STAFF_SKILL">
+                <label class="form-check-label ms-2 fw-semibold" for="rsReason4">
+                  👥 Kỹ năng tư vấn, chốt sale hoặc phân ca nhân sự chưa tối ưu
+                </label>
+              </div>
+              <div class="form-check p-2 bg-light rounded border">
+                <input class="form-check-input ms-1" type="radio" name="rescuePrimaryReason" id="rsReason5" value="OTHER">
+                <label class="form-check-label ms-2 fw-semibold" for="rsReason5">
+                  🔍 Nguyên nhân đặc thù khác (mặt bằng, thời tiết, đối thủ cạnh tranh...)
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="card border-danger bg-white mb-3">
+            <div class="card-header bg-danger text-white fw-bold">
+              📝 2. Cam Kết Kế Hoạch Hành Động (Action Plan Contract)
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Giải pháp can thiệp hành động cụ thể <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="rescueActionPlan" rows="3" placeholder="Ví dụ: Điều chuyển 30 áo sơ mi size 39-40 từ kho tổng về trước thứ 5; Tăng cường 1 nhân viên cứng chốt sale ca tối cuối tuần..." required></textarea>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Người chịu trách nhiệm chính <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="rescueOwner" placeholder="Tên CHT & ASM phụ trách" required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Thời hạn hoàn thành (Due Date) <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="rescueDueDate" required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Doanh thu dự kiến hồi phục</label>
+                  <input type="text" class="form-control" id="rescueExpectedRecovery" placeholder="Ví dụ: 50,000,000 đ">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="button" class="btn btn-danger btn-lg fw-bold py-3 rounded-3" onclick="submitTargetRescueVisit()">
+              <i class="bi bi-shield-check me-2"></i> Ký Cam Kết & Gửi Kế Hoạch Cứu Target
+            </button>
+          </div>
+        </div>
+
     <div class="tab-content" id="visitTabsContent">
       
       <!-- TAB 1: THÔNG TIN CHUNG -->
@@ -3716,7 +4072,372 @@
   }
 
   // Initialize App
+  
+// =============================================================================
+// WAVE 3: PWA / APPLE HIG SPA CLIENT ENGINE (DIAGNOSTICS, MODES, INDEXEDDB)
+// =============================================================================
+window.STORE_DIAGNOSTICS_DATA = {};
+window.CURRENT_INSPECTION_MODE = "deep_audit";
+window.QUICK_PULSE_STATE = { 1: "Chưa chọn", 2: "Chưa chọn", 3: "Chưa chọn", 4: "Chưa chọn", 5: "Chưa chọn", 6: "Chưa chọn" };
+
+/**
+ * 1. Fetch and Cache 185 Store Diagnostics from Backend to IndexedDB
+ */
+function fetchAndCacheStoreDiagnostics() {
+  // Check IndexedDB / LocalStorage first for 0ms instant render
+  try {
+    const cachedSnap = localStorage.getItem("store_diagnostics_snapshot_v1_5");
+    if (cachedSnap) {
+      const parsed = JSON.parse(cachedSnap);
+      if (parsed && parsed.stores) {
+        window.STORE_DIAGNOSTICS_DATA = parsed.stores;
+        console.log("✓ Loaded", Object.keys(parsed.stores).length, "store diagnostics from Local Cache.");
+      }
+    }
+  } catch(e) {
+    console.warn("LocalStorage read warning:", e);
+  }
+
+  // Fetch latest snapshot in background via google.script.run
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response && response.ok && response.stores) {
+          window.STORE_DIAGNOSTICS_DATA = response.stores;
+          try {
+            localStorage.setItem("store_diagnostics_snapshot_v1_5", JSON.stringify(response));
+            console.log("✓ Synced", response.store_count, "store diagnostics cards to Local Cache.");
+          } catch(eLS) {}
+          
+          // If a store is currently selected, re-render its diagnostic card
+          const currentStoreCode = document.getElementById('storeCode') ? document.getElementById('storeCode').value : '';
+          if (currentStoreCode) {
+            renderExecutiveDiagnosticCard(currentStoreCode);
+          }
+        }
+      })
+      .withFailureHandler(function(err) {
+        console.warn("Could not background-sync store diagnostics:", err);
+      })
+      .getStoreDiagnostics();
+  }
+}
+
+/**
+ * 2. Render Apple HIG Executive Diagnostic Card
+ */
+function renderExecutiveDiagnosticCard(storeCode) {
+  const layer = document.getElementById('executiveDiagnosticLayer');
+  if (!layer) return;
+
+  const cleanCode = String(storeCode || '').split(' - ')[0].trim().toUpperCase();
+  if (!cleanCode) {
+    layer.classList.add('d-none');
+    return;
+  }
+
+  const card = window.STORE_DIAGNOSTICS_DATA[cleanCode];
+  if (!card) {
+    // Show placeholder card if store not in diagnostic database yet
+    document.getElementById('diagStoreCodeBadge').innerText = cleanCode;
+    document.getElementById('diagStoreNameTitle').innerText = cleanCode;
+    document.getElementById('diagStoreMetaSubtitle').innerText = "Đang tải dữ liệu chẩn đoán...";
+    document.getElementById('diagSeverityPill').className = "sev-pill sev-unknown";
+    document.getElementById('diagSeverityText').innerText = "NO TARGET DATA";
+    layer.classList.remove('d-none');
+    return;
+  }
+
+  // Meta
+  document.getElementById('diagStoreCodeBadge').innerText = card.store_code || cleanCode;
+  document.getElementById('diagStoreNameTitle').innerText = card.store_name || cleanCode;
+  document.getElementById('diagStoreMetaSubtitle').innerText = "ASM: " + (card.asm_name || "Chưa gán") + " • Vùng: " + (card.region || "HCM") + " • QLCH: " + (card.manager || "Chưa cập nhật");
+
+  // Severity Pill
+  const sevPill = document.getElementById('diagSeverityPill');
+  const sevText = document.getElementById('diagSeverityText');
+  const sev = card.diagnosis ? card.diagnosis.lag_severity : "UNKNOWN";
+
+  if (sev === "PROTECT_ON_TRACK") {
+    sevPill.className = "sev-pill sev-protect";
+    sevText.innerHTML = '<i class="bi bi-shield-check"></i> ON TRACK (Tiến độ tốt)';
+  } else if (sev === "WATCH") {
+    sevPill.className = "sev-pill sev-watch";
+    sevText.innerHTML = '<i class="bi bi-eye-fill"></i> WATCH (Cần theo dõi)';
+  } else if (sev === "RECOVERY") {
+    sevPill.className = "sev-pill sev-recovery";
+    sevText.innerHTML = '<i class="bi bi-arrow-up-right-circle-fill"></i> RECOVERY (Cần phục hồi)';
+  } else if (sev === "RESCUE_CRITICAL") {
+    sevPill.className = "sev-pill sev-rescue";
+    sevText.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> RESCUE (Cấp cứu doanh số)';
+  } else {
+    sevPill.className = "sev-pill sev-unknown";
+    sevText.innerHTML = '<i class="bi bi-question-circle"></i> CHƯA CÓ TARGET';
+  }
+
+  // 4 Metrics
+  const rev = card.revenue || {};
+  const stk = card.inventory || {};
+
+  const actProgress = rev.achievement_pct !== null && rev.achievement_pct !== undefined ? rev.achievement_pct + "%" : "--";
+  const mtdActStr = rev.mtd_actual ? (rev.mtd_actual / 1e6).toFixed(1) + "M" : "0M";
+  const mtdTgtStr = rev.mtd_target ? (rev.mtd_target / 1e6).toFixed(1) + "M" : "0M";
+  document.getElementById('diagMtdProgress').innerText = actProgress;
+  document.getElementById('diagMtdValDetail').innerText = mtdActStr + " / " + mtdTgtStr;
+
+  const paceDelta = rev.pace_delta_pct !== null && rev.pace_delta_pct !== undefined ? (rev.pace_delta_pct > 0 ? "+" : "") + rev.pace_delta_pct + "%" : "--";
+  const paceIndexStr = rev.pace_index !== null && rev.pace_index !== undefined ? "Pace: " + (rev.pace_index * 100).toFixed(1) + "%" : "Pace: --";
+  document.getElementById('diagPaceDelta').innerText = paceDelta;
+  document.getElementById('diagPaceDelta').className = "diag-metric-val " + (rev.pace_delta_pct < -10 ? "text-danger" : (rev.pace_delta_pct >= 0 ? "text-success" : "text-warning"));
+  document.getElementById('diagPaceIndexDetail').innerText = paceIndexStr + " (Kỳ vọng " + (rev.expected_progress_pct || 90.3) + "%)";
+
+  const reqDailyStr = rev.required_daily_runrate ? (rev.required_daily_runrate / 1e6).toFixed(1) + "M/ngày" : "0M";
+  document.getElementById('diagRequiredDaily').innerText = reqDailyStr;
+  document.getElementById('diagDaysLeftDetail').innerText = "Còn " + (rev.selling_days_remaining || 3) + " ngày bán";
+
+  const agingPctStr = stk.aging_pct !== null && stk.aging_pct !== undefined ? stk.aging_pct + "%" : "--";
+  const totalQtyStr = stk.total_qty ? "Tồn: " + Number(stk.total_qty).toLocaleString() + " sp" : "Chưa có data kho";
+  document.getElementById('diagStockAging').innerText = agingPctStr;
+  document.getElementById('diagStockAging').className = "diag-metric-val " + (stk.aging_pct > 50 ? "text-danger" : "text-dark");
+  document.getElementById('diagStockQtyDetail').innerText = totalQtyStr;
+
+  // Render Top Blockers Box
+  const blockersBox = document.getElementById('diagBlockersContainer');
+  const blockers = card.diagnosis ? card.diagnosis.top_blockers || [] : [];
+  if (blockers.length > 0) {
+    let bHtml = '<div class="mt-2 pt-2 border-top"><div class="fw-bold text-dark mb-2" style="font-size:13px;"><i class="bi bi-activity text-danger me-1"></i> Các Điểm Nghẽn Cần Xử Lý Ngay Hiện Trường:</div>';
+    blockers.forEach(function(b) {
+      const pClass = b.priority === 1 ? "blocker-p1" : (b.priority === 2 ? "blocker-p2" : "blocker-p3");
+      const icon = b.priority === 1 ? "🔴 [ƯU TIÊN 1]" : (b.priority === 2 ? "📦 [ƯU TIÊN 2]" : "🟡 [THEO DÕI]");
+      bHtml += '<div class="blocker-card ' + pClass + '"><div class="fw-bold" style="font-size:13px;">' + icon + ' ' + b.title + '</div><small class="text-muted">' + b.detail + '</small></div>';
+    });
+    bHtml += '</div>';
+    blockersBox.innerHTML = bHtml;
+  } else {
+    blockersBox.innerHTML = '<div class="alert alert-success py-2 px-3 mb-0 mt-2 rounded-3" style="font-size:13px;"><i class="bi bi-check-circle-fill me-1"></i> Cửa hàng vận hành ổn định, không ghi nhận điểm nghẽn nghiêm trọng.</div>';
+  }
+
+  layer.classList.remove('d-none');
+}
+
+/**
+ * 3. Switch Inspection Mode (5 Modes SPA)
+ */
+function switchInspectionMode(modeKey) {
+  window.CURRENT_INSPECTION_MODE = modeKey;
+
+  // Update switcher buttons UI
+  document.querySelectorAll('.ios-mode-btn').forEach(function(btn) {
+    if (btn.getAttribute('data-mode') === modeKey) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Sync with internal form modeSelect
+  const modeSelectEl = document.getElementById('modeSelect');
+  if (modeSelectEl) {
+    if (modeKey === "cross") modeSelectEl.value = "cross";
+    else if (modeKey === "opening") modeSelectEl.value = "opening";
+    else modeSelectEl.value = "own";
+    
+    if (typeof handleModeChange === "function") {
+      handleModeChange();
+    }
+  }
+
+  const quickSection = document.getElementById('quickPulseSection');
+  const rescueSection = document.getElementById('targetRescueSection');
+  const tabsContainer = document.querySelector('.nav-tabs-container');
+  const mainTabsContent = document.getElementById('visitTabsContent');
+
+  if (modeKey === "quick_pulse") {
+    if (quickSection) quickSection.classList.remove('d-none');
+    if (rescueSection) rescueSection.classList.add('d-none');
+    if (tabsContainer) tabsContainer.classList.add('d-none');
+    if (mainTabsContent) mainTabsContent.classList.add('d-none');
+  } else if (modeKey === "target_rescue") {
+    if (quickSection) quickSection.classList.add('d-none');
+    if (rescueSection) rescueSection.classList.remove('d-none');
+    if (tabsContainer) tabsContainer.classList.add('d-none');
+    if (mainTabsContent) mainTabsContent.classList.add('d-none');
+  } else {
+    // deep_audit, cross, opening
+    if (quickSection) quickSection.classList.add('d-none');
+    if (rescueSection) rescueSection.classList.add('d-none');
+    if (tabsContainer) tabsContainer.classList.remove('d-none');
+    if (mainTabsContent) mainTabsContent.classList.remove('d-none');
+  }
+}
+
+/**
+ * 4. Quick Pulse 1-Touch Toggle Handler
+ */
+function toggleQuickItem(idx) {
+  const current = window.QUICK_PULSE_STATE[idx] || "Chưa chọn";
+  let nextState = "Đạt";
+  if (current === "Chưa chọn") nextState = "Đạt";
+  else if (current === "Đạt") nextState = "Chưa đạt";
+  else nextState = "Chưa chọn";
+
+  window.QUICK_PULSE_STATE[idx] = nextState;
+
+  const btn = document.getElementById('qBtn' + idx);
+  const badge = document.getElementById('qBadge' + idx);
+
+  if (nextState === "Đạt") {
+    btn.className = "quick-toggle-btn passed";
+    badge.className = "badge bg-success";
+    badge.innerText = "✓ Đạt";
+  } else if (nextState === "Chưa đạt") {
+    btn.className = "quick-toggle-btn failed";
+    badge.className = "badge bg-danger";
+    badge.innerText = "✗ Chưa đạt";
+  } else {
+    btn.className = "quick-toggle-btn";
+    badge.className = "badge bg-secondary";
+    badge.innerText = "Chưa chọn";
+  }
+}
+
+/**
+ * 5. Submit Quick Pulse Visit Record (Wave 2B/2C Hardened)
+ */
+function submitQuickPulseVisit() {
+  const storeSelect = document.getElementById('storeCode');
+  const storeCode = storeSelect ? storeSelect.value.split(' - ')[0].trim().toUpperCase() : '';
+  if (!storeCode) {
+    alert("Vui lòng chọn Mã cửa hàng trước khi gửi biên bản!");
+    return;
+  }
+
+  const asmSelect = document.getElementById('asmName');
+  const asmName = asmSelect ? asmSelect.value : (window.CURRENT_USER ? window.CURRENT_USER.fullName : '');
+
+  const visitId = "qp_" + storeCode + "_" + new Date().getTime() + "_" + Math.random().toString(36).substring(2, 7);
+  const note = document.getElementById('quickPulseNote') ? document.getElementById('quickPulseNote').value.trim() : '';
+
+  const payload = {
+    quick_items: window.QUICK_PULSE_STATE,
+    asm_note: note,
+    submitted_via: "Quick_Pulse_PWA"
+  };
+
+  const visitRecord = {
+    visit_id: visitId,
+    store_code: storeCode,
+    visit_type: "quick_pulse",
+    asm: asmName,
+    auth_token: window.AUTH_TOKEN || localStorage.getItem("storevisit_auth_token") || "",
+    payload: payload
+  };
+
+  if (typeof showSavingOverlay === "function") showSavingOverlay();
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (typeof hideSavingOverlay === "function") hideSavingOverlay();
+        if (res && res.ok) {
+          alert("🎉 " + res.message);
+          // Reset quick pulse toggles
+          for (let i = 1; i <= 6; i++) {
+            window.QUICK_PULSE_STATE[i] = "Chưa chọn";
+            const b = document.getElementById('qBtn' + i);
+            const bg = document.getElementById('qBadge' + i);
+            if (b) b.className = "quick-toggle-btn";
+            if (bg) { bg.className = "badge bg-secondary"; bg.innerText = "Chưa chọn"; }
+          }
+          if (document.getElementById('quickPulseNote')) document.getElementById('quickPulseNote').value = "";
+        } else {
+          alert("❌ Không thể lưu biên bản: " + (res ? res.message : "Lỗi không xác định"));
+        }
+      })
+      .withFailureHandler(function(err) {
+        if (typeof hideSavingOverlay === "function") hideSavingOverlay();
+        alert("❌ Lỗi kết nối máy chủ: " + err.toString());
+      })
+      .submitVisitRecord(visitRecord);
+  } else {
+    alert("✓ Đã lưu Quick Pulse ngoại tuyến thành công vào IndexedDB (Simulation mode)!");
+  }
+}
+
+/**
+ * 6. Submit Target Rescue Action Plan (Wave 2B/2C Hardened)
+ */
+function submitTargetRescueVisit() {
+  const storeSelect = document.getElementById('storeCode');
+  const storeCode = storeSelect ? storeSelect.value.split(' - ')[0].trim().toUpperCase() : '';
+  if (!storeCode) {
+    alert("Vui lòng chọn Mã cửa hàng trước khi ký cam kết cứu Target!");
+    return;
+  }
+
+  const actionPlan = document.getElementById('rescueActionPlan') ? document.getElementById('rescueActionPlan').value.trim() : '';
+  const owner = document.getElementById('rescueOwner') ? document.getElementById('rescueOwner').value.trim() : '';
+  const dueDate = document.getElementById('rescueDueDate') ? document.getElementById('rescueDueDate').value.trim() : '';
+  const expectedRecovery = document.getElementById('rescueExpectedRecovery') ? document.getElementById('rescueExpectedRecovery').value.trim() : '';
+
+  if (!actionPlan || !owner || !dueDate) {
+    alert("Vui lòng nhập đầy đủ: Kế hoạch hành động cụ thể, Người chịu trách nhiệm chính và Thời hạn hoàn thành!");
+    return;
+  }
+
+  const selectedReasonEl = document.querySelector('input[name="rescuePrimaryReason"]:checked');
+  const primaryReason = selectedReasonEl ? selectedReasonEl.value : "PACE_DROP";
+
+  const asmSelect = document.getElementById('asmName');
+  const asmName = asmSelect ? asmSelect.value : (window.CURRENT_USER ? window.CURRENT_USER.fullName : '');
+
+  const visitId = "rescue_" + storeCode + "_" + new Date().getTime() + "_" + Math.random().toString(36).substring(2, 7);
+
+  const payload = {
+    primary_blocker: primaryReason,
+    action_plan: actionPlan,
+    owner: owner,
+    due_date: dueDate,
+    expected_recovery: expectedRecovery,
+    submitted_via: "Target_Rescue_PWA"
+  };
+
+  const visitRecord = {
+    visit_id: visitId,
+    store_code: storeCode,
+    visit_type: "target_rescue",
+    asm: asmName,
+    auth_token: window.AUTH_TOKEN || localStorage.getItem("storevisit_auth_token") || "",
+    payload: payload
+  };
+
+  if (typeof showSavingOverlay === "function") showSavingOverlay();
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (typeof hideSavingOverlay === "function") hideSavingOverlay();
+        if (res && res.ok) {
+          alert("🎉 " + res.message);
+          if (document.getElementById('rescueActionPlan')) document.getElementById('rescueActionPlan').value = "";
+          if (document.getElementById('rescueExpectedRecovery')) document.getElementById('rescueExpectedRecovery').value = "";
+        } else {
+          alert("❌ Không thể lưu cam kết: " + (res ? res.message : "Lỗi không xác định"));
+        }
+      })
+      .withFailureHandler(function(err) {
+        if (typeof hideSavingOverlay === "function") hideSavingOverlay();
+        alert("❌ Lỗi kết nối máy chủ: " + err.toString());
+      })
+      .submitVisitRecord(visitRecord);
+  } else {
+    alert("✓ Đã lưu Cam Kết Target Rescue ngoại tuyến thành công vào IndexedDB (Simulation mode)!");
+  }
+}
+
+
   function initApp() {
+    fetchAndCacheStoreDiagnostics();
     debugLog("initApp: Bắt đầu khởi tạo hệ thống...");
     try {
       // 1. DÙNG NGAY DỮ LIỆU HARDCODED LẬP TỨC (KHÔNG BỊ CHẶN, LÀM MƯỢT UI)
@@ -8598,7 +9319,138 @@
       transform: translateY(-2px);
     }
 
-</style>
+
+    /* =========================================================================
+       APPLE HIG & SPA STYLES (WAVE 3 RETAIL COMMANDER)
+       ========================================================================= */
+    .ios-glass-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(229, 231, 235, 0.8);
+      border-radius: 18px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      margin-bottom: 20px;
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .ios-mode-switcher {
+      display: flex;
+      background: #F1F5F9;
+      padding: 4px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      gap: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid #E2E8F0;
+    }
+    
+    .ios-mode-btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: #64748B;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .ios-mode-btn.active {
+      background: #FFFFFF;
+      color: #0F172A;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
+    
+    .diag-metric-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .diag-metric-val {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    
+    .diag-metric-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748B;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    
+    .sev-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .sev-protect { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
+    .sev-watch { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
+    .sev-recovery { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
+    .sev-rescue { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
+    .sev-unknown { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
+    
+    .blocker-card {
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border-left: 4px solid;
+    }
+    .blocker-p1 { background: #FEF2F2; border-left-color: #EF4444; border-top: 1px solid #FEE2E2; border-right: 1px solid #FEE2E2; border-bottom: 1px solid #FEE2E2; }
+    .blocker-p2 { background: #FFFBEB; border-left-color: #F59E0B; border-top: 1px solid #FEF3C7; border-right: 1px solid #FEF3C7; border-bottom: 1px solid #FEF3C7; }
+    .blocker-p3 { background: #F8FAFC; border-left-color: #64748B; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; }
+
+    .quick-toggle-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      border: 1.5px solid #E2E8F0;
+      background: #FFFFFF;
+      font-weight: 600;
+      font-size: 14px;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .quick-toggle-btn.passed {
+      background: #F0FDF4;
+      border-color: #22C55E;
+      color: #15803D;
+    }
+    .quick-toggle-btn.failed {
+      background: #FEF2F2;
+      border-color: #EF4444;
+      color: #B91C1C;
+    }
+
+  </style>
     <div class="html-report-wrapper">
       <!-- COVER -->
       <div class="html-report-cover">
@@ -8732,7 +9584,138 @@
       transform: translateY(-2px);
     }
 
-</style>
+
+    /* =========================================================================
+       APPLE HIG & SPA STYLES (WAVE 3 RETAIL COMMANDER)
+       ========================================================================= */
+    .ios-glass-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(229, 231, 235, 0.8);
+      border-radius: 18px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      margin-bottom: 20px;
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .ios-mode-switcher {
+      display: flex;
+      background: #F1F5F9;
+      padding: 4px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      gap: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid #E2E8F0;
+    }
+    
+    .ios-mode-btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: #64748B;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .ios-mode-btn.active {
+      background: #FFFFFF;
+      color: #0F172A;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
+    
+    .diag-metric-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .diag-metric-val {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    
+    .diag-metric-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748B;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    
+    .sev-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .sev-protect { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
+    .sev-watch { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
+    .sev-recovery { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
+    .sev-rescue { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
+    .sev-unknown { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
+    
+    .blocker-card {
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border-left: 4px solid;
+    }
+    .blocker-p1 { background: #FEF2F2; border-left-color: #EF4444; border-top: 1px solid #FEE2E2; border-right: 1px solid #FEE2E2; border-bottom: 1px solid #FEE2E2; }
+    .blocker-p2 { background: #FFFBEB; border-left-color: #F59E0B; border-top: 1px solid #FEF3C7; border-right: 1px solid #FEF3C7; border-bottom: 1px solid #FEF3C7; }
+    .blocker-p3 { background: #F8FAFC; border-left-color: #64748B; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; }
+
+    .quick-toggle-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      border: 1.5px solid #E2E8F0;
+      background: #FFFFFF;
+      font-weight: 600;
+      font-size: 14px;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .quick-toggle-btn.passed {
+      background: #F0FDF4;
+      border-color: #22C55E;
+      color: #15803D;
+    }
+    .quick-toggle-btn.failed {
+      background: #FEF2F2;
+      border-color: #EF4444;
+      color: #B91C1C;
+    }
+
+  </style>
     </head><body>${content.innerHTML}
   </div><!-- END APP MAIN CONTAINER -->
 
