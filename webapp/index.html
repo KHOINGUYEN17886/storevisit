@@ -4118,29 +4118,64 @@ async function queueOfflineSubmission(visitRecord) {
   }
 }
 
-// Background sync outbox when network reconnects
+// Background sync outbox when network reconnects (P4 & P5 Resilient)
 async function processOutboxSync() {
   if (!navigator.onLine) return;
   try {
     const db = await initOutboxDB();
     if (!db) return;
-    const tx = db.transaction(OUTBOX_STORE, "readonly");
+    const tx = db.transaction(OUTBOX_STORE, "readwrite");
     const store = tx.objectStore(OUTBOX_STORE);
     const req = store.getAll();
     req.onsuccess = async () => {
       const items = req.result || [];
+      const now = new Date().getTime();
+      
+      // P4: Recovery for Stale SYNCING records (> 60s without ACK, e.g. browser killed)
+      items.forEach(it => {
+        if (it.sync_status === "SYNCING") {
+          const syncStart = it.sync_started_at ? new Date(it.sync_started_at).getTime() : 0;
+          if (now - syncStart > 60000) {
+            it.sync_status = "QUEUED"; // Reset stale syncing
+            store.put(it);
+            console.log("✓ Recovered stale SYNCING record:", it.visit_id);
+          }
+        }
+      });
+
       const pending = items.filter(it => it.sync_status === "QUEUED" || it.sync_status === "FAILED");
       if (pending.length === 0) return;
       console.log("🔄 Background syncing", pending.length, "pending outbox records...");
+      
       for (const item of pending) {
+        item.sync_status = "SYNCING";
+        item.sync_started_at = new Date().toISOString();
+        store.put(item);
+
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           google.script.run
             .withSuccessHandler(async (res) => {
-              if (res && res.ok) {
-                const delTx = db.transaction(OUTBOX_STORE, "readwrite");
-                delTx.objectStore(OUTBOX_STORE).delete(item.visit_id);
-                console.log("✓ Outbox synced and cleaned:", item.visit_id);
+              const freshDb = await initOutboxDB();
+              if (!freshDb) return;
+              const delTx = freshDb.transaction(OUTBOX_STORE, "readwrite");
+              const outboxStore = delTx.objectStore(OUTBOX_STORE);
+              
+              if (res && (res.ok || res.duplicate)) {
+                outboxStore.delete(item.visit_id);
+                console.log("✓ Outbox synced and cleaned (persisted or deduped):", item.visit_id);
+              } else {
+                item.sync_status = "FAILED";
+                item.last_error = res ? res.message : "Lỗi không xác định từ máy chủ";
+                outboxStore.put(item);
               }
+            })
+            .withFailureHandler(async (err) => {
+              const freshDb = await initOutboxDB();
+              if (!freshDb) return;
+              const errTx = freshDb.transaction(OUTBOX_STORE, "readwrite");
+              item.sync_status = "FAILED";
+              item.last_error = err.toString();
+              errTx.objectStore(OUTBOX_STORE).put(item);
             })
             .submitVisitRecord(item);
         }
@@ -4152,6 +4187,12 @@ async function processOutboxSync() {
 }
 
 window.addEventListener('online', processOutboxSync);
+// Check outbox immediately on load
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", processOutboxSync);
+} else {
+  processOutboxSync();
+}
 
 window.STORE_DIAGNOSTICS_DATA = {};
 window.CURRENT_INSPECTION_MODE = "deep_audit";
