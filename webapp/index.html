@@ -1193,16 +1193,23 @@
         asmSelect.appendChild(opt);
       });
       
-      // Auto select ASM for ASM user
+      // Auto select ASM for ASM user — strict match to avoid "Dũng" ambiguity
       if (user && user.role === 'asm') {
         var userTarget = normStr(user.fullName || user.username);
+        var matchIdx = -1;
+        // Pass 1: exact full-name match (most reliable)
         for (var i = 0; i < asmSelect.options.length; i++) {
           var optNorm = normStr(asmSelect.options[i].value);
-          if (optNorm && (optNorm === userTarget || userTarget.includes(optNorm) || optNorm.includes(userTarget))) {
-            asmSelect.selectedIndex = i;
-            break;
+          if (optNorm && optNorm === userTarget) { matchIdx = i; break; }
+        }
+        // Pass 2: option value fully contained inside user fullName (e.g. "HN" in "HN ASM")
+        if (matchIdx < 0) {
+          for (var i = 0; i < asmSelect.options.length; i++) {
+            var optNorm = normStr(asmSelect.options[i].value);
+            if (optNorm && optNorm.length >= 6 && userTarget.includes(optNorm)) { matchIdx = i; break; }
           }
         }
+        if (matchIdx >= 0) asmSelect.selectedIndex = matchIdx;
       } else if (prevAsm) {
         for (var k = 0; k < asmSelect.options.length; k++) {
           if (asmSelect.options[k].value === prevAsm) {
@@ -1230,6 +1237,8 @@
     // 3. Populate Store Dropdown immediately
     updateStoreList();
   }
+  // Immediately expose for cross-script-block access (must be set at module level, not inside fn body)
+  window.initDropdowns = initDropdowns;
 
   function updateStoreList() {
     window.updateStoreList = updateStoreList;
@@ -1270,10 +1279,16 @@
         if (user && user.role === 'asm') {
           var userAsm = user.fullName || user.username || asm;
           var targetNorm = normStr(userAsm);
-          var matchedKey = Object.keys(data.mapping_by_asm).find(function(k) {
-            var kn = normStr(k);
-            return kn === targetNorm || targetNorm.includes(kn) || kn.includes(targetNorm);
-          });
+          var asmKeys = Object.keys(data.mapping_by_asm);
+          // Pass 1: exact match
+          var matchedKey = asmKeys.find(function(k) { return normStr(k) === targetNorm; });
+          // Pass 2: option value (≥6 chars) is a subset of user's full name
+          if (!matchedKey) {
+            matchedKey = asmKeys.find(function(k) {
+              var kn = normStr(k);
+              return kn.length >= 6 && targetNorm.includes(kn);
+            });
+          }
           
           if (matchedKey && data.mapping_by_asm[matchedKey] && data.mapping_by_asm[matchedKey].length > 0) {
             stores = data.mapping_by_asm[matchedKey];
@@ -12007,19 +12022,25 @@ function submitTargetRescueVisit() {
     const asmSelect = document.getElementById("asmName");
     if (asmSelect) {
       if (user.role === 'asm' && user.fullName) {
-        function normStr(s) {
-          return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        function _normForASM(s) {
+          return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
                     .replace(/^(ASM|QLKD)\s+/i, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
                     .replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
         }
-        const normalizedFull = normStr(user.fullName);
+        const normalizedFull = _normForASM(user.fullName);
+        let matchIdx = -1;
+        // Pass 1: exact full-name match
         for (let i = 0; i < asmSelect.options.length; i++) {
-          const optVal = normStr(asmSelect.options[i].value);
-          if (optVal && (optVal === normalizedFull || normalizedFull.includes(optVal) || optVal.includes(normalizedFull))) {
-            asmSelect.selectedIndex = i;
-            break;
+          if (_normForASM(asmSelect.options[i].value) === normalizedFull) { matchIdx = i; break; }
+        }
+        // Pass 2: option (≥6 chars) is a subset of user fullName
+        if (matchIdx < 0) {
+          for (let i = 0; i < asmSelect.options.length; i++) {
+            const optNorm = _normForASM(asmSelect.options[i].value);
+            if (optNorm.length >= 6 && normalizedFull.includes(optNorm)) { matchIdx = i; break; }
           }
         }
+        if (matchIdx >= 0) asmSelect.selectedIndex = matchIdx;
       }
     }
     
@@ -14289,16 +14310,32 @@ function submitTargetRescueVisit() {
     if (desc) desc.textContent = meta.desc;
     if (hdr) hdr.style.background = `linear-gradient(135deg, ${meta.color}, ${meta.color}CC)`;
     if (nsoFields) nsoFields.classList.toggle('d-none', modeKey !== 'nso');
+    // Ensure dropdowns are populated before copying to pre-flight modal
+    if (typeof window.initDropdowns === 'function') {
+      window.initDropdowns(window.STORE_DATA_SSOT || null);
+    }
     // Populate store dropdown from main storeCode select
     const srcSel = document.getElementById('storeCode');
     const dstSel = document.getElementById('preFlightStoreCode');
     if (srcSel && dstSel) {
       dstSel.innerHTML = '<option value="">-- Chọn cửa hàng --</option>';
+      let optCount = 0;
       Array.from(srcSel.options).forEach(opt => {
-        if (!opt.value || opt.style.display === 'none') return;
+        if (!opt.value) return;
+        if (opt.style.display === 'none') return; // respect role filter
         const o = new Option(opt.textContent, opt.value);
         dstSel.add(o);
+        optCount++;
       });
+      // Fallback: if no stores loaded (storeCode empty), show all from SSOT
+      if (optCount === 0 && window.STORE_DATA_SSOT && window.STORE_DATA_SSOT.mapping_by_asm) {
+        const allStores = new Set();
+        Object.values(window.STORE_DATA_SSOT.mapping_by_asm).forEach(list => list.forEach(s => allStores.add(s)));
+        Array.from(allStores).sort().forEach(s => {
+          const o = new Option(s, s);
+          dstSel.add(o);
+        });
+      }
     }
     const dateEl = document.getElementById('preFlightDate');
     if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
@@ -14345,6 +14382,12 @@ function submitTargetRescueVisit() {
     if (mainStore) { mainStore.value = storeEl.value; mainStore.dispatchEvent(new Event('change')); }
     const mainDate = document.getElementById('reportDate');
     if (mainDate) mainDate.value = AppFlow.reportDate;
+    // Also ensure ASM is set for the user (in case initDropdowns ran before session)
+    if (window.CURRENT_USER && window.CURRENT_USER.role === 'asm') {
+      if (typeof window.initDropdowns === 'function') {
+        window.initDropdowns(window.STORE_DATA_SSOT || null);
+      }
+    }
     // Set mode
     if (AppFlow.mode === 'nso') {
       const ms = document.getElementById('modeSelect');
