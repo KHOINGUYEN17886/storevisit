@@ -1797,17 +1797,22 @@ function processForm(formObject) {
         throw new Error("Hình thức kiểm tra không hợp lệ (chỉ chấp nhận 'own', 'cross' hoặc 'opening').");
       }
       if (formObject.modeSelect === "opening") {
-        if (!formObject.openingType || !["new", "reopen"].includes(formObject.openingType)) {
-          throw new Error("Loại khai trương không hợp lệ.");
-        }
-        if (!formObject.openingPhase || !["before", "day", "after"].includes(formObject.openingPhase)) {
-          throw new Error("Giai đoạn khai trương không hợp lệ.");
-        }
-        if (!formObject.openingDate || !/^\d{4}-\d{2}-\d{2}$/.test(formObject.openingDate)) {
-          throw new Error("Ngày khai trương không hợp lệ.");
-        }
-        if (!formObject.openingReadiness || !["ready", "minor_fix", "not_ready"].includes(formObject.openingReadiness)) {
-          throw new Error("Mức độ sẵn sàng khai trương không hợp lệ.");
+        // If NSO punch list data is present, skip legacy field validation
+        var hasNSOPunchList = !!(formObject.nso_punch_list && formObject.nso_punch_list.trim());
+        if (!hasNSOPunchList) {
+          // Legacy opening form validation
+          if (!formObject.openingType || !["new", "reopen"].includes(formObject.openingType)) {
+            throw new Error("Loại khai trương không hợp lệ.");
+          }
+          if (!formObject.openingPhase || !["before", "day", "after"].includes(formObject.openingPhase)) {
+            throw new Error("Giai đoạn khai trương không hợp lệ.");
+          }
+          if (!formObject.openingDate || !/^\d{4}-\d{2}-\d{2}$/.test(formObject.openingDate)) {
+            throw new Error("Ngày khai trương không hợp lệ.");
+          }
+          if (!formObject.openingReadiness || !["ready", "minor_fix", "not_ready"].includes(formObject.openingReadiness)) {
+            throw new Error("Mức độ sẵn sàng khai trương không hợp lệ.");
+          }
         }
       }
     }
@@ -1858,7 +1863,9 @@ function processForm(formObject) {
     
     // Validate Region Select
     if (!isDraftFlag && (formObject.modeSelect === "cross" || formObject.modeSelect === "opening")) {
-      if (!formObject.regionSelect || !dynamicStoreData.regions.includes(formObject.regionSelect)) {
+      // Skip region check for NSO punch list mode (region not required in punch list flow)
+      var isNSOMode = !!(formObject.nso_punch_list && formObject.nso_punch_list.trim());
+      if (!isNSOMode && (!formObject.regionSelect || !dynamicStoreData.regions.includes(formObject.regionSelect))) {
         throw new Error("Khu vực (Region) bắt buộc và phải hợp lệ.");
       }
     }
@@ -1889,10 +1896,14 @@ function processForm(formObject) {
           throw new Error("Cửa hàng " + targetStoreCode + " không thuộc quyền quản lý của ASM " + formObject.asmName);
         }
       } else if (formObject.modeSelect === "cross" || formObject.modeSelect === "opening") {
-        var storesForRegion = dynamicStoreData.mapping_by_region[formObject.regionSelect] || [];
-        if (!checkStoreMatch(storesForRegion, targetStoreCode)) {
-          throw new Error("Cửa hàng " + targetStoreCode + " không thuộc khu vực " + formObject.regionSelect);
+        var isNSOPunchMode = !!(formObject.nso_punch_list && formObject.nso_punch_list.trim());
+        if (!isNSOPunchMode) {
+          var storesForRegion = dynamicStoreData.mapping_by_region[formObject.regionSelect] || [];
+          if (!checkStoreMatch(storesForRegion, targetStoreCode)) {
+            throw new Error("Cửa hàng " + targetStoreCode + " không thuộc khu vực " + formObject.regionSelect);
+          }
         }
+        // NSO punch list: store validation deferred to punch list data integrity
       }
     }
     
@@ -2651,6 +2662,7 @@ function processForm(formObject) {
       opening_phase: formObject.openingPhase || "",
       opening_date: formObject.openingDate || "",
       opening_readiness: formObject.openingReadiness || "",
+      nso_punch_list: formObject.nso_punch_list || "",
       status: isDraftFlag ? "draft" : "pending",
       created_at: new Date(),
       updated_at: new Date()

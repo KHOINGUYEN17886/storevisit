@@ -851,6 +851,44 @@
       }
     }
 
+/* ===== PROFESSIONAL FLOW v2 ===== */
+#landingModeScreen{display:none;min-height:calc(100vh - 120px);padding:24px 0 40px;}
+#landingModeScreen.active{display:block;}
+.mode-card-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:900px;margin:0 auto;}
+@media(min-width:768px){.mode-card-grid{grid-template-columns:repeat(4,1fr);}}
+.mode-card{background:#FFF;border:2px solid #E8E2D8;border-radius:16px;padding:24px 16px;cursor:pointer;transition:all .2s;text-align:center;position:relative;}
+.mode-card:hover{border-color:#C5A059;box-shadow:0 8px 24px rgba(197,160,89,.2);transform:translateY(-2px);}
+.mode-card .mode-icon{font-size:40px;margin-bottom:12px;display:block;line-height:1;}
+.mode-card .mode-name{font-size:15px;font-weight:800;color:#1C1917;margin-bottom:6px;}
+.mode-card .mode-desc{font-size:12px;color:#78716C;line-height:1.4;margin-bottom:10px;}
+.mode-card .mode-time{font-size:11px;font-weight:700;color:#C5A059;background:#FEF9EE;padding:3px 10px;border-radius:20px;border:1px solid #C5A059;display:inline-block;}
+.mode-card.mode-quick{border-top:4px solid #F59E0B;}
+.mode-card.mode-rescue{border-top:4px solid #EF4444;}
+.mode-card.mode-full{border-top:4px solid #6E1E1E;}
+.mode-card.mode-nso{border-top:4px solid #059669;}
+.mode-cross-link{text-align:center;margin-top:14px;}
+.mode-cross-link a{font-size:13px;color:#78716C;text-decoration:underline dotted;cursor:pointer;}
+.mode-cross-link a:hover{color:#6E1E1E;}
+#sessionContextBar{display:none;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(197,160,89,.3);padding:5px 16px;font-size:13px;color:#FFF;font-weight:600;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+#sessionContextBar.active{display:flex;}
+.session-badge{background:rgba(197,160,89,.25);border:1px solid rgba(197,160,89,.5);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700;color:#F9F5EB;}
+#btnChangeSession{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:3px 10px;font-size:12px;color:#FFF;cursor:pointer;font-weight:700;}
+.nav-link[data-locked="true"]{opacity:.4!important;cursor:not-allowed!important;position:relative;}
+.nav-link[data-locked="true"]::after{content:"🔒";font-size:9px;position:absolute;top:3px;right:3px;}
+.tab-completion-badge{display:inline-block;width:14px;height:14px;border-radius:50%;font-size:8px;line-height:14px;text-align:center;margin-left:4px;font-weight:900;vertical-align:middle;}
+.tab-badge-empty{background:#E5E7EB;color:#9CA3AF;}
+.tab-badge-partial{background:#FEF3C7;color:#D97706;}
+.tab-badge-complete{background:#D1FAE5;color:#059669;}
+.tab-badge-error{background:#FEE2E2;color:#DC2626;}
+#preFlightModal .modal-header{color:#FFF;}
+#preFlightModal .preflight-mode-label{font-size:18px;font-weight:800;}
+#preFlightModal .preflight-mode-desc{font-size:13px;opacity:.85;}
+#preSubmitReviewModal .modal-header{background:linear-gradient(135deg,#0A2342,#173A66);color:#FFF;}
+.review-item-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F4F6;font-size:14px;}
+.review-item-row:last-child{border-bottom:none;}
+.review-status-ok{color:#059669;font-weight:700;}
+.review-status-warn{color:#D97706;font-weight:700;}
+.review-status-err{color:#DC2626;font-weight:700;}
 </style>
   <script src="store_manifest_ssot.js"></script>
 </head>
@@ -1127,30 +1165,6 @@
       localStorage.removeItem("storevisit_user");
     } catch(e) {}
     showAuthPortalUI();
-  }
-
-  function applyUserSession(user) {
-    currentUser = user;
-    window.CURRENT_USER = user;
-    window.applyUserSession = applyUserSession;
-    
-    var userBar = document.getElementById("userHeaderBar");
-    var nameEl = document.getElementById("userDisplayName");
-    var badgeEl = document.getElementById("userRoleBadge");
-    if (userBar && nameEl && badgeEl) {
-      userBar.classList.remove("d-none");
-      nameEl.textContent = "👤 " + (user.fullName || user.username);
-      if (user.role === "master" || user.role === "admin") {
-        badgeEl.textContent = "Master Administrator";
-        badgeEl.className = "badge bg-warning text-dark me-2";
-      } else {
-        badgeEl.textContent = user.region ? `ASM • ${user.region}` : "ASM Quản Lý";
-        badgeEl.className = "badge bg-info text-dark me-2";
-      }
-    }
-    
-    // RE-HYDRATE ALL DROPDOWNS IMMEDIATELY
-    initDropdowns(window.STORE_DATA_SSOT);
   }
 
   function initDropdowns(data) {
@@ -1696,6 +1710,16 @@
 <!-- WRAPPER CHÍNH CỦA TOÀN BỘ APP (Chỉ hiển thị khi đã xác thực thành công) -->
 <div id="appMainContainer" class="d-none">
   <div id="cloudDraftNotifyBanner" class="container d-none pt-2"></div>
+<!-- SESSION CONTEXT BAR -->
+<div id="sessionContextBar">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <span class="session-badge" id="scbModeBadge">⚡ Kiểm Tra Nhanh</span>
+    <span id="scbStoreName" style="font-size:13px;">📍 --</span>
+    <span id="scbDate" style="font-size:13px;">📅 --</span>
+  </div>
+  <button id="btnChangeSession" onclick="showLandingScreen()"><i class="bi bi-arrow-repeat me-1"></i>Đổi chế độ</button>
+</div>
+
 
 
 <div class="app-header">
@@ -1812,6 +1836,112 @@
   </div>
 </div>
 
+
+<!-- LANDING MODE SELECTION SCREEN -->
+<div id="landingModeScreen" class="container">
+  <div class="text-center mb-4 pt-3">
+    <h4 class="fw-bold" style="color:#1C1917;">Chọn chế độ kiểm tra</h4>
+    <p class="text-muted small mb-0">Mỗi chế độ được tối ưu cho mục đích riêng — chọn đúng để tiết kiệm thời gian.</p>
+  </div>
+  <div class="mode-card-grid">
+    <div class="mode-card mode-quick" onclick="selectInspectionMode('quick_pulse')" role="button" tabindex="0">
+      <span class="mode-icon">⚡</span>
+      <div class="mode-name">Kiểm Tra Nhanh</div>
+      <div class="mode-desc">Kiểm tra tác chiến 6 trọng điểm cho cửa hàng cũ ổn định</div>
+      <span class="mode-time">⏱ 10-15 phút</span>
+    </div>
+    <div class="mode-card mode-rescue" onclick="selectInspectionMode('target_rescue')" role="button" tabindex="0">
+      <span class="mode-icon">🎯</span>
+      <div class="mode-name">Cứu Target</div>
+      <div class="mode-desc">Phân tích nguyên nhân &amp; giải pháp phục hồi doanh số</div>
+      <span class="mode-time">⏱ 15-20 phút</span>
+    </div>
+    <div class="mode-card mode-full" onclick="selectInspectionMode('deep_audit')" role="button" tabindex="0">
+      <span class="mode-icon">🏢</span>
+      <div class="mode-name">Kiểm Tra Toàn Diện</div>
+      <div class="mode-desc">9 tabs chấm điểm chi tiết, định kỳ, toàn diện vận hành</div>
+      <span class="mode-time">⏱ 45-60 phút</span>
+    </div>
+    <div class="mode-card mode-nso" onclick="selectInspectionMode('nso')" role="button" tabindex="0">
+      <span class="mode-icon">🎊</span>
+      <div class="mode-name">NSO &amp; Renovation</div>
+      <div class="mode-desc">Khai trương mới / Tái khai trương sau cải tạo</div>
+      <span class="mode-time">⏱ 20-30 phút</span>
+    </div>
+  </div>
+  <div class="mode-cross-link">
+    <a onclick="selectInspectionMode('cross')" tabindex="0">🔄 Kiểm tra chéo giữa các cửa hàng →</a>
+  </div>
+</div>
+
+<!-- PRE-FLIGHT MODAL (static backdrop - cannot dismiss without completing) -->
+<div class="modal fade" id="preFlightModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header p-3" id="preFlightModalHeader" style="background:linear-gradient(135deg,#6E1E1E,#4A1212);">
+        <div>
+          <div class="preflight-mode-label" id="preFlightModeLabel">⚡ Kiểm Tra Nhanh</div>
+          <div class="preflight-mode-desc" id="preFlightModeDesc">Điền thông tin cửa hàng để bắt đầu</div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" onclick="cancelPreFlight()"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Cửa hàng <span class="text-danger">*</span></label>
+          <select class="form-select" id="preFlightStoreCode" required>
+            <option value="">-- Chọn cửa hàng --</option>
+          </select>
+          <div class="invalid-feedback">Vui lòng chọn cửa hàng.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold"><i class="bi bi-calendar-check text-primary me-1"></i> Ngày kiểm tra <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" id="preFlightDate" required>
+        </div>
+        <div id="preFlightNSOFields" class="d-none">
+          <hr class="my-2">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-building me-1 text-success"></i> Loại dự án</label>
+            <select class="form-select" id="preFlightNSOType">
+              <option value="new">🏪 Mở mới (NSO)</option>
+              <option value="renovation">🔨 Tái khai trương (Renovation)</option>
+              <option value="soft">🌱 Soft Opening</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-calendar-event me-1 text-success"></i> Ngày khai trương chính thức</label>
+            <input type="date" class="form-control" id="preFlightOpeningDate">
+          </div>
+        </div>
+        <div class="alert alert-danger d-none py-2 small" id="preFlightError"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" onclick="cancelPreFlight()">
+          <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </button>
+        <button type="button" class="btn fw-bold px-4" id="btnPreFlightConfirm" onclick="confirmPreFlight()" style="background:linear-gradient(135deg,#6E1E1E,#4A1212);color:#FFF;border:none;">
+          <i class="bi bi-play-fill me-1"></i> Bắt đầu kiểm tra
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRE-SUBMIT REVIEW MODAL -->
+<div class="modal fade" id="preSubmitReviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header p-3">
+        <h5 class="modal-title fw-bold fs-6"><i class="bi bi-clipboard2-check-fill me-2"></i>Xác nhận trước khi gửi</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4" id="preSubmitReviewContent"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-arrow-left me-1"></i> Quay lại sửa</button>
+        <button type="button" class="btn btn-success fw-bold px-4" id="btnConfirmFinalSubmit" onclick="executeFinalSubmit()"><i class="bi bi-send-fill me-1"></i> Xác nhận Gửi</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="container">
 
   <!-- MAIN NAVIGATION MENU -->
@@ -2048,31 +2178,31 @@
     <div class="nav-tabs-container" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
             <ul class="nav nav-tabs" id="visitTabs" role="tablist" style="flex-wrap: nowrap; min-width: max-content;">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab"><i class="bi bi-info-circle me-1"></i> 1. Thông tin chung</button>
+          <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab"><i class="bi bi-info-circle me-1"></i> 1. Thông tin chung<span class="tab-completion-badge tab-badge-empty" id="badge-info">○</span></button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="frontage-tab" data-bs-toggle="tab" data-bs-target="#tab-frontage" type="button" role="tab"><i class="bi bi-shop-window me-1"></i> 2. Mặt tiền</button>
+          <button class="nav-link" data-locked="true" id="frontage-tab" data-bs-toggle="tab" data-bs-target="#tab-frontage" type="button" role="tab"><i class="bi bi-shop-window me-1"></i> 2. Mặt tiền<span class="tab-completion-badge tab-badge-empty" id="badge-frontage">○</span></button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="inner-tab" data-bs-toggle="tab" data-bs-target="#tab-inner" type="button" role="tab"><i class="bi bi-door-open me-1"></i> 3. Không gian trong</button>
+          <button class="nav-link" data-locked="true" id="inner-tab" data-bs-toggle="tab" data-bs-target="#tab-inner" type="button" role="tab"><i class="bi bi-door-open me-1"></i> 3. Không gian trong<span class="tab-completion-badge tab-badge-empty" id="badge-inner">○</span></button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="merch-tab" data-bs-toggle="tab" data-bs-target="#tab-merch" type="button" role="tab"><i class="bi bi-tags me-1"></i> 4. Trưng bày VM</button>
+          <button class="nav-link" data-locked="true" id="merch-tab" data-bs-toggle="tab" data-bs-target="#tab-merch" type="button" role="tab"><i class="bi bi-tags me-1"></i> 4. Trưng bày VM<span class="tab-completion-badge tab-badge-empty" id="badge-merch">○</span></button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="warehouse-tab" data-bs-toggle="tab" data-bs-target="#tab-warehouse" type="button" role="tab"><i class="bi bi-boxes me-1"></i> 5. Kho & Quầy kệ</button>
+          <button class="nav-link" data-locked="true" id="warehouse-tab" data-bs-toggle="tab" data-bs-target="#tab-warehouse" type="button" role="tab"><i class="bi bi-boxes me-1"></i> 5. Kho & Quầy kệ<span class="tab-completion-badge tab-badge-empty" id="badge-warehouse">○</span></button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="staff-tab" data-bs-toggle="tab" data-bs-target="#tab-staff" type="button" role="tab"><i class="bi bi-people me-1"></i> 6. Nhân sự</button>
+          <button class="nav-link" data-locked="true" id="staff-tab" data-bs-toggle="tab" data-bs-target="#tab-staff" type="button" role="tab"><i class="bi bi-people me-1"></i> 6. Nhân sự<span class="tab-completion-badge tab-badge-empty" id="badge-staff">○</span></button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="competitor-tab" data-bs-toggle="tab" data-bs-target="#tab-competitor" type="button" role="tab"><i class="bi bi-crosshair me-1"></i> 7. Đối thủ</button>
+          <button class="nav-link" data-locked="true" id="competitor-tab" data-bs-toggle="tab" data-bs-target="#tab-competitor" type="button" role="tab"><i class="bi bi-crosshair me-1"></i> 7. Đối thủ<span class="tab-completion-badge tab-badge-empty" id="badge-competitor">○</span></button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="survey-tab" data-bs-toggle="tab" data-bs-target="#tab-survey" type="button" role="tab"><i class="bi bi-clipboard-data me-1"></i> 8. Khảo sát QLKD</button>
+          <button class="nav-link" data-locked="true" id="survey-tab" data-bs-toggle="tab" data-bs-target="#tab-survey" type="button" role="tab"><i class="bi bi-clipboard-data me-1"></i> 8. Khảo sát QLKD<span class="tab-completion-badge tab-badge-empty" id="badge-survey">○</span></button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#tab-summary" type="button" role="tab"><i class="bi bi-check2-circle me-1"></i> 9. Tổng hợp lỗi</button>
+          <button class="nav-link" data-locked="true" id="summary-tab" data-bs-toggle="tab" data-bs-target="#tab-summary" type="button" role="tab"><i class="bi bi-check2-circle me-1"></i> 9. Tổng hợp lỗi<span class="tab-completion-badge tab-badge-empty" id="badge-summary">○</span></button>
         </li>
       </ul>
     </div>
@@ -5860,6 +5990,7 @@ function submitTargetRescueVisit() {
       initFormState();
       handleModeChange();
       attachGlobalListeners();
+      if (typeof initProfessionalFlow === 'function') initProfessionalFlow();
       
       // 5. Đăng ký addEventListener cho menu buttons (FALLBACK CHẮC CHẮN ngoài onclick)
       var menuMap = {
@@ -10781,7 +10912,28 @@ function submitTargetRescueVisit() {
         button { display:none !important; }
         .html-report-section { page-break-inside:avoid; }
       }
-    </style>
+    /* ===== NSO PUNCH LIST STYLES ===== */
+.nso-category-header{background:linear-gradient(135deg,#1E3A5F,#0A2342);color:#FFF;padding:10px 16px;border-radius:8px 8px 0 0;font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;}
+.nso-category-card{border:1.5px solid #E5E7EB;border-radius:8px;margin-bottom:16px;overflow:hidden;}
+.nso-item{background:#FFF;border-bottom:1px solid #F3F4F6;padding:12px 16px;transition:background .15s;}
+.nso-item:last-child{border-bottom:none;}
+.nso-item:hover{background:#FAFAF9;}
+.nso-item-label{font-size:13px;font-weight:600;color:#1C1917;line-height:1.4;flex:1;}
+.nso-status-bar{display:flex;gap:4px;flex-wrap:nowrap;margin-top:8px;}
+.nso-status-btn{flex:1;padding:6px 4px;border:1.5px solid #E5E7EB;border-radius:8px;background:#F9FAFB;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;min-width:0;}
+.nso-status-btn.active-done{background:#D1FAE5;border-color:#059669;color:#059669;}
+.nso-status-btn.active-pending{background:#FEF3C7;border-color:#D97706;color:#D97706;}
+.nso-status-btn.active-blocker{background:#FEE2E2;border-color:#DC2626;color:#DC2626;}
+.nso-item-detail{background:#FAFAF9;border-top:1px solid #F3F4F6;padding:10px 16px;display:none;}
+.nso-item-detail.show{display:block;}
+.nso-item-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:6px;vertical-align:middle;}
+.tag-blocker{background:#FEE2E2;color:#DC2626;}
+.tag-major{background:#FEF3C7;color:#D97706;}
+.tag-minor{background:#F3F4F6;color:#6B7280;}
+.nso-photo-thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.nso-photo-thumb{width:56px;height:56px;border-radius:6px;object-fit:cover;border:1px solid #E5E7EB;cursor:pointer;}
+
+</style>
     <div class="html-report-wrapper">
       <div class="html-report-cover">
         <h1>BÁO CÁO KIỂM TRA CỬA HÀNG</h1>
@@ -13932,6 +14084,461 @@ function submitTargetRescueVisit() {
       console.warn("[CloudSync] saveDraftToLocalStorage error:", e);
     }
   }
+
+    /* ==========================================================
+   * NSO / RENOVATION PUNCH LIST ENGINE
+   * ========================================================== */
+  const NSO_STANDARD_CHECKLIST = [
+    { id:'cat1', icon:'\u1F3D7\uFE0F', name:'M\u1EB7t ti\u1EC1n & Bi\u1EC3n hi\u1EC7u', items:[
+      {id:'nso_01',label:'Bi\u1EC3n hi\u1EC7u ngo\u00E0i tr\u1EDDi l\u1EAFp \u0111\u00FAng chu\u1EA9n, \u0111\u00FAng v\u1ECB tr\u00ED, \u0111\u1EE7 s\u00E1ng ban \u0111\u00EAM',tier:'blocker'},
+      {id:'nso_02',label:'Decal c\u1EEDa k\u00EDnh / sticker campaign \u0111\u00FAng nh\u1EADn di\u1EC7n th\u01B0\u01A1ng hi\u1EC7u',tier:'major'},
+      {id:'nso_03',label:'B\u1EA3ng gi\u00E1 / banner khai tr\u01B0\u01A1ng tr\u01B0\u1EDBc c\u1EEDa ho\u1EB7c m\u1EB7t ti\u1EC1n',tier:'major'},
+      {id:'nso_04',label:'\u0110\u00E8n chi\u1EBFu m\u1EB7t ti\u1EC1n & mannequin c\u1EEDa s\u1ED5 ho\u1EA1t \u0111\u1ED9ng t\u1ED1t',tier:'major'},
+      {id:'nso_05',label:'L\u1ED1i v\u00E0o s\u1EA1ch, kh\u00F4ng c\u00F2n v\u1EADt li\u1EC7u x\u00E2y d\u1EF1ng ho\u1EB7c r\u00E1c th\u1EA3i thi c\u00F4ng',tier:'blocker'}
+    ]},
+    { id:'cat2', icon:'\u26A1', name:'C\u01A1 s\u1EDF v\u1EADt ch\u1EA5t & Thi\u1EBFt b\u1ECB', items:[
+      {id:'nso_06',label:'H\u1EC7 th\u1ED1ng \u0111i\u1EC7n & \u00E1nh s\u00E1ng trong shop ho\u00E0n ch\u1EC9nh, kh\u00F4ng b\u00F3ng b\u1ECB t\u1ED1i',tier:'blocker'},
+      {id:'nso_07',label:'M\u00E1y l\u1EA1nh ho\u1EA1t \u0111\u1ED9ng b\u00ECnh th\u01B0\u1EDDng, nhi\u1EC7t \u0111\u1ED9 ph\u00F9 h\u1EE3p (~20\u00B0C)',tier:'blocker'},
+      {id:'nso_08',label:'POS / m\u00E1y t\u00EDnh b\u00E1n h\u00E0ng \u0111\u00E3 setup, test giao d\u1ECBch th\u1EED th\u00E0nh c\u00F4ng',tier:'blocker'},
+      {id:'nso_09',label:'M\u00E1y in h\u00F3a \u0111\u01A1n k\u1EBFt n\u1ED1i \u1ED5n \u0111\u1ECBnh, in th\u1EED OK',tier:'major'},
+      {id:'nso_10',label:'Camera an ninh ho\u1EA1t \u0111\u1ED9ng, c\u00F3 ghi h\u00ECnh',tier:'major'},
+      {id:'nso_11',label:'H\u1EC7 th\u1ED1ng ch\u1ED1ng tr\u1ED9m t\u1EEB (EAS) t\u1EA1i c\u1EEDa ra v\u00E0o',tier:'major'},
+      {id:'nso_12',label:'K\u00E9t s\u1EAFt & qu\u1EA7y thu ng\u00E2n ho\u00E0n ch\u1EC9nh, c\u00F3 kh\u00F3a s\u1ED1',tier:'blocker'},
+      {id:'nso_13',label:'Wifi / internet \u1ED5n \u0111\u1ECBnh cho POS v\u00E0 c\u00E1c thi\u1EBFt b\u1ECB',tier:'major'}
+    ]},
+    { id:'cat3', icon:'\u1F455', name:'H\u00E0ng h\u00F3a & Tr\u01B0ng b\u00E0y VM', items:[
+      {id:'nso_14',label:'H\u00E0ng nh\u1EADp v\u1EC1 \u0111\u1EE7 theo k\u1EBF ho\u1EA1ch opening (so s\u00E1nh v\u1EDBi PO \u0111\u00E3 duy\u1EC7t)',tier:'blocker'},
+      {id:'nso_15',label:'VM setup \u0111\u00FAng planogram \u0111\u01B0\u1EE3c BG\u0110 duy\u1EC7t',tier:'blocker'},
+      {id:'nso_16',label:'Mannequin \u0111\u00E3 m\u1EB7c \u0111\u1ED3 \u0111\u00FAng theme khai tr\u01B0\u01A1ng',tier:'major'},
+      {id:'nso_17',label:'Price tag \u0111\u1EA7y \u0111\u1EE7 100% h\u00E0ng tr\u00EAn s\u00E0n',tier:'blocker'},
+      {id:'nso_18',label:'H\u00E0ng l\u1ED7i / tr\u1EA3 kho \u0111\u00E3 \u0111\u01B0\u1EE3c t\u00E1ch ri\u00EAng, d\u00E1n nh\u00E3n',tier:'minor'},
+      {id:'nso_19',label:'T\u1ED3n kho \u0111\u01B0\u1EE3c nh\u1EADp h\u1EC7 th\u1ED1ng \u0111\u1EA7y \u0111\u1EE7',tier:'major'},
+      {id:'nso_20',label:'Qu\u1EA7y k\u1EC7 \u0111\u1EE7 s\u1ED1 l\u01B0\u1EE3ng, \u0111\u00FAng v\u1ECB tr\u00ED, ch\u1EAFc ch\u1EAFn',tier:'major'}
+    ]},
+    { id:'cat4', icon:'\u1F465', name:'Nh\u00E2n s\u1EF1 & V\u1EADn h\u00E0nh', items:[
+      {id:'nso_21',label:'\u0110\u1EE7 s\u1ED1 l\u01B0\u1EE3ng nh\u00E2n vi\u00EAn theo k\u1EBF ho\u1EA1ch',tier:'blocker'},
+      {id:'nso_22',label:'\u0110\u1ED3ng ph\u1EE5c \u0111\u00FAng chu\u1EA9n, \u0111eo th\u1EBB t\u00EAn',tier:'blocker'},
+      {id:'nso_23',label:'NV bi\u1EBFt s\u1EED d\u1EE5ng POS c\u01A1 b\u1EA3n (giao d\u1ECBch, ho\u00E0n tr\u1EA3)',tier:'blocker'},
+      {id:'nso_24',label:'Ph\u00E2n ca khai tr\u01B0\u01A1ng h\u1EE3p l\u00FD, c\u00F3 ng\u01B0\u1EDDi ph\u1EE5 tr\u00E1ch t\u1EEBng khu v\u1EF1c',tier:'major'},
+      {id:'nso_25',label:'S\u1ED1 \u0111i\u1EC7n tho\u1EA1i kh\u1EA9n c\u1EA5p (NM, IT, Kho) \u0111\u01B0\u1EE3c th\u00F4ng b\u00E1o cho NV',tier:'minor'}
+    ]},
+    { id:'cat5', icon:'\u1F6E1\uFE0F', name:'V\u1EC7 sinh & An to\u00E0n PCCC', items:[
+      {id:'nso_26',label:'To\u00E0n b\u1ED9 s\u00E0n nh\u00E0 s\u1EA1ch, kh\u00F4ng c\u00F2n b\u1EE5i / m\u1EA3nh v\u1EE5n thi c\u00F4ng',tier:'blocker'},
+      {id:'nso_27',label:'B\u00ECnh ch\u1EEFa ch\u00E1y \u0111\u00FAng s\u1ED1 l\u01B0\u1EE3ng, \u0111\u00FAng v\u1ECB tr\u00ED, c\u00F2n h\u1EA1n',tier:'blocker'},
+      {id:'nso_28',label:'L\u1ED1i tho\u00E1t hi\u1EC3m kh\u00F4ng b\u1ECB ch\u1EB7n, bi\u1EC3n b\u00E1o r\u00F5, \u0111\u00E8n exit ho\u1EA1t \u0111\u1ED9ng',tier:'blocker'}
+    ]}
+  ];
+  window.NSO_STANDARD_CHECKLIST = NSO_STANDARD_CHECKLIST;
+  let nsoItemsData = {};
+  let nsoCustomItems = [];
+  let nsoCustomCounter = 0;
+  window.nsoItemsData = nsoItemsData;
+
+  function renderNSOPunchList() {
+    const body = document.getElementById('nsoPunchListBody');
+    if (!body) return;
+    const cats = [...NSO_STANDARD_CHECKLIST];
+    if (nsoCustomItems.length > 0) cats.push({id:'cat_custom',icon:'\u2795',name:'H\u1EA1ng m\u1EE5c t\u00F9y ch\u1EC9nh',items:nsoCustomItems});
+    let html = '';
+    cats.forEach(cat => {
+      html += <div class="nso-category-card mb-3"><div class="nso-category-header"><span></span><span></span><span class="ms-auto badge bg-light text-dark"> h\u1EA1ng m\u1EE5c</span></div><div class="nso-cat-items">;
+      cat.items.forEach(item => {
+        if (!nsoItemsData[item.id]) nsoItemsData[item.id]={status:'none',note:'',deadline:'',assignee:'',photos:[]};
+        const st=nsoItemsData[item.id];
+        const tierBadge=item.tier==='blocker'?'<span class="nso-item-tag tag-blocker">\u1F6AB BLOCKER</span>':item.tier==='major'?'<span class="nso-item-tag tag-major">\u26A0 MAJOR</span>':'<span class="nso-item-tag tag-minor">MINOR</span>';
+        const detShow=(st.status==='pending'||st.status==='blocker')?'show':'';
+        html += <div class="nso-item" id="nso-item-wrapper-"><div class="nso-item-label"></div><div class="nso-status-bar"><button type="button" class="nso-status-btn " onclick="setNSOItemStatus('','done')">&check; Ho\u00E0n th\u00E0nh</button><button type="button" class="nso-status-btn " onclick="setNSOItemStatus('','pending')">&#9203; \u0110ang n\u1EE3</button><button type="button" class="nso-status-btn " onclick="setNSOItemStatus('','blocker')">&#128683; Ch\u1EB7n KT</button></div></div><div class="nso-item-detail " id="nso-detail-"><div class="row g-2 mb-2"><div class="col-md-6"><label class="form-label small fw-bold mb-1">Ghi ch\u00FA</label><input type="text" class="form-control form-control-sm" value="" placeholder="M\u00F4 t\u1EA3 v\u1EA5n \u0111\u1EC1..." oninput="updateNSOItemField('','note',this.value)"></div><div class="col-md-3"><label class="form-label small fw-bold mb-1">Deadline</label><input type="date" class="form-control form-control-sm" value="" oninput="updateNSOItemField('','deadline',this.value)"></div><div class="col-md-3"><label class="form-label small fw-bold mb-1">Giao cho</label><select class="form-select form-select-sm" onchange="updateNSOItemField('','assignee',this.value)"><option value="">-- Ch\u1ECDn --</option><option value="contractor" >Nh\u00E0 th\u1EA7u</option><option value="warehouse" >Kho</option><option value="it" >IT</option><option value="bgd" >BG\u0110</option><option value="asm" >ASM</option><option value="cht" >CHT</option></select></div></div><div><label class="form-label small fw-bold mb-1">&#128247; \u1EA2nh hi\u1EC7n tr\u01B0\u1EDDng</label><input type="file" capture="environment" accept="image/*" multiple class="form-control form-control-sm" onchange="handleNSOItemPhoto('',this)"><div class="nso-photo-thumbs" id="nso-thumbs-"></div></div></div>;
+      });
+      html += '</div></div>';
+    });
+    body.innerHTML = html;
+    updateNSOKPIBanner();
+  }
+  window.renderNSOPunchList = renderNSOPunchList;
+
+  function setNSOItemStatus(itemId, status) {
+    if (!nsoItemsData[itemId]) nsoItemsData[itemId]={status:'none',note:'',deadline:'',assignee:'',photos:[]};
+    nsoItemsData[itemId].status=status;
+    const w=document.getElementById('nso-item-wrapper-'+itemId);
+    if(w){const bs=w.querySelectorAll('.nso-status-btn');bs.forEach(b=>b.classList.remove('active-done','active-pending','active-blocker'));if(status==='done')bs[0].classList.add('active-done');else if(status==='pending')bs[1].classList.add('active-pending');else if(status==='blocker')bs[2].classList.add('active-blocker');}
+    const d=document.getElementById('nso-detail-'+itemId);
+    if(d){if(status==='pending'||status==='blocker')d.classList.add('show');else d.classList.remove('show');}
+    updateNSOKPIBanner();
+  }
+  window.setNSOItemStatus = setNSOItemStatus;
+
+  function updateNSOItemField(itemId,field,value){if(!nsoItemsData[itemId])nsoItemsData[itemId]={status:'none',note:'',deadline:'',assignee:'',photos:[]};nsoItemsData[itemId][field]=value;}
+  window.updateNSOItemField = updateNSOItemField;
+
+  function handleNSOItemPhoto(itemId,input){
+    if(!input.files||!input.files.length)return;
+    if(!nsoItemsData[itemId])nsoItemsData[itemId]={status:'none',note:'',deadline:'',assignee:'',photos:[]};
+    const tc=document.getElementById('nso-thumbs-'+itemId);
+    Array.from(input.files).forEach(file=>{const r=new FileReader();r.onload=function(e){nsoItemsData[itemId].photos.push(e.target.result);if(tc){const img=document.createElement('img');img.src=e.target.result;img.className='nso-photo-thumb';img.alt='Photo';tc.appendChild(img);}};r.readAsDataURL(file);});
+  }
+  window.handleNSOItemPhoto = handleNSOItemPhoto;
+
+  function updateNSOKPIBanner(){
+    let done=0,pending=0,blocker=0,total=0;
+    NSO_STANDARD_CHECKLIST.forEach(c=>c.items.forEach(i=>{total++;const s=nsoItemsData[i.id];if(!s||s.status==='none')return;if(s.status==='done')done++;else if(s.status==='pending')pending++;else if(s.status==='blocker')blocker++;}));
+    nsoCustomItems.forEach(i=>{total++;const s=nsoItemsData[i.id];if(!s||s.status==='none')return;if(s.status==='done')done++;else if(s.status==='pending')pending++;else if(s.status==='blocker')blocker++;});
+    const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    setEl('nsoCountDone',done);setEl('nsoCountPending',pending);setEl('nsoCountBlocker',blocker);setEl('nsoCountTotal',total);
+    const pct=total>0?Math.round(done/total*100):0;
+    const bar=document.getElementById('nsoProgressBar');if(bar)bar.style.width=pct+'%';
+    const v=document.getElementById('nsoReadinessVerdict');
+    if(v){if(blocker>0){v.style.background='#FEE2E2';v.style.color='#DC2626';v.style.borderColor='#DC2626';v.textContent='\u1F6AB Kh\u00F4ng th\u1EC3 khai tr\u01B0\u01A1ng \u2014 C\u00F2n '+blocker+' v\u1EA5n \u0111\u1EC1 ch\u1EB7n';}else if(pending>0){v.style.background='#FEF3C7';v.style.color='#D97706';v.style.borderColor='#D97706';v.textContent='\u26A0\uFE0F C\u00F3 th\u1EC3 khai tr\u01B0\u01A1ng \u2014 '+pending+' h\u1EA1ng m\u1EE5c c\u00F2n n\u1EE3';}else if(done>=total*0.9&&total>0){v.style.background='#D1FAE5';v.style.color='#059669';v.style.borderColor='#059669';v.textContent='\u2705 S\u1EB5n s\u00E0ng khai tr\u01B0\u01A1ng!';}else{v.style.background='#F3F4F6';v.style.color='#6B7280';v.style.borderColor='#E5E7EB';v.textContent='Ch\u01B0a \u0111\u00E1nh gi\u00E1 \u0111\u1EE7';}}
+  }
+  window.updateNSOKPIBanner = updateNSOKPIBanner;
+
+  function addNSOCustomItem(){
+    nsoCustomCounter++;
+    const label=prompt('Nh\u1EADp t\u00EAn h\u1EA1ng m\u1EE5c t\u00F9y ch\u1EC9nh:');
+    if(!label)return;
+    nsoCustomItems.push({id:'nso_custom_'+nsoCustomCounter,label:label,tier:'minor'});
+    nsoItemsData['nso_custom_'+nsoCustomCounter]={status:'none',note:'',deadline:'',assignee:'',photos:[]};
+    renderNSOPunchList();
+  }
+  window.addNSOCustomItem = addNSOCustomItem;
+
+  function updateNSOProjectTypeLabel(){
+    const sel=document.getElementById('nsoProjectType');const lbl=document.getElementById('nsoProjectTypeLabel');
+    if(!sel||!lbl)return;
+    const L={'new':'\u1F3EA NSO \u2014 M\u1EDF M\u1EDBi','renovation':'\u1F528 T\u00E1i Khai Tr\u01B0\u01A1ng','soft':'\u1F331 Soft Opening'};
+    lbl.textContent=L[sel.value]||sel.value;
+    if(window.AppFlow)window.AppFlow.nsoType=sel.value;
+  }
+  window.updateNSOProjectTypeLabel = updateNSOProjectTypeLabel;
+
+  function collectNSOData(){
+    const r={project_type:document.getElementById('nsoProjectType')?.value||'new',opening_date:document.getElementById('nsoOpeningDate')?.value||'',contractor:document.getElementById('nsoContractor')?.value||'',project_manager:document.getElementById('nsoProjectManager')?.value||'',inspection_date:document.getElementById('nsoInspectionDate')?.value||'',overall_notes:document.getElementById('nsoOverallNotes')?.value||'',items:{},custom_items:nsoCustomItems,kpi:{total:0,done:0,pending:0,blocker:0}};
+    Object.entries(nsoItemsData).forEach(([id,s])=>{if(s.status!=='none'){r.items[id]={...s,photos_count:s.photos.length};r.kpi.total++;if(s.status==='done')r.kpi.done++;else if(s.status==='pending')r.kpi.pending++;else if(s.status==='blocker')r.kpi.blocker++;}});
+    return r;
+  }
+  window.collectNSOData = collectNSOData;
+
+  function submitNSOReport(){
+    const sc=document.getElementById('storeCode')?.value;
+    const rd=document.getElementById('reportDate')?.value;
+    if(!sc){alert('Vui l\u00F2ng ch\u1ECDn c\u1EEDa h\u00E0ng.');return;}
+    if(!rd){alert('Vui l\u00F2ng ch\u1ECDn ng\u00E0y ki\u1EC3m tra.');return;}
+    const nsoData=collectNSOData();
+    const rc=document.getElementById('preSubmitReviewContent');
+    if(rc)rc.innerHTML=<div class="review-item-row"><span>Ch\u1EBF \u0111\u1ED9</span><span class="review-status-ok">\u1F38A NSO & Renovation</span></div><div class="review-item-row"><span>C\u1EEDa h\u00E0ng</span><span class="fw-bold"></span></div><div class="review-item-row"><span>Ng\u00E0y ki\u1EC3m tra</span><span class="fw-bold"></span></div><div class="review-item-row"><span>Ho\u00E0n th\u00E0nh</span><span class="review-status-ok">/</span></div><div class="review-item-row"><span>Blocker</span><span class=""> v\u1EA5n \u0111\u1EC1</span></div>;
+    if(window.AppFlow)window.AppFlow._pendingSubmitFn=()=>executeNSOSubmit(nsoData);
+    if(typeof bootstrap!=='undefined')bootstrap.Modal.getOrCreateInstance(document.getElementById('preSubmitReviewModal')).show();
+    else executeNSOSubmit(nsoData);
+  }
+  window.submitNSOReport = submitNSOReport;
+
+  function executeNSOSubmit(nsoData){
+    let h=document.getElementById('_nso_punch_list_data');
+    if(!h){h=document.createElement('input');h.type='hidden';h.id='_nso_punch_list_data';h.name='nso_punch_list';const f=document.getElementById('storeVisitForm');if(f)f.appendChild(h);}
+    h.value=JSON.stringify(nsoData);
+    const ms=document.getElementById('modeSelect');if(ms)ms.value='opening';
+    const f=document.getElementById('storeVisitForm');
+    if(f)f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+  }
+  window.executeNSOSubmit = executeNSOSubmit;
+
+/* ============================================================
+   * PROFESSIONAL FLOW v2 — AppFlowController
+   * ============================================================ */
+  const AppFlow = {
+    state: 'LANDING', mode: null, storeCode: null, storeName: null,
+    reportDate: null, nsoType: null, openingDate: null,
+    preflightConfirmed: false, _pendingSubmitFn: null
+  };
+  window.AppFlow = AppFlow;
+
+  const MODE_META = {
+    quick_pulse:   { label: '⚡ Kiểm Tra Nhanh',      desc: 'Kiểm tra tác chiến 10-15 phút',              color: '#F59E0B' },
+    target_rescue: { label: '🎯 Cứu Target',           desc: 'Phục hồi doanh số, phân tích nguyên nhân', color: '#EF4444' },
+    deep_audit:    { label: '🏢 Kiểm Tra Toàn Diện',  desc: '9 tabs chấm điểm chi tiết định kỳ',        color: '#6E1E1E' },
+    nso:           { label: '🎊 NSO & Renovation',    desc: 'Khai trương mới / Tái khai trương',          color: '#059669' },
+    cross:         { label: '🔄 Kiểm Tra Chéo',       desc: 'Kiểm tra chéo giữa các cửa hàng',          color: '#7C3AED' }
+  };
+
+  function showLandingScreen() {
+    AppFlow.state = 'LANDING';
+    AppFlow.preflightConfirmed = false;
+    const landing = document.getElementById('landingModeScreen');
+    if (landing) landing.classList.add('active');
+    const scb = document.getElementById('sessionContextBar');
+    if (scb) scb.classList.remove('active');
+    document.querySelectorAll('.main-view-section').forEach(v => v.classList.add('d-none'));
+    const mainNavWrap = document.getElementById('mainMenuTabs')?.closest('.nav-tabs-container');
+    if (mainNavWrap) mainNavWrap.style.display = 'none';
+  }
+
+  function hideLandingScreen() {
+    const landing = document.getElementById('landingModeScreen');
+    if (landing) landing.classList.remove('active');
+    const mainNavWrap = document.getElementById('mainMenuTabs')?.closest('.nav-tabs-container');
+    if (mainNavWrap) mainNavWrap.style.display = '';
+  }
+
+  function selectInspectionMode(modeKey) {
+    AppFlow.mode = modeKey;
+    const meta = MODE_META[modeKey] || MODE_META.deep_audit;
+    const lbl = document.getElementById('preFlightModeLabel');
+    const desc = document.getElementById('preFlightModeDesc');
+    const hdr = document.getElementById('preFlightModalHeader');
+    const nsoFields = document.getElementById('preFlightNSOFields');
+    if (lbl) lbl.textContent = meta.label;
+    if (desc) desc.textContent = meta.desc;
+    if (hdr) hdr.style.background = `linear-gradient(135deg, ${meta.color}, ${meta.color}CC)`;
+    if (nsoFields) nsoFields.classList.toggle('d-none', modeKey !== 'nso');
+    // Populate store dropdown from main storeCode select
+    const srcSel = document.getElementById('storeCode');
+    const dstSel = document.getElementById('preFlightStoreCode');
+    if (srcSel && dstSel) {
+      dstSel.innerHTML = '<option value="">-- Chọn cửa hàng --</option>';
+      Array.from(srcSel.options).forEach(opt => {
+        if (!opt.value || opt.style.display === 'none') return;
+        const o = new Option(opt.textContent, opt.value);
+        dstSel.add(o);
+      });
+    }
+    const dateEl = document.getElementById('preFlightDate');
+    if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+    const errEl = document.getElementById('preFlightError');
+    if (errEl) errEl.classList.add('d-none');
+    const sel = document.getElementById('preFlightStoreCode');
+    if (sel) sel.classList.remove('is-invalid');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('preFlightModal')).show();
+  }
+
+  function cancelPreFlight() {
+    const m = bootstrap.Modal.getInstance(document.getElementById('preFlightModal'));
+    if (m) m.hide();
+    AppFlow.mode = null;
+  }
+
+  function confirmPreFlight() {
+    const storeEl = document.getElementById('preFlightStoreCode');
+    const dateEl = document.getElementById('preFlightDate');
+    const errEl = document.getElementById('preFlightError');
+    if (!storeEl?.value) {
+      storeEl.classList.add('is-invalid');
+      if (errEl) { errEl.textContent = 'Vui lòng chọn cửa hàng.'; errEl.classList.remove('d-none'); }
+      return;
+    }
+    if (!dateEl?.value) {
+      if (errEl) { errEl.textContent = 'Vui lòng chọn ngày kiểm tra.'; errEl.classList.remove('d-none'); }
+      return;
+    }
+    storeEl.classList.remove('is-invalid');
+    if (errEl) errEl.classList.add('d-none');
+    AppFlow.storeCode = storeEl.value.split(' - ')[0].trim();
+    AppFlow.storeName = storeEl.options[storeEl.selectedIndex]?.textContent?.trim() || AppFlow.storeCode;
+    AppFlow.reportDate = dateEl.value;
+    AppFlow.preflightConfirmed = true;
+    AppFlow.state = 'IN_PROGRESS';
+    if (AppFlow.mode === 'nso') {
+      AppFlow.nsoType = document.getElementById('preFlightNSOType')?.value || 'new';
+      AppFlow.openingDate = document.getElementById('preFlightOpeningDate')?.value || AppFlow.reportDate;
+    }
+    bootstrap.Modal.getInstance(document.getElementById('preFlightModal'))?.hide();
+    // Sync to main form
+    const mainStore = document.getElementById('storeCode');
+    if (mainStore) { mainStore.value = storeEl.value; mainStore.dispatchEvent(new Event('change')); }
+    const mainDate = document.getElementById('reportDate');
+    if (mainDate) mainDate.value = AppFlow.reportDate;
+    // Set mode
+    if (AppFlow.mode === 'nso') {
+      const ms = document.getElementById('modeSelect');
+      if (ms) { ms.value = 'opening'; ms.dispatchEvent(new Event('change')); }
+    } else {
+      if (typeof switchInspectionMode === 'function') switchInspectionMode(AppFlow.mode);
+    }
+    updateSessionContextBar();
+    hideLandingScreen();
+    switchMainMenu('new-report');
+    setTimeout(updateTabLockState, 150);
+    if (AppFlow.mode === 'nso' && typeof showNSOView === 'function') showNSOView();
+  }
+
+  function updateSessionContextBar() {
+    const scb = document.getElementById('sessionContextBar');
+    if (!scb || !AppFlow.preflightConfirmed) return;
+    const meta = MODE_META[AppFlow.mode] || MODE_META.deep_audit;
+    const modeBadge = document.getElementById('scbModeBadge');
+    const storeSpan = document.getElementById('scbStoreName');
+    const dateSpan = document.getElementById('scbDate');
+    if (modeBadge) modeBadge.textContent = meta.label;
+    if (storeSpan) storeSpan.textContent = '📍 ' + (AppFlow.storeName || AppFlow.storeCode || '--');
+    if (dateSpan && AppFlow.reportDate) {
+      const d = new Date(AppFlow.reportDate + 'T00:00:00');
+      dateSpan.textContent = '📅 ' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    scb.classList.add('active');
+  }
+
+  // Tab lock
+  const LOCKED_TAB_IDS = ['frontage-tab','inner-tab','merch-tab','warehouse-tab','staff-tab','competitor-tab','survey-tab','summary-tab'];
+
+  function lockAllTabs() {
+    LOCKED_TAB_IDS.forEach(id => { const b = document.getElementById(id); if (b) b.setAttribute('data-locked','true'); });
+  }
+  function unlockAllTabs() {
+    LOCKED_TAB_IDS.forEach(id => { const b = document.getElementById(id); if (b) b.removeAttribute('data-locked'); });
+  }
+  function updateTabLockState() {
+    const sc = document.getElementById('storeCode')?.value;
+    const rd = document.getElementById('reportDate')?.value;
+    const ip = document.getElementById('inspectionProfileSelect')?.value;
+    if (sc && rd && ip) unlockAllTabs(); else lockAllTabs();
+    updateAllTabBadges();
+  }
+  function handleTabClickGuard(ev) {
+    if (this.getAttribute('data-locked') === 'true') {
+      ev.preventDefault(); ev.stopImmediatePropagation();
+      showTabLockToast();
+      const it = document.getElementById('info-tab');
+      if (it) { it.click(); setTimeout(() => { const s=document.getElementById('storeCode'); if(s&&!s.value){s.focus();s.scrollIntoView({behavior:'smooth',block:'center'});} },200); }
+      return false;
+    }
+  }
+  function showTabLockToast() {
+    const ex = document.getElementById('tabLockToast');
+    if (ex) ex.remove();
+    const t = document.createElement('div');
+    t.id = 'tabLockToast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1C1917;color:#FFF;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s;white-space:nowrap;';
+    t.innerHTML = '🔒 Vui lòng hoàn thành thông tin ở <strong>Tab 1</strong> trước';
+    document.body.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),300); },2500);
+  }
+  function attachTabGuards() {
+    LOCKED_TAB_IDS.forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.removeEventListener('click',handleTabClickGuard,true); b.addEventListener('click',handleTabClickGuard,true); }
+    });
+  }
+
+  // Tab badges
+  const TAB_BADGE_PANE_MAP = { 'info-tab':'tab-info','frontage-tab':'tab-frontage','inner-tab':'tab-inner','merch-tab':'tab-merch','warehouse-tab':'tab-warehouse','staff-tab':'tab-staff','competitor-tab':'tab-competitor','survey-tab':'tab-survey','summary-tab':'tab-summary' };
+  const BADGE_ID_MAP = { 'info-tab':'badge-info','frontage-tab':'badge-frontage','inner-tab':'badge-inner','merch-tab':'badge-merch','warehouse-tab':'badge-warehouse','staff-tab':'badge-staff','competitor-tab':'badge-competitor','survey-tab':'badge-survey','summary-tab':'badge-summary' };
+
+  function updateAllTabBadges() {
+    Object.keys(TAB_BADGE_PANE_MAP).forEach(tabId => {
+      const pane = document.getElementById(TAB_BADGE_PANE_MAP[tabId]);
+      const badge = document.getElementById(BADGE_ID_MAP[tabId]);
+      if (!pane || !badge) return;
+      const all = pane.querySelectorAll('input:not([type=file]):not([type=hidden]), select, textarea');
+      const reqd = pane.querySelectorAll('input[required], select[required], textarea[required]');
+      const anyFilled = Array.from(all).some(el => el.value && el.value.trim());
+      const allReqdFilled = reqd.length > 0 && Array.from(reqd).every(el => el.value && el.value.trim());
+      if (allReqdFilled) { badge.className='tab-completion-badge tab-badge-complete'; badge.textContent='✓'; }
+      else if (anyFilled) { badge.className='tab-completion-badge tab-badge-partial'; badge.textContent='◑'; }
+      else { badge.className='tab-completion-badge tab-badge-empty'; badge.textContent='○'; }
+    });
+  }
+
+  // Pre-submit review
+  function showPreSubmitReview(finalFn) {
+    AppFlow._pendingSubmitFn = finalFn;
+    const content = document.getElementById('preSubmitReviewContent');
+    if (!content) { if(finalFn) finalFn(); return; }
+    const sc = document.getElementById('storeCode')?.value || '(chưa chọn)';
+    const rd = document.getElementById('reportDate')?.value || '(chưa có)';
+    const meta = MODE_META[AppFlow.mode||'deep_audit'] || MODE_META.deep_audit;
+    const photoCount = Object.keys(window.PHOTO_DATA_MAP||{}).length;
+    const noStore = !document.getElementById('storeCode')?.value;
+    content.innerHTML = `
+      <div class="review-item-row"><span>Chế độ kiểm tra</span><span class="review-status-ok">${meta.label}</span></div>
+      <div class="review-item-row"><span>Cửa hàng</span><span class="fw-bold ${noStore?'review-status-err':''}">${sc}</span></div>
+      <div class="review-item-row"><span>Ngày kiểm tra</span><span class="fw-bold">${rd}</span></div>
+      <div class="review-item-row"><span>Hình ảnh đính kèm</span><span class="${photoCount>0?'review-status-ok':'review-status-warn'}">${photoCount} ảnh</span></div>
+    `;
+    const confirmBtn = document.getElementById('btnConfirmFinalSubmit');
+    if (confirmBtn) confirmBtn.disabled = noStore;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('preSubmitReviewModal')).show();
+  }
+  function executeFinalSubmit() {
+    bootstrap.Modal.getInstance(document.getElementById('preSubmitReviewModal'))?.hide();
+    if (AppFlow._pendingSubmitFn) { setTimeout(AppFlow._pendingSubmitFn,300); AppFlow._pendingSubmitFn=null; }
+  }
+
+  // NSO view (stub — Phase 3 will flesh this out)
+  function showNSOView() {
+    const ns = document.getElementById('nsoPunchListSection');
+    const tc = document.getElementById('visitTabs')?.closest('.nav-tabs-container');
+    const vc = document.getElementById('visitTabsContent');
+    const ios = document.getElementById('iosModeSwitcher');
+    if (ns) ns.classList.remove('d-none');
+    if (tc) tc.classList.add('d-none');
+    if (vc) vc.classList.add('d-none');
+    if (ios) ios.classList.add('d-none');
+    if (typeof renderNSOPunchList === 'function') renderNSOPunchList();
+  }
+  window.showNSOView = showNSOView;
+
+  // Tab 1 change listeners
+  function attachTab1ChangeListeners() {
+    ['storeCode','reportDate','inspectionProfileSelect'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.addEventListener('change', updateTabLockState); el.addEventListener('input', updateTabLockState); }
+    });
+  }
+
+  // Wrap submit functions with review gate
+  function wrapSubmitWithReview() {
+    const wrapFn = (fnName) => {
+      const orig = window[fnName];
+      if (orig && !orig._wrapped) {
+        window[fnName] = function() {
+          if (!document.getElementById('storeCode')?.value) {
+            alert('Vui lòng chọn cửa hàng trước khi gửi báo cáo.');
+            return;
+          }
+          showPreSubmitReview(() => orig.call(window));
+        };
+        window[fnName]._wrapped = true;
+      }
+    };
+    wrapFn('submitQuickPulseVisit');
+    wrapFn('submitTargetRescueVisit');
+  }
+
+
+  /* ============================================================
+   * PHASE 4: Hook storeVisitForm main submit through review gate
+   * ============================================================ */
+  function hookMainFormSubmitReview() {
+    const form = document.getElementById('storeVisitForm');
+    if (!form || form._reviewHooked) return;
+    form._reviewHooked = true;
+    form.addEventListener('submit', function interceptSubmit(e) {
+      // Only gate when not already inside executeFinalSubmit
+      if (form._bypassReviewGate) return; // allow through
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const sc = document.getElementById('storeCode')?.value;
+      if (!sc) {
+        alert('Vui lòng chọn cửa hàng trước khi gửi báo cáo.');
+        return;
+      }
+      // Use showPreSubmitReview, then on confirm fire real submit
+      showPreSubmitReview(function() {
+        form._bypassReviewGate = true;
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        setTimeout(() => { form._bypassReviewGate = false; }, 2000);
+      });
+    }, true); // capture phase = intercept before existing listener
+  }
+  window.hookMainFormSubmitReview = hookMainFormSubmitReview;
+
+  function initProfessionalFlow() { {
+    lockAllTabs();
+    attachTabGuards();
+    attachTab1ChangeListeners();
+    showLandingScreen();
+    setTimeout(wrapSubmitWithReview, 1000);
+    hookMainFormSubmitReview();
+  }
+  window.initProfessionalFlow = initProfessionalFlow;
 
   // Bind Auth Check on Load
   document.addEventListener("DOMContentLoaded", function() {
